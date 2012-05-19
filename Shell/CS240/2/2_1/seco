@@ -1,0 +1,29 @@
+#/bin/bash
+
+filename=
+command=0
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -f | --file )           shift
+                                filename=$1
+                                ;;
+        -d | --date )           command=$((command+1))
+                                ;;
+        -c | --capitalize )     command=$((command+2))
+                                ;;
+        * )                     echo "Usage:\nseco [commands]\nCommands:\n-d to expand date to current system date.\n-c to capitalise first letters of all words.\n-f filename to choose the input file which will be overwritten."
+                                exit 1
+    esac
+    shift
+done;
+if [ "$command" -gt "1" ]; then
+    sed 's/\ \([a-z]\)/\ \u\1/g' $filename > ~/bin/secon;
+    sed 's/./\u&/' ~/bin/secon > ~/bin/second;
+    command=$((command-2));
+    cp ~/bin/second $filename;
+fi;
+if [ "$command" -gt "0" ]; then
+    sed s/date/"$(date)"/g $filename > ~/bin/second;
+    cp ~/bin/second $filename;
+fi;

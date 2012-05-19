@@ -1,0 +1,10 @@
+DP
+~~
+
+At each stage, check which is greater, choosing the value of a number or its bytelandian equivalent.
+Memoization:
+in the calculation of max$-value of a particular number, store the max$-values of the numbers that are encoutered during the computation (if the numbers are greater than 1000 if the precomputed array suggested below is used) in a hash table; these values will help speed up the computation of other max$-values involved with that of the particular number.
+
+In order to increase the speed:
+precompute the max$-values of 0-1000 in an array.
+instead of reinitializing the hash table for each test case, allow the hash table to build up (aggregate values) with each test case.

@@ -1,0 +1,3 @@
+package "postfix" was removed while installing "sendmail"
+
+"postfix" seems to be more advanced than "sendmail". pay heed to it after 27/11/2010.

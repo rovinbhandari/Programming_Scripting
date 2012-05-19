@@ -1,0 +1,9 @@
+php config files :
+
+1.	/var/lib/ucf/cache/:etc:dbconfig-common:phpmyadmin.conf OR /etc/dbconfig-common/phpmyadmin.conf
+		db related settings
+2.	/var/lib/ucf/cache/:etc:phpmyadmin:config-db.php
+		db-type and db-pass for phpmyadmin
+3.	/etc/apache2/conf.d/phpmyadmin.conf
+		allow-deny settings
+4.	

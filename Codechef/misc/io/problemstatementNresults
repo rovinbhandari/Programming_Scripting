@@ -1,0 +1,32 @@
+Aim of these files is to test various available options of input/output. Since many of the CodeChef problems are i/o centric (also), all these files are tested with test cases = 10^7 and each test case being between 1 and 10^9 and the results are documented as follows:
+
+(Only input from stdin and output to stdout is performed by each program)
+
+
+io.c		4.84s
+io.cpp		45.84s
+io.py		147.52s
+-----------------------
+io2.c		5.51s
+-----------------------
+io3.c (GunBan)	
+
+
+
+##################################################################################################################################################
+
+for test cases = 10^6 with other parameters remaining the same, the results are as follows:
+
+(Only input from stdin and output to stdout is performed by each program)
+
+
+io.c		0.84s
+io.cpp		7.30s
+io.py		22.50s
+-----------------------
+io2.c		0.81s
+io2_1.c		0.49s
+io2_1.c (-O3)	0.33s
+-----------------------
+io3.c (GunBan)	
+

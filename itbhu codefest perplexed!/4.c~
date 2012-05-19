@@ -1,0 +1,15 @@
+#include<stdio.h>
+void main()
+{
+	int c, x, i = 1, j, d = 0;
+	scanf("%d", &c);
+	while(c--)
+	{
+		scanf("%d", &x);
+		for( ; i <= x / 2; i++)
+			for(j = 1; j <= x; j++)
+				if(pow(i, j) == x && d < j)
+					d = j;
+		printf("%d", d);
+	}
+}

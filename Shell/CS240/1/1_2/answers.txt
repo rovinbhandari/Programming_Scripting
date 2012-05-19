@@ -1,0 +1,9 @@
+1.	:w
+2.	:wq
+	:zz (?)
+3.	/then
+4.	:1,$s/then/than/g
+5.	u
+6.	:$ [Enter] g$ 200aGOD [Esc]
+	[}] 200aGOD [Esc]
+7.	:1 [Enter] /GOD [^G]

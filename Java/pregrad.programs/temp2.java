@@ -1,0 +1,2 @@
+import java.io.*;class temp2{public static void main(String args[]) throws IOException{BufferedReader x=new BufferedReader(new InputStreamReader(System.in));System.out.println("Enter a number to calculate its factorial:");double n=Double.parseDouble(x.readLine());double f=1.0d;for(double i=1.0d;i<=n;i++)f*=i;System.out.println("Factorial of "+n+" = "+f);}}
+//largest integer value whose factorial can be obtained = 720 

@@ -1,0 +1,37 @@
+ACM International Collegiate Programming Contest, Asia-Amritapuri Site, 2011
+
+Problem E: Append to Divide
+
+Honeydukes' Sweet Shop has donated buckets of Bertie Bott's Every Flavor Beans (a kind of jelly bean) to the students of Hogwarts School of Witchcraft and Wizardry, one basket per House. But when the baskets (each labeled with the House number i) were delivered to the school, it was discovered that the number of sweets in each bucket were not exactly divisible by the number of students in that house A[i], and quarrels broke out about who got the extra sweets.
+Harry Potter to the rescue! Harry suggested using magic to make sure that every bucket contained a number of sweets that were exactly divisible by the number of students in the corresponding House.
+Can you tell us how many sweets were in the last bucket, given the way Harry's spell worked:
+
+Given the number of students A[i] in each of the N houses, we define the array B[0..N] as follows. Initialize B[0] = 1 and for i = 1 to N, set B[i] to the smallest integer obtained by appending one or more digits (0-9) to B[i-1] such that B[i] is divisible by A[i]. Find the value of B[N] modulo 1000000007.
+
+Input (STDIN):
+The first line contains the number of test cases T. T cases follow. Each test case consists of N in the first line followed by N space-separated integers on the next line denoting the values A[1..N].
+
+Output (STDOUT):
+Output T lines, one for each case containing B[N] % 1000000007.
+
+Constraints:
+1 <= T <= 10
+1 <= N <= 1000
+1 <= A[i] <= 1,000,000
+
+Time limit : 3 secs
+
+Sample Input:
+2
+3
+2 3 4
+4
+1234 56789 12345 6789
+
+Sample Output:
+1020
+681070756
+
+Notes:
+Case 1 : A[1..3] = {2,3,4}, B[0..3] = {1, 10, 102, 1020}.
+

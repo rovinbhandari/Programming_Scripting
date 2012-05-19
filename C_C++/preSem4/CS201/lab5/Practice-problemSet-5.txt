@@ -1,0 +1,9 @@
+Question 1:
+
+1. Implement binary search tree with the following operations: insert(T, o),
+delete(o), search(o), inorder(T), preorder(T), postorder(T), ancestors(T, v),
+descendants(T, v). Data type at each node of the tree should be binded using
+templates.
+
+2. Implement priority queues using heap data structure with the following
+operations: insert(H, o), maximum(H), delete_max(H)

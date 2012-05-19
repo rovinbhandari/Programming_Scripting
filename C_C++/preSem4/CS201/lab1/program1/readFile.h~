@@ -1,0 +1,4 @@
+#include<ifstream>
+fOpen(string filename);
+fReadline(string filename, int line);
+fClose(string filename);

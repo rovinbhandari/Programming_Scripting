@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char* argv[])
+{
+	int tabsize, atoi(char*);
+
+	if(argc > 1)
+	{
+		tabsize = atoi(argv[1]);
+	}
+
+	char c, getchar();
+	int counter = 0, putchar(int);
+
+	while((c = getchar()) != EOF)
+	{
+		if(c == '\n')
+		{
+			counter = 0;
+			putchar(c);
+		}
+		else if(c == '\t')
+		{
+			int i;
+
+			for(i = 0; i < tabsize - counter % tabsize; i++)
+			{
+				putchar(' ');
+				counter++;
+			}
+		}
+		else
+		{
+			putchar(c);
+			counter++;
+		}
+	}
+
+	return 0;
+}
+

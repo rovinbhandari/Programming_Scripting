@@ -1,0 +1,21 @@
+1. use nG to position at n character in line..and then D for delete.
+
+2. code for marking a line- "mx"...x is the mark on the line. ->
+    : 't1,'t2 !awk'{print $5""$4""...""$1}'  for reevrting word numbers
+5,4,3,2,1....t1,t2 are start line and end line for a block of text.
+
+3. vague idea- open both files...and use:n to go to next file, then search
+:\searchstring
+:e# to go to previous file.
+
+4. go to visual mode- v
+   select a block of text (dont kno how to do it), maybe mark beginin and
+end lines of block. then << for right shifting, >>for left shiftin of
+block.
+:set sw=4  for settin no. of characters to be moved.
+
+5. to install vim-
+ apt-set install vim vim-common vim-gnome vim-gui-common vim-runtime
+
+
+

@@ -1,0 +1,13 @@
+#include <fstream>
+#include <iostream>
+#include <string>
+using namespace std;
+int main()
+{
+	string filename,s;
+	cin >> filename;
+	ifstream f(filename, ifstream::in);
+	//f.open(filename,r);
+	//f.getline(s,100);
+	return (0);
+}
