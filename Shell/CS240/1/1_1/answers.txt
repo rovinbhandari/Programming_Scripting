@@ -1,0 +1,21 @@
+1.	who -Hu   ;;   wall <multiple_messages> ^D
+	users
+2.	uname -a
+  	cat /etc/issue.net #or# cat /etc/issue		//issue.net is for telnet & issue is for tty  ???
+  	#open tty#
+3.	calendar -w 3
+4.	tput cup 20 30 && printf "CS240\n"
+5.	time	//real : total; user : outside kernel; system : inside kernel
+*6.	history
+	script
+7.	ls -C
+8.	cat -A FILENAME
+	od -c FILENAME
+9.	cat filename1 filename2 > temp && mv -i temp filename3 && rm -f temp
+10.	cp -r SOURCE DESTINATION
+11.	rm -i FILESorDIRECTORY
+12.	rm -r *
+*13.	mv -i -v SOURCE DESTISANTION
+14.	wc -w filename1 filename2 filename3 filename4|grep total|head -c -6 && printf "\n"
+15.	split FILENAME PREFIX -l NOOFLINES
+16.	cmp FILENAME1 FILENAME2

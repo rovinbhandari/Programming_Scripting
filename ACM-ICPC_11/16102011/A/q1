@@ -1,0 +1,33 @@
+ACM International Collegiate Programming Contest, Asia-Amritapuri Site, 2011
+Problem A: Numerology
+
+Numerology is a difficult branch of magic, involving converting words and names to numbers, and deriving mystical significance from them. Harry Potter, our hero, has never had a good head for maths, being more at home killing evil wizards or playing Quidditch, but his Divination teacher at Hogwarts school of witchcraft has assigned him a numerology project for the Progcon ceremony. She has given him two integers A and B, and has asked him to list all the numbers in the range [A...B] inclusive that contain no digit that occurs more than twice in it, in decimal representation. Harry could not figure out a magic spell to do this task, but you can perhaps help him with your 'compooter thingy' that Muggles* use.
+
+Input (STDIN):
+The first line contains the number of test cases T. Each of the next T lines contains two integers, A and B.
+
+Output (STDOUT):
+Output T lines, one for each case containing the required answer for the corresponding case.
+
+Constraints:
+1 <= T <= 10000
+1 <= A <= B <= 10^18
+
+Time limit: 4 seconds
+
+Sample Input:
+3
+100 120
+1000 1000
+123 456
+
+Sample Output:
+20
+0
+331
+
+Explanation:
+For the first case, all numbers except 111 satisfy the condition.
+
+*Muggles = non-magical people
+

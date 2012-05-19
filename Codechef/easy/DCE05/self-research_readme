@@ -1,0 +1,63 @@
+1.
+
+Bruteforce	[ refer self-research.ods ]
+for 51 people, a bit array with indices 0 - 50 is created. At each index, the element has a value of 1.
+The following indices are crossed out:
+[ i <- {0, 1, 2, ..., 50}; j <- {0, 1, 3, 7, 15} ]
+2i + j
+	0	2	4	6	...	50
+4i + j
+	1	5	9	13	...	49
+8i + j
+	3	11	19	27	...	43
+16i + j
+	7	23	39
+32i + j
+	15	47
+64i + j	-> multipying factor of i becomes more than 50. => only one uncrossed element is left in the array. scan from the back end of the array to the head and print out the index of the first encountered uncrossed element.
+
+
+
+2.
+
+DCC
+for n people, a bit array with indices 0 - (n - 1) is created. At each index, the element has a value of 1.
+at each stage of DIVISION, the array is didived (not actual division; just setting the bounds of the pointer) into half. CONQUER by crossing out (=> make the element = 0) the first element of the array. COMBINE the two arrays re-setting the bounds of the pointers.
+The base case array would have 2 elements in case n is even; 3 elements (in one of the cases) in case n is odd. In case the base case has three elements, cross out the first and third elements.
+Time Complexity:
+Conquering and Combining : 2 * O(n/2)	[ because, the first element is at half the size of the array ]
+Thus, T(n) = 2T(n/2) + O(n)
+=> T(n) = O(n(log n))
+but here, the enormous number of memory accesses slow down the program.
+
+
+
+3.
+
+DCC (without arrays)	[ refer self-research2.ods ]
+Consider n people. At each stage of DIVISION, divide the number by 2. No CONQUERING involved. While COMBINING, return the following values:
+i, s.t. i = 2 or i = 3 (i.e., base-case)	->	2
+i, s.t. i /= 2 and i /= 3	->	sum of the return values of i/2 and that of i/2 or i/2 + 1	[ follows from method 2 above ]
+Time Complexity:
+T(n) = O(n(log n))
+
+
+
+4.
+
+DP
+In the method 3 above, store the already calculated values in an array. But since n may range to 10e9, the total usage of memory would be 4GB, so make the array smaller, say 10e2 to 10e5.
+Time Complexity:
+T(n) < O(n(log n))
+
+
+
+5.
+
+Mathematical Formula		[ refer self-research2.ods ]
+n people. The input vs. output series goes in the manner as in the .ods file.
+Thus, we just need to find out a power of two, two raised to which is just less than n. The answer is two raised to that power.
+To calculate it, we can:
+	a). repetitively divide n by 2 and count the power.
+	b). solve the problem in constant time (31 steps) if we store the powers of 2 (till 2**30) in an array.
+	c). use: integral part of pow(2, (floor(log(a, 2))))

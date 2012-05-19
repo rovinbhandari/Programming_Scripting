@@ -1,0 +1,13 @@
+all: prog.out
+
+prog.out: prog.o multiply.o sum.o
+	gcc prog.o multiply.o sum.o -o prog.out
+
+prog.o: prog.c
+	gcc -c prog.c
+
+multiply.o: multiply.c
+	gcc -c multiply.c
+
+sum.o: sum.c
+	gcc -c sum.c

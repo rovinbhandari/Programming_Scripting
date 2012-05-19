@@ -1,0 +1,13 @@
+DIRECTORIES:
+source
+bytecode
+bin
+
+DIRECTIONS:
+cd to the source directory
+scalac *.scala -d <pathto>bytecode directory
+cd to the bytecode directory
+jar cvfe <pathto>bin/simulator.jar <classnameofclasscontaining"main"> *.class
+from anywhere in the directory hierarchy, execute the jar file as:
+scala <pathto>bin/simulator.jar
+

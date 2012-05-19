@@ -1,0 +1,8 @@
+all : 61
+	g++ 61.o 61func.o -o 61
+
+61.o : 61.cpp
+	g++ -c 61.cpp -o 61.o
+
+61func.o : 61func.cpp
+	g++ -c 61func.cpp -o 61func.o

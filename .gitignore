@@ -15,7 +15,8 @@
 *.lzma
 *.zip
 *.bz2
-*.mp3
 *.gz
 *.tgz
 *.7z
+*.mp3
+*.flv

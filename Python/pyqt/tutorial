@@ -1,0 +1,15 @@
+Get qt gui widgets into the program:
+	from PyQt4 import QtGui
+
+Create a  QT Apllication:
+	app = QtGui.QApplication(sys.argv)
+
+Create a widget:
+	widget = QtGui.Qwidget()
+		QWidget - base class for all user interface objects
+		default constructor is provided
+		default constructor = no parent
+		widget with no parent = window
+	functions:
+		resize(width, height)
+		setWinowTitle(title)

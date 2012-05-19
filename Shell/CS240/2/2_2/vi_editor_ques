@@ -1,0 +1,6 @@
+1
+2 Use combination of yw, y$,p 
+3 Use ":sp" command to split window. [Ctrl-w] to switch into the other window. "e [filename]" to open new file. "/[string]" to search for the required string.
+  Or use ":!cat [filename] | grep [string]". This accesses the command line.
+4 Use "=a{"
+5 Use ":syntax [on/off]" to toggle on syntax highlighting.

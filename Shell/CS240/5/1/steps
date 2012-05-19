@@ -1,0 +1,10 @@
+extract to /usr/src/
+go into the directory of the kernel files
+install glade (for gtk libraries)
+to keep old configs in place, sudo make oldconfig
+sudo make
+make modules
+make modules_install
+make install
+//modify grub configuration file
+update-grub
