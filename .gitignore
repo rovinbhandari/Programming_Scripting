@@ -1,5 +1,6 @@
 .*.swo
 .*.swp
+.dropbox
 *.o
 *.opp
 *.a
