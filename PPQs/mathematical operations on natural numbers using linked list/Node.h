@@ -11,7 +11,8 @@ typedef struct node
 	}
 	Node;
 
-// function declarations for converting to and from Node.
+struct node* newnode(struct data*, struct node*);
+// other function declarations.
 
 #endif
 

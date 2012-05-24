@@ -7,6 +7,7 @@ typedef struct data
 	}
 	Data;
 
-// fucntion declarations for converting to and from Data.
+// function declarations for converting to and from Data.
 
 #endif
+

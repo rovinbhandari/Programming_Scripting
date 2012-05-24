@@ -1,0 +1,10 @@
+:e Data.c
+:vs Data.h
+:tabnew Node.c
+:vs Node.h
+:tabnew LinkedList.c
+:vs LinkedList.h
+:tabnew operations.c
+:vs operations.h
+:tabnew main.c
+:tabnew Makefile

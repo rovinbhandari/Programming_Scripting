@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const size_t sizenode = sizeof(struct node);
-
 struct node* gethead(struct linkedlist* pll)
 {
 	return pll->phead;
@@ -33,25 +31,19 @@ struct linkedlist* newlist()
 
 void insertfrontmost(struct linkedlist* pll, struct data* pd)
 {
-	struct node* pn = (struct node*) malloc(sizenode);
-	pn->pdata = pd;
+	struct node* pn = newnode(pd, NULL);
 	if(pll->phead)
 	{
 		pn->pnext = pll->phead;
 		pll->phead = pll->pcurrent = pn;
 	}
 	else
-	{
-		pn->pnext = NULL;
 		pll->phead = pll->ptail = pll->pcurrent = pn;
-	}	
 }
 
 void insertbackmost(struct linkedlist* pll, struct data* pd)
 {
-	struct node* pn = (struct node*) malloc(sizenode);
-	pn->pdata = pd;
-	pn->pnext = NULL;
+	struct node* pn = newnode(pd, NULL);
 	if(pll->ptail)
 	{
 		//TODO: can the following two statements be combined into one safely?
@@ -64,8 +56,7 @@ void insertbackmost(struct linkedlist* pll, struct data* pd)
 
 void insertback(struct linkedlist* pll, struct data* pd)
 {
-	struct node* pn = (struct node*) malloc(sizenode);
-	pn->pdata = pd;
+	struct node* pn = newnode(pd, NULL);
 	if(pll->pcurrent)
 	{
 		pn->pnext = pll->pcurrent->pnext;
@@ -79,10 +70,7 @@ void insertback(struct linkedlist* pll, struct data* pd)
 		exit(1);
 	}
 	else
-	{
-		pn->pnext = NULL;
 		pll->phead = pll->ptail = pll->pcurrent = pn;
-	}	
 }
 
 // other function definitions.
