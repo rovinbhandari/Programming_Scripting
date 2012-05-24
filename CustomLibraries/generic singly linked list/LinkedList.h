@@ -27,4 +27,3 @@ void insertback(struct linkedlist*, struct data*);
 
 #endif
 
-
