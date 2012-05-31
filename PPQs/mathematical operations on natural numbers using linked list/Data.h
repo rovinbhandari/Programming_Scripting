@@ -12,7 +12,7 @@ typedef struct data
 
 // function declarations for converting to and from Data.
 struct data* inttodata(int);
-int datatoint(struct data*);
+Digit datatoint(struct data*);
 
 #endif
 

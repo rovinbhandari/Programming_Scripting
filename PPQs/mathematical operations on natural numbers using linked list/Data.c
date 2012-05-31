@@ -3,7 +3,7 @@
 #include <assert.h>
 
 // function definitions for converting to and from Data.
-struct data* digittodata(int x)
+struct data* inttodata(int x)
 {
 	assert(x >= 0 && x <= 9);
 	struct data* d = (struct data*) malloc(sizeof(struct data));
@@ -11,7 +11,7 @@ struct data* digittodata(int x)
 	return d;
 }
 
-Digit datatodigit(struct data* d)
+Digit datatoint(struct data* d)
 {
 	return d->digit;
 }
