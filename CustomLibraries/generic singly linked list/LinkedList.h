@@ -23,6 +23,8 @@ void insertfrontmost(struct linkedlist*, struct data*);
 void insertbackmost(struct linkedlist*, struct data*);
 void insertback(struct linkedlist*, struct data*);
 
+void outputlist(struct linkedlist*);
+
 // other function declarations.
 
 #endif

@@ -73,5 +73,19 @@ void insertback(struct linkedlist* pll, struct data* pd)
 		pll->phead = pll->ptail = pll->pcurrent = pn;
 }
 
+void outputlist(struct linkedlist* ll)
+{
+	printf("Contents of linked list %p:\n", (void*) ll);
+	struct node* pn = ll->phead;
+	if(pn)
+		do
+		{
+			printf("\t");
+			outputnode(pn);
+		}
+		while((pn = pn->pnext) != ll->ptail);
+	printf("=========================\n\n");
+}
+
 // other function definitions.
 

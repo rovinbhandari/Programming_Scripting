@@ -12,6 +12,9 @@ typedef struct node
 	Node;
 
 struct node* newnode(struct data*, struct node*);
+
+void outputnode(struct node*);
+
 // other function declarations.
 
 #endif
