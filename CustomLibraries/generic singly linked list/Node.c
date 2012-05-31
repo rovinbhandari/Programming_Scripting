@@ -11,5 +11,12 @@ struct node* newnode(struct data* pd, struct node* pn)
 	return n;
 }
 
+void outputnode(struct node* pn)
+{
+	printf("Contents of node %p:\t", (void*) pn);
+	outputdata(pn->pdata);
+	printf("\n");
+}
+
 // other function definitions.
 

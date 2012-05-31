@@ -1,5 +1,6 @@
 #include <Data.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
 // function definitions for converting to and from Data.
@@ -15,4 +16,11 @@ Digit datatoint(struct data* d)
 {
 	return d->digit;
 }
+
+void outputdata(struct data* pd)
+{
+	printf("%d", datatoint(pd));
+}
+
+// other function definitions.
 
