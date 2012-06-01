@@ -12,6 +12,7 @@ typedef struct node
 	Node;
 
 struct node* newnode(struct data*, struct node*);
+void editdata(struct node*, struct data*);
 
 void outputnode(struct node*);
 

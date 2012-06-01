@@ -11,6 +11,11 @@ struct node* newnode(struct data* pd, struct node* pn)
 	return n;
 }
 
+void editdata(struct node* pn, struct data* pd)
+{
+	pn->pdata = pd;
+}
+
 void outputnode(struct node* pn)
 {
 	printf("Contents of node %p:\t", (void*) pn);
