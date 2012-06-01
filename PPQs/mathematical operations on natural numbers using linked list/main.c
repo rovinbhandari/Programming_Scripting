@@ -3,10 +3,10 @@
 
 int main(void)
 {
-	int a = 2389, b = 23484;
+	int a = 23, b = 11;
 	LinkedList* lla = intnumbertolinkedlist(a);
 	LinkedList* llb = intnumbertolinkedlist(b);
-	LinkedList* llc = add(lla, llb);
+	LinkedList* llc = multiply(lla, llb);
 	int c = linkedlisttointnumber(llc);
 	printf("a = %d\nlla = ", a);
 	outputlist(lla);
