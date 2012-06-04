@@ -5,7 +5,6 @@
 *.opp
 *.a
 *.i
-*.s
 *.class
 *.jar
 *.pyc
