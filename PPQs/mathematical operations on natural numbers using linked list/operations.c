@@ -106,9 +106,15 @@ LinkedList* multiply(LinkedList* ll1, LinkedList* ll2)
 {
 	assert(ll1->phead);
 	assert(ll2->phead);
-	LinkedList* llsum = newlist();
+	LinkedList* llpro = newlist();
 	Node* n1 = ll1->phead;
 	Node* n2 = ll2->phead;
-	return llsum;
+	Node* npro = llpro->phead;
+	int carry = 0, place = 0, pro;
+	while(n1)
+	{
+		int t1 = datatoint(n1->pdata);
+		
+	return llpro;
 }
 
