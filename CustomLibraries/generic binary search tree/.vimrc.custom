@@ -1,0 +1,7 @@
+:e BinarySearchTree.hpp
+:tabnew BinaryNode.definitions.hpp
+:vs BinaryNode.declarations.hpp
+:tabnew BinarySearchTree.definitions.hpp
+:vs BinarySearchTree.declarations.hpp
+:tabnew testBST.cpp
+:tabnew Makefile
