@@ -77,13 +77,12 @@ void outputlist(struct linkedlist* ll)
 {
 	printf("Contents of linked list %p:\n", (void*) ll);
 	struct node* pn = ll->phead;
-	if(pn)
-		do
-		{
-			printf("\t");
-			outputnode(pn);
-		}
-		while((pn = pn->pnext) != ll->ptail);
+	while(pn)
+	{
+		printf("\t");
+		outputnode(pn);
+		pn = pn->pnext;
+	}
 	printf("=========================\n\n");
 }
 
