@@ -1,0 +1,4 @@
+:e Singleton.hpp
+:tabnew Singleton.definitions.hpp
+:vs Singleton.declarations.hpp
+:tabnew main.cpp
