@@ -90,29 +90,34 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(const Any& object)
 }
 
 template<class Any>
-const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>* helper, const Any& object)
+const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, const Any& object)
 {
-	if(!root)	// root is NULL
+	if(!root)			// root is NULL
 	{
-		root = new BinaryNode<Any>(&object, 1, NULL, NULL);
+		root = new BinaryNode<Any>(object, 1, NULL, NULL);
 		return root;
 	}
-	else if(helper)		// root is not NULL; helper is not NULL
+	else if(!helper)	// root is not NULL; helper is NULL
+	{
+		helper = new BinaryNode<Any>(object, 1, NULL, NULL);
+		return helper;
+	}
+	else				// root is not NULL; helper is not NULL
 	{
 		
-		if(object < *helper->element)
+		if(object < helper->element)
 			return insert(helper->pleftchild, object);
-		else if(object == *helper->element)
+		else if(helper->element < object)
+			return insert(helper->prightchild, object);
+		else
 		{
 			if(duplicatesallowed)
 				helper->multiplicity++;
+			else
+				;
 			return helper;
 		}
-		else
-			return insert(helper->prightchild, object);
 	}
-	else	// root is not NULL; helper is NULL
-		return new BinaryNode<Any>(&object, 1, NULL, NULL);
 }
 
 template<class Any>
@@ -145,7 +150,7 @@ void BinarySearchTree<Any>::printtraversalinorder(BinaryNode<Any>* bn)
 	if(!bn)
 		return;
 	printtraversalinorder(bn->pleftchild);
-	cout<<"\t"<<*bn->element<<endl;
+	cout<<"\t"<<bn->element<<endl;
 	printtraversalinorder(bn->prightchild);
 }
 
