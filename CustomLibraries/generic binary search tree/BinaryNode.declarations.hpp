@@ -5,13 +5,13 @@ template <class Any>
 class BinaryNode
 {
 	protected:
-		const Any* element;
+		const Any element;
 		int multiplicity;
 
 		BinaryNode* pleftchild;
 		BinaryNode* prightchild;
 		
-		BinaryNode(const Any* object, int X, BinaryNode* pl, BinaryNode* pr);
+		BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode* pr);
 	friend class BinarySearchTree<Any>;
 };
 

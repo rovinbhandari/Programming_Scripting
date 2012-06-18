@@ -45,7 +45,7 @@ class BinarySearchTree
 		void allowduplicates(bool t_f);
 
 		const BinaryNode<Any>* insert(const Any& object);
-		const BinaryNode<Any>* insert(BinaryNode<Any>* helper, const Any& object);
+		const BinaryNode<Any>* insert(BinaryNode<Any>*& helper, const Any& object);
 		
 		void remove(Any& object);
 		void removelazy(const Any& object);

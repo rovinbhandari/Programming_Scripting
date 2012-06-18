@@ -4,7 +4,7 @@
 #include <BinaryNode.declarations.hpp>
 
 template <class Any>
-BinaryNode<Any>::BinaryNode(const Any* object, int X, BinaryNode* pl, BinaryNode* pr)
+BinaryNode<Any>::BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode* pr)
 	: element(object),
 	  multiplicity(X),
 	  pleftchild(pl),

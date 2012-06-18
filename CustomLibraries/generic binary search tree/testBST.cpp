@@ -22,6 +22,7 @@ int main(void)
 	{
 		cin>>x;
 		bst.insert(x);
+		bst.printtraversalinorder();
 	}
 	//printtraversal1(bst.traversalinorder());
 	bst.printtraversalinorder();
