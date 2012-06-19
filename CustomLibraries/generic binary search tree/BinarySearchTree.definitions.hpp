@@ -150,6 +150,8 @@ void BinarySearchTree<Any>::removehard(BinaryNode<Any>*& helper, Any& object)
 		removehard(helper->pleftchild, object);
 	else if(helper->element < object)
 		removehard(helper->prightchild, object);
+	else if(duplicatesallowed && helper->multiplicity > 1)
+		helper->multiplicity--;
 	else
 		if(helper->isfullnode())
 		{
@@ -170,7 +172,7 @@ template<class Any>
 BinaryNode<Any>* BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>* helper) const
 {
 	if(!helper)
-		return NULL;	// throw NodeNotFoundException
+		return NULL;	//TODO: throw NodeNotFoundException
 	if(!helper->pleftchild)
 		return helper;
 	else
