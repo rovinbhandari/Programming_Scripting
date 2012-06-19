@@ -51,12 +51,20 @@ class BinarySearchTree
 		void removelazy(const Any& object);
 		void removelazy(const BinaryNode<Any>* helper, const Any& object);
 		void removehard(Any& object);
-		void removehard(const BinaryNode<Any>* helper, Any& object);
+		void removehard(BinaryNode<Any>*& helper, Any& object);
 		
-		const Any& findmin() const;
-		const Any& findmax() const;
 		const BinaryNode<Any>* find(const Any& object) const;
 		const bool contains(const Any& object) const;
+		const Any& findmin() const;
+		const Any& findmin(BinaryNode<Any>* helper) const;
+		BinaryNode<Any>* findminbinarynode() const;
+		BinaryNode<Any>* findminbinarynode(BinaryNode<Any>* helper) const;
+		const Any& findmax() const;
+		const Any& findmax(BinaryNode<Any>* helper) const;
+		const BinaryNode<Any>* findmaxbinarynode() const;
+		const BinaryNode<Any>* findmaxbinarynode(BinaryNode<Any>* helper) const;
+
+		BinarySearchTree<Any>* subtree(BinaryNode<Any>* bn);
 		
 		//TODO: add overloaded functions for the following \
 		four functions, to print a subtree.

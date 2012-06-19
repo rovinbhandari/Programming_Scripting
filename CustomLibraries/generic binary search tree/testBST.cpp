@@ -14,15 +14,23 @@ inline void printtraversal1(const vector<const Any&>& order)
 
 int main(void)
 {
-	int n;
+	int n, N;
 	int x;
 	BinarySearchTree<int> bst;
 	bst.allowduplicates();
-	cin>>n;
+	cin>>N;
+	n = N;
 	while(n--)
 	{
 		cin>>x;
 		bst.insert(x);
+		bst.printtraversalinorder();
+	}
+	n = N;
+	while(n--)
+	{
+		cin>>x;
+		bst.removehard(x);
 		bst.printtraversalinorder();
 	}
 	//printtraversal1(bst.traversalinorder());

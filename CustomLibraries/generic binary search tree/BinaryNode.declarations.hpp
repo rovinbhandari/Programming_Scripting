@@ -5,13 +5,15 @@ template <class Any>
 class BinaryNode
 {
 	protected:
-		const Any element;
+		Any element;
 		int multiplicity;
 
 		BinaryNode* pleftchild;
 		BinaryNode* prightchild;
 		
 		BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode* pr);
+		bool isleaf();
+		bool isfullnode();
 	friend class BinarySearchTree<Any>;
 };
 

@@ -12,4 +12,16 @@ BinaryNode<Any>::BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode*
 {
 }
 
+template <class Any>
+bool BinaryNode<Any>::isleaf()
+{
+	return !pleftchild && !prightchild;
+}
+
+template <class Any>
+bool BinaryNode<Any>::isfullnode()
+{
+	return pleftchild && prightchild;
+}
+
 #endif
