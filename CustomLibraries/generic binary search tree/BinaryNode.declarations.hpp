@@ -18,4 +18,3 @@ class BinaryNode
 #include <BinaryNode.definitions.hpp>
 
 #endif
-

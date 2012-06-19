@@ -13,4 +13,3 @@ BinaryNode<Any>::BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode*
 }
 
 #endif
-

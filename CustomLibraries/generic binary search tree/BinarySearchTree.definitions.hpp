@@ -39,7 +39,7 @@ bool BinarySearchTree<Any>::isempty()
 template <class Any>
 bool BinarySearchTree<Any>::isempty(BinaryNode<Any>* bn)
 {
-	return (bool) bn;
+	return !((bool) bn);
 }
 
 template <class Any>
@@ -75,8 +75,9 @@ BinaryNode<Any>* BinarySearchTree<Any>::clone(BinaryNode<Any>* bn)
 }
 
 template <class Any>
-void BinarySearchTree<Any>::allowduplicates(bool t_f)
+void BinarySearchTree<Any>::allowduplicates(bool t_f = true)
 {
+	//cerr<<"isempty() = "<<isempty()<<endl;
 	if(isempty())
 		duplicatesallowed = t_f;
 	else
@@ -121,6 +122,36 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, c
 }
 
 template<class Any>
+void BinarySearchTree<Any>::remove(Any& object)
+{
+
+}
+
+template<class Any>
+void BinarySearchTree<Any>::removelazy(const Any& object)
+{
+
+}
+
+template<class Any>
+void BinarySearchTree<Any>::removelazy(const BinaryNode<Any>* helper, const Any& object)
+{
+
+}
+
+template<class Any>
+void BinarySearchTree<Any>::removehard(Any& object)
+{
+
+}
+
+template<class Any>
+void BinarySearchTree<Any>::removehard(const BinaryNode<Any>* helper, Any& object)
+{
+
+}
+
+template<class Any>
 const vector<const Any&>& BinarySearchTree<Any>::traversalinorder() const
 {
 	vector<const Any&> order;
@@ -141,18 +172,32 @@ void BinarySearchTree<Any>::traversalinorder(BinaryNode<Any>* bn, vector<const A
 template<class Any>
 void BinarySearchTree<Any>::printtraversalinorder()
 {
-	printtraversalinorder(root);
+	//cerr<<"duplicatesallowed = "<<duplicatesallowed<<endl;
+	if(duplicatesallowed)
+		printtraversalinorderduplicatesallowed(root);
+	else
+		printtraversalinorderduplicatesnotallowed(root);
 }
 
 template<class Any>
-void BinarySearchTree<Any>::printtraversalinorder(BinaryNode<Any>* bn)
+void BinarySearchTree<Any>::printtraversalinorderduplicatesallowed(BinaryNode<Any>* bn)
 {
 	if(!bn)
 		return;
-	printtraversalinorder(bn->pleftchild);
+	printtraversalinorderduplicatesallowed(bn->pleftchild);
+	if(bn->multiplicity > 0)
+		cout<<"\t"<<bn->element<<"\tx\t"<<bn->multiplicity<<endl;
+	printtraversalinorderduplicatesallowed(bn->prightchild);
+}
+
+template<class Any>
+void BinarySearchTree<Any>::printtraversalinorderduplicatesnotallowed(BinaryNode<Any>* bn)
+{
+	if(!bn)
+		return;
+	printtraversalinorderduplicatesnotallowed(bn->pleftchild);
 	cout<<"\t"<<bn->element<<endl;
-	printtraversalinorder(bn->prightchild);
+	printtraversalinorderduplicatesnotallowed(bn->prightchild);
 }
 
 #endif
-
