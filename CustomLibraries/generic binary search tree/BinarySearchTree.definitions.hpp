@@ -93,17 +93,12 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(const Any& object)
 template<class Any>
 const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, const Any& object)
 {
-	if(!root)			// root is NULL
-	{
-		root = new BinaryNode<Any>(object, 1, NULL, NULL);
-		return root;
-	}
-	else if(!helper)	// root is not NULL; helper is NULL
+	if(!helper)
 	{
 		helper = new BinaryNode<Any>(object, 1, NULL, NULL);
 		return helper;
 	}
-	else				// root is not NULL; helper is not NULL
+	else
 	{
 		
 		if(object < helper->element)
@@ -124,31 +119,62 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, c
 template<class Any>
 void BinarySearchTree<Any>::remove(Any& object)
 {
-
+	removelazy(object);
 }
 
 template<class Any>
 void BinarySearchTree<Any>::removelazy(const Any& object)
 {
-
+	removelazy(root, object);
 }
 
+#define REMOVELAZYTHRESHOLD (-11)
 template<class Any>
 void BinarySearchTree<Any>::removelazy(const BinaryNode<Any>* helper, const Any& object)
 {
-
+	
 }
 
 template<class Any>
 void BinarySearchTree<Any>::removehard(Any& object)
 {
-
+	removehard(root, object);
 }
 
 template<class Any>
-void BinarySearchTree<Any>::removehard(const BinaryNode<Any>* helper, Any& object)
+void BinarySearchTree<Any>::removehard(BinaryNode<Any>*& helper, Any& object)
 {
+	if(!helper)
+		return;
+	else if(object < helper->element)
+		removehard(helper->pleftchild, object);
+	else if(helper->element < object)
+		removehard(helper->prightchild, object);
+	else
+		if(helper->isfullnode())
+		{
+			BinaryNode<Any>* temp = findminbinarynode(helper->prightchild);
+			helper->element = temp->element;
+			helper->multiplicity = temp->multiplicity;
+			removehard(temp, temp->element);
+		}
+		else
+		{
+			BinaryNode<Any>* temp = helper;
+			helper = helper->pleftchild ? helper->pleftchild : helper->prightchild;
+			delete temp;
+		}
+}
 
+template<class Any>
+BinaryNode<Any>* BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>* helper) const
+{
+	if(!helper)
+		return NULL;	// throw NodeNotFoundException
+	if(!helper->pleftchild)
+		return helper;
+	else
+		return findminbinarynode(helper->pleftchild);
 }
 
 template<class Any>
