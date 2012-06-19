@@ -17,6 +17,7 @@ int main(void)
 	int n;
 	int x;
 	BinarySearchTree<int> bst;
+	bst.allowduplicates();
 	cin>>n;
 	while(n--)
 	{
@@ -25,8 +26,7 @@ int main(void)
 		bst.printtraversalinorder();
 	}
 	//printtraversal1(bst.traversalinorder());
-	bst.printtraversalinorder();
+	//bst.printtraversalinorder();
 
 	return 0;
 }
-

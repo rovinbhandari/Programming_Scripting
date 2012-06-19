@@ -42,7 +42,7 @@ class BinarySearchTree
 		BinaryNode<Any>* clone();
 		BinaryNode<Any>* clone(BinaryNode<Any>* bn);
 
-		void allowduplicates(bool t_f);
+		void allowduplicates(bool t_f/* = true*/);
 
 		const BinaryNode<Any>* insert(const Any& object);
 		const BinaryNode<Any>* insert(BinaryNode<Any>*& helper, const Any& object);
@@ -63,7 +63,8 @@ class BinarySearchTree
 		const vector<const Any&>& traversalinorder() const;
 		void traversalinorder(BinaryNode<Any>* bn, vector<const Any&>& order);
 		void printtraversalinorder();
-		void printtraversalinorder(BinaryNode<Any>* bn);
+		void printtraversalinorderduplicatesallowed(BinaryNode<Any>* bn);
+		void printtraversalinorderduplicatesnotallowed(BinaryNode<Any>* bn);
 		const vector<const Any&> traversalpreorder() const;
 		const vector<const Any&> traversalpostorder() const;
 		const vector<const vector<const Any&> > traversallevelorder() const;
