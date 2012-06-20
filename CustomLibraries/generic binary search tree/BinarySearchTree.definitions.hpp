@@ -117,55 +117,56 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, c
 }
 
 template<class Any>
-void BinarySearchTree<Any>::remove(Any& object)
+void BinarySearchTree<Any>::remove(Any& object, REMOVEMETHOD rm = LAZY)
 {
-	removelazy(object);
+	remove(root, object, rm);
 }
 
 template<class Any>
-void BinarySearchTree<Any>::removelazy(const Any& object)
-{
-	removelazy(root, object);
-}
-
-#define REMOVELAZYTHRESHOLD (-11)
-template<class Any>
-void BinarySearchTree<Any>::removelazy(const BinaryNode<Any>* helper, const Any& object)
-{
-	
-}
-
-template<class Any>
-void BinarySearchTree<Any>::removehard(Any& object)
-{
-	removehard(root, object);
-}
-
-template<class Any>
-void BinarySearchTree<Any>::removehard(BinaryNode<Any>*& helper, Any& object)
+void BinarySearchTree<Any>::remove(BinaryNode<Any>*& helper, Any& object, REMOVEMETHOD rm = LAZY)
 {
 	if(!helper)
 		return;
 	else if(object < helper->element)
-		removehard(helper->pleftchild, object);
+		remove(helper->pleftchild, object, rm);
 	else if(helper->element < object)
-		removehard(helper->prightchild, object);
-	else if(duplicatesallowed && helper->multiplicity > 1)
-		helper->multiplicity--;
+		remove(helper->prightchild, object, rm);
+	else if(duplicatesallowed
+			&&
+			((rm == LAZY
+				&& helper->multiplicity > removelazythreshold)
+			 ||
+			 (rm == HARD
+				&& helper->multiplicity > 1))
+		   )
+		deletelazy(helper);
 	else
-		if(helper->isfullnode())
-		{
-			BinaryNode<Any>* temp = findminbinarynode(helper->prightchild);
-			helper->element = temp->element;
-			helper->multiplicity = temp->multiplicity;
-			removehard(temp, temp->element);
-		}
-		else
-		{
-			BinaryNode<Any>* temp = helper;
-			helper = helper->pleftchild ? helper->pleftchild : helper->prightchild;
-			delete temp;
-		}
+		deletehard(helper);
+}
+
+template<class Any>
+void BinarySearchTree<Any>::deletelazy(BinaryNode<Any>*& pBN)
+{
+	pBN->multiplicity--;
+}
+
+template<class Any>
+void BinarySearchTree<Any>::deletehard(BinaryNode<Any>*& pBN)
+{
+	BinaryNode<Any>* temp;
+	if(pBN->isfullnode())
+	{
+		temp = findminbinarynode(pBN->prightchild);
+		pBN->element = temp->element;
+		pBN->multiplicity = temp->multiplicity;
+		remove(temp, temp->element, HARD);
+	}
+	else
+	{
+		temp = pBN;
+		pBN = pBN->pleftchild ? pBN->pleftchild : pBN->prightchild;
+		delete temp;
+	}
 }
 
 template<class Any>
@@ -177,6 +178,21 @@ BinaryNode<Any>* BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>* helpe
 		return helper;
 	else
 		return findminbinarynode(helper->pleftchild);
+}
+
+template<class Any>
+int BinarySearchTree<Any>::getremovelazythreshold() const
+{
+	return removelazythreshold;
+}
+
+template<class Any>
+void BinarySearchTree<Any>::setremovelazythreshold(int value = -11)
+{
+	if(value > 0)
+		return;		//TODO: throw ValueTooBigException
+	else
+		removelazythreshold = value;
 }
 
 template<class Any>

@@ -12,6 +12,12 @@ class BinarySearchTree;
 
 #include <BinaryNode.declarations.hpp>
 
+enum REMOVEMETHOD
+{
+	LAZY,
+	HARD
+};
+
 template <class Any>		//TODO: add Comparable for comparison of elements.
 class BinarySearchTree
 {
@@ -47,11 +53,8 @@ class BinarySearchTree
 		const BinaryNode<Any>* insert(const Any& object);
 		const BinaryNode<Any>* insert(BinaryNode<Any>*& helper, const Any& object);
 		
-		void remove(Any& object);
-		void removelazy(const Any& object);
-		void removelazy(const BinaryNode<Any>* helper, const Any& object);
-		void removehard(Any& object);
-		void removehard(BinaryNode<Any>*& helper, Any& object);
+		void remove(Any& object, REMOVEMETHOD rm/* = LAZY*/);
+		void remove(BinaryNode<Any>*& helper, Any& object, REMOVEMETHOD rm/* = LAZY*/);
 		
 		const BinaryNode<Any>* find(const Any& object) const;
 		const bool contains(const Any& object) const;
@@ -77,9 +80,15 @@ class BinarySearchTree
 		const vector<const Any&> traversalpostorder() const;
 		const vector<const vector<const Any&> > traversallevelorder() const;
 		
+		int getremovelazythreshold() const;
+		void setremovelazythreshold(int value/* = -11*/);
+		
 		Any& operator++();		// move to left child if exists.
 		Any& operator++(int);	// move to right child if exists.
 	
+	private:
+		void deletelazy(BinaryNode<Any>*& pBN);
+		void deletehard(BinaryNode<Any>*& pBN);
 
 	private:
 		struct LevelInfo
@@ -97,6 +106,7 @@ class BinarySearchTree
 
 		BinaryNode<Any>* root;
 		bool duplicatesallowed;
+		int removelazythreshold;
 };
 
 #include <BinarySearchTree.definitions.hpp>
