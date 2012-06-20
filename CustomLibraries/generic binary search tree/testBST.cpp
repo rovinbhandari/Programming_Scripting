@@ -17,7 +17,7 @@ int main(void)
 	int n, N;
 	int x;
 	BinarySearchTree<int> bst;
-	bst.allowduplicates();
+	//bst.allowduplicates();
 	cin>>N;
 	
 	cout<<"Insertions:"<<endl;
