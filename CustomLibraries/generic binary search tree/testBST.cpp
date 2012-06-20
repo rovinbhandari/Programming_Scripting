@@ -19,19 +19,28 @@ int main(void)
 	BinarySearchTree<int> bst;
 	bst.allowduplicates();
 	cin>>N;
+	
+	cout<<"Insertions:"<<endl;
 	n = N;
 	while(n--)
 	{
 		cin>>x;
 		bst.insert(x);
 		bst.printtraversalinorder();
+		cout<<"\t---"<<endl;
 	}
+
+	cout<<"\t---"<<endl;
+	cout<<"\t---"<<endl;
+
+	cout<<"Deletions:"<<endl;
 	n = N;
 	while(n--)
 	{
 		cin>>x;
-		bst.removehard(x);
+		bst.remove(x, HARD);
 		bst.printtraversalinorder();
+		cout<<"\t---"<<endl;
 	}
 	//printtraversal1(bst.traversalinorder());
 	//bst.printtraversalinorder();
