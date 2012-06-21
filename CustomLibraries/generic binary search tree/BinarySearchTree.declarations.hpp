@@ -53,15 +53,15 @@ class BinarySearchTree
 		const BinaryNode<Any>* insert(const Any& object);
 		const BinaryNode<Any>* insert(BinaryNode<Any>*& helper, const Any& object);
 		
-		void remove(Any& object, REMOVEMETHOD rm/* = LAZY*/);
-		void remove(BinaryNode<Any>*& helper, Any& object, REMOVEMETHOD rm/* = LAZY*/);
+		void remove(const Any& object, REMOVEMETHOD rm/* = LAZY*/);
+		void remove(BinaryNode<Any>*& helper, const Any& object, REMOVEMETHOD rm/* = LAZY*/);
 		
 		const BinaryNode<Any>* find(const Any& object) const;
 		const bool contains(const Any& object) const;
 		const Any& findmin() const;
 		const Any& findmin(BinaryNode<Any>* helper) const;
-		BinaryNode<Any>* findminbinarynode() const;
-		BinaryNode<Any>* findminbinarynode(BinaryNode<Any>* helper) const;
+		BinaryNode<Any>*& findminbinarynode() const;
+		BinaryNode<Any>*& findminbinarynode(BinaryNode<Any>*& helper) const;
 		const Any& findmax() const;
 		const Any& findmax(BinaryNode<Any>* helper) const;
 		const BinaryNode<Any>* findmaxbinarynode() const;
@@ -80,9 +80,11 @@ class BinarySearchTree
 		const vector<const Any&> traversalpostorder() const;
 		const vector<const vector<const Any&> > traversallevelorder() const;
 		
+		/*
 		int getremovelazythreshold() const;
-		void setremovelazythreshold(int value/* = -11*/);
-		
+		void setremovelazythreshold(int value/ * = -11* /);
+		*/
+
 		Any& operator++();		// move to left child if exists.
 		Any& operator++(int);	// move to right child if exists.
 	
@@ -106,7 +108,8 @@ class BinarySearchTree
 
 		BinaryNode<Any>* root;
 		bool duplicatesallowed;
-		int removelazythreshold;
+		int removelazythresholdduplicatesallowed;
+		int removelazythresholdduplicatesnotallowed;
 };
 
 #include <BinarySearchTree.definitions.hpp>

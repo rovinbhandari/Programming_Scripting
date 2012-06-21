@@ -1,0 +1,1 @@
+SQUISHED: Whenever remove() is called in HARD mode for removing a full node, the min_node in the right subtree of the former node does not get removed properly. The error lies in either deletehard() or findminbinarynode().

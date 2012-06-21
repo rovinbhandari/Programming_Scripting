@@ -10,7 +10,9 @@ using namespace std;
 template <class Any>
 BinarySearchTree<Any>::BinarySearchTree()
 	: root(NULL),
-	  duplicatesallowed(false)
+	  duplicatesallowed(false),
+	  removelazythresholdduplicatesallowed(-11),
+	  removelazythresholdduplicatesnotallowed(-3)
 {
 }
 
@@ -77,7 +79,6 @@ BinaryNode<Any>* BinarySearchTree<Any>::clone(BinaryNode<Any>* bn)
 template <class Any>
 void BinarySearchTree<Any>::allowduplicates(bool t_f = true)
 {
-	//cerr<<"isempty() = "<<isempty()<<endl;
 	if(isempty())
 		duplicatesallowed = t_f;
 	else
@@ -117,13 +118,13 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, c
 }
 
 template<class Any>
-void BinarySearchTree<Any>::remove(Any& object, REMOVEMETHOD rm = LAZY)
+void BinarySearchTree<Any>::remove(const Any& object, REMOVEMETHOD rm = LAZY)
 {
 	remove(root, object, rm);
 }
 
 template<class Any>
-void BinarySearchTree<Any>::remove(BinaryNode<Any>*& helper, Any& object, REMOVEMETHOD rm = LAZY)
+void BinarySearchTree<Any>::remove(BinaryNode<Any>*& helper, const Any& object, REMOVEMETHOD rm = LAZY)
 {
 	if(!helper)
 		return;
@@ -132,13 +133,16 @@ void BinarySearchTree<Any>::remove(BinaryNode<Any>*& helper, Any& object, REMOVE
 	else if(helper->element < object)
 		remove(helper->prightchild, object, rm);
 	else if(duplicatesallowed
-			&&
-			((rm == LAZY
-				&& helper->multiplicity > removelazythreshold)
-			 ||
-			 (rm == HARD
-				&& helper->multiplicity > 1))
-		   )
+			&& rm == LAZY
+			&& helper->multiplicity > removelazythresholdduplicatesallowed)
+		deletelazy(helper);
+	else if(duplicatesallowed
+			&& rm == HARD
+			&& helper->multiplicity > 1)
+		deletelazy(helper);
+	else if(!duplicatesallowed
+			&& rm == LAZY
+			&& helper->multiplicity > removelazythresholdduplicatesnotallowed)
 		deletelazy(helper);
 	else
 		deletehard(helper);
@@ -153,33 +157,42 @@ void BinarySearchTree<Any>::deletelazy(BinaryNode<Any>*& pBN)
 template<class Any>
 void BinarySearchTree<Any>::deletehard(BinaryNode<Any>*& pBN)
 {
-	BinaryNode<Any>* temp;
 	if(pBN->isfullnode())
 	{
-		temp = findminbinarynode(pBN->prightchild);
+		BinaryNode<Any>*& temp = findminbinarynode(pBN->prightchild);
 		pBN->element = temp->element;
 		pBN->multiplicity = temp->multiplicity;
-		remove(temp, temp->element, HARD);
+		deletehard(temp);
 	}
 	else
 	{
-		temp = pBN;
+		BinaryNode<Any>* temp = pBN;
 		pBN = pBN->pleftchild ? pBN->pleftchild : pBN->prightchild;
 		delete temp;
 	}
 }
 
 template<class Any>
-BinaryNode<Any>* BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>* helper) const
+BinaryNode<Any>*& BinarySearchTree<Any>::findminbinarynode() const
 {
+	return findminbinarynode(root);
+}
+
+template<class Any>
+BinaryNode<Any>*& BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>*& helper) const
+{
+	/*
 	if(!helper)
-		return NULL;	//TODO: throw NodeNotFoundException
+		;	//TODO: throw NodeNotFoundException
+			//		http://stackoverflow.com/questions/577270/creating-new-exception-in-c
+	*/
 	if(!helper->pleftchild)
 		return helper;
 	else
 		return findminbinarynode(helper->pleftchild);
 }
 
+/*
 template<class Any>
 int BinarySearchTree<Any>::getremovelazythreshold() const
 {
@@ -194,6 +207,7 @@ void BinarySearchTree<Any>::setremovelazythreshold(int value = -11)
 	else
 		removelazythreshold = value;
 }
+*/
 
 template<class Any>
 const vector<const Any&>& BinarySearchTree<Any>::traversalinorder() const
@@ -216,7 +230,6 @@ void BinarySearchTree<Any>::traversalinorder(BinaryNode<Any>* bn, vector<const A
 template<class Any>
 void BinarySearchTree<Any>::printtraversalinorder()
 {
-	//cerr<<"duplicatesallowed = "<<duplicatesallowed<<endl;
 	if(duplicatesallowed)
 		printtraversalinorderduplicatesallowed(root);
 	else
