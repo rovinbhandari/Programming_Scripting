@@ -33,6 +33,8 @@ int main(void)
 	cout<<"\t---"<<endl;
 	cout<<"\t---"<<endl;
 
+	//ASSERT(false, "GG!");
+
 	cout<<"Deletions:"<<endl;
 	n = N;
 	while(n--)

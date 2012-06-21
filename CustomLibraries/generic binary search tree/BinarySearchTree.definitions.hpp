@@ -1,11 +1,8 @@
 #ifndef BinarySearchTree_definitions_hpp
 #define BinarySearchTree_definitions_hpp
 
-#include <vector>
-#include <iostream>
 #include <BinaryNode.declarations.hpp>
 #include <BinarySearchTree.declarations.hpp>
-using namespace std;
 
 template <class Any>
 BinarySearchTree<Any>::BinarySearchTree()
@@ -79,10 +76,9 @@ BinaryNode<Any>* BinarySearchTree<Any>::clone(BinaryNode<Any>* bn)
 template <class Any>
 void BinarySearchTree<Any>::allowduplicates(bool t_f = true)
 {
-	if(isempty())
-		duplicatesallowed = t_f;
-	else
-		;	// throw BSTnotemptyException;	//TODO
+	ASSERT(isempty(), "BST not empty.");
+	duplicatesallowed = t_f;
+	
 }
 
 template<class Any>
@@ -106,14 +102,13 @@ const BinaryNode<Any>* BinarySearchTree<Any>::insert(BinaryNode<Any>*& helper, c
 			return insert(helper->pleftchild, object);
 		else if(helper->element < object)
 			return insert(helper->prightchild, object);
-		else
+		else if(duplicatesallowed)
 		{
-			if(duplicatesallowed)
-				helper->multiplicity++;
-			else
-				;
+			helper->multiplicity++;
 			return helper;
 		}
+		else
+			return helper;
 	}
 }
 
@@ -175,17 +170,14 @@ void BinarySearchTree<Any>::deletehard(BinaryNode<Any>*& pBN)
 template<class Any>
 BinaryNode<Any>*& BinarySearchTree<Any>::findminbinarynode() const
 {
-	return findminbinarynode(root);
+	BinaryNode<Any>*& temp = root;
+	return findminbinarynode(temp);
 }
 
 template<class Any>
 BinaryNode<Any>*& BinarySearchTree<Any>::findminbinarynode(BinaryNode<Any>*& helper) const
 {
-	/*
-	if(!helper)
-		;	//TODO: throw NodeNotFoundException
-			//		http://stackoverflow.com/questions/577270/creating-new-exception-in-c
-	*/
+	ASSERT(helper, "Node not found.");
 	if(!helper->pleftchild)
 		return helper;
 	else
