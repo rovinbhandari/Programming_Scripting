@@ -12,7 +12,7 @@ class BinaryNode
 		BinaryNode* prightchild;
 		
 		BinaryNode(const Any object, int X, BinaryNode* pl, BinaryNode* pr);
-		bool isleaf();
+		bool isleafnode();
 		bool isfullnode();
 	friend class BinarySearchTree<Any>;
 };

@@ -2,7 +2,6 @@
 #define BinarySearchTree_declarations_hpp
 
 #include <vector>
-#include <iostream>
 using namespace std;
 
 //TODO: put const whereever needed to be enforced.
