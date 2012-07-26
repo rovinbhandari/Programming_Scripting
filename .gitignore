@@ -4,6 +4,7 @@
 *.o
 *.opp
 *.a
+*.so
 *.i
 *.class
 *.jar
