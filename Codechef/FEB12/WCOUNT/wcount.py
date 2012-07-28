@@ -4,7 +4,8 @@ import math
 import sys
 import string
 
-dbg = True
+mod = 1000000007
+dbg = not True
 
 def dbgout(d, x):
 	if dbg:
@@ -28,11 +29,13 @@ for s in sys.stdin:
 			dr.append(s.count(c))
 			s = s.replace(c, '')
 		dbgout("dr", dr)
-		result = math.factorial(nr)
-		dbgout("result", result)
+		prodr = 1
 		for i in dr:
-			result /= math.factorial(i)
-			dbgout("result", result)
-		result %= 1000000007
+			prodr *= math.factorial(i)
+		dbgout("prodr", prodr)
+		result = math.factorial(nr) // prodr
+		dbgout("result", result)
+		result %= mod
+		dbgout("result", result)
 		print result
 sys.exit(0)

@@ -11,7 +11,7 @@ primefactors2_10 = {2: {2: 1, 3: 0, 5: 0, 7: 0}, 3: {2: 1, 3: 1, 5: 0, 7: 0}, 4:
 nr = 0
 dr = {}
 pfnr = {}
-dbg = True
+dbg = not True
 
 def dbgout(d, x):
 	if dbg:
@@ -64,21 +64,27 @@ def divide():
 def powermod(a, b):
 	dbgout("a", a)
 	dbgout("b", b)
-	if b == 0:
-		a = 1
-	while b > 1:
-		a *= a
-		if a > mod:
-			a %= mod
+	pro = 1
+	while b >= 1:
+		pro = (pro * a) % mod
 		b -= 1
+	dbgout("a^b", pro)
+	return pro
+
+def powermod2(a, b):
+	dbgout("a", a)
+	dbgout("b", b)
+	a = (a ** b) % mod
 	dbgout("a^b", a)
 	return a
+	
 
 def multiply():
 	result = 1
 	for p in pfnr:
 		dbgout("result", result)
 		result = (result * powermod(p, pfnr[p])) % mod
+		#result = (result * powermod2(p, pfnr[p])) % mod
 	dbgout("result", result)
 	return result
 
@@ -98,7 +104,11 @@ for s in sys.stdin:
 		divide()
 		dbgout("dr", dr)
 		dbgout("pfnr", pfnr)
-		print multiply()
+		result = multiply()
+		dbgout("result", result)
+		result %= mod
+		dbgout("result", result)
+		print result		
 """
 
 nr = 500
