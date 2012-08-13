@@ -1,0 +1,43 @@
+Doors
+
+Problem code: DOORS
+	
+
+    Submit
+    My Submissions
+    All Submissions
+
+There are N doors of a palace, all of which are operated by a set of buttons. One day, Alice, who is just 8 years old, gets access to these buttons. Having recently learnt the multiplication tables, she decides to press buttons in a particular order. First, she presses all the buttons that are multiples of 1. Next, she presses all buttons that are multiples of 2, then 3 and so on until N; after which she leaves.
+
+Each press of button toggles the state of the door, i.e. a door that is open will be closed by the button press and opened if closed initially.
+
+Given that all doors were closed initially, give the number of doors that are open after she leaves.
+Input
+
+The input contains several lines. First line contains the number 't', which represents the number of test cases that follow. This is followed by 't' lines of numbers which represent 'N'. 0 < t < 1000000 0 < N < 100000000
+Output
+
+For each input, output the number of doors that are open at the end.
+Example
+
+Input:
+4
+4
+10
+16
+27
+
+Output:
+2
+3
+4
+5
+
+Author: 	rajatkhanduja
+Date Added: 	8-08-2012
+Time Limit: 	3 sec
+Source Limit: 	50000 Bytes
+Languages: 	ADA, ASM, BASH, C, C99 strict, CPP 4.0.0-8, CPP 4.3.2, CS2, D, FORT, JAR, JAVA, LUA, NEM, NICE, PAS fpc, PAS gpc, PERL, PYTH, RUBY, ST, TCL
+
+
+
