@@ -1,0 +1,37 @@
+Palindrome Magic
+
+Problem code: T02
+	
+
+    Submit
+    My Submissions
+    All Submissions
+
+In Math-World, each student is issued a unique ID which is a palindromic number. This ensures that the students can easily remember their ID. But the administration is afraid of a problem. It is afraid that if it keeps a very small ID, then it may soon run out of unique palindrome numbers. Thus, it has hired you as they've run out of mathematicians and programmers. So, they tell you the problem and then ask you to solve the following problem. For a n-digit palindrome, what is the kth palindrome (if arranged in ascending order) that can be formed? For eg. In the list of 2 digit palindromes, the 7th palindrome is 77 (1st being 11, 2nd being 22 and so on). The input will be of the form of an ordered pair n,k where n<=9. Find the kth n-digit palindrome. Note: This problem is pretty elementary to such an expereinced person as you, and so the administration asks you to solve it as fast as possible, so try and minimize the running time of your code as much as possible.
+Input
+
+The first line of the input contains T, the number of test cases that follow. The following T lines contain two values separated by a space. The first one is n (number of digits in the palindrome) and the next is k (the kth number in ascending order to be found)
+Output
+
+The output should be of T lines, where each line has the corresponding output of the test case. That is line 2 will contain kth n-digit palindrome for the 2nd test case.
+Example
+
+Input:
+3
+4,9
+7,50
+9,120
+
+Output:
+1881
+1049401
+101191101
+
+Author: 	rajatkhanduja
+Date Added: 	7-08-2012
+Time Limit: 	1 sec
+Source Limit: 	50000 Bytes
+Languages: 	ADA, ASM, BASH, BF, C, C99 strict, CAML, CLOJ, CLPS, CPP 4.0.0-8, CPP 4.3.2, CS2, D, ERL, FORT, FS, GO, HASK, ICK, ICON, JAR, JAVA, JS, LISP clisp, LISP sbcl, LUA, NEM, NICE, PAS fpc, PAS gpc, PERL, PERL6, PHP, PIKE, PRLG, PYTH, PYTH 3.1.2, RUBY, SCALA, SCM guile, SCM qobi, ST, TCL, TEXT, WSPC
+
+
+
