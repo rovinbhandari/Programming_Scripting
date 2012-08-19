@@ -1,0 +1,39 @@
+Evil hacker
+
+Problem code: EVILHACK
+	
+
+    Submit
+    All Submissions
+
+After reading the book Digital Fortress, one evil computer programmer was so inspired that he decided to steal information from the FBI servers themselves. He was able to create a virus, using polymorphic code mutations, just as it was written in the book, that even the FBI filters were unable to detect it. He knew about the FBI servers, that they were arranged in a X by Y grid. The virus was self-propagating, which means he have to release it to only 1 computer to affect the whole grid. The virus made complex hacks to break down firewall and other securities, and that too without raising any security alarm, so that it took almost 1 hour to break into a server. After it affects a server, it spreads to nearby servers adjacent to it and start hacking them, which takes another hour on their own:
+
+Go fellow hackers! Given X and Y, It's our task to find the minimum time to shut down all the FBI servers.
+Input
+
+The first line contains A, the number of test cases. Each of the next A lines contain two integers X and Y.
+A <= 1,000
+0 <= X <= 10,00,000
+0 <= Y <= 10,00,000
+Output
+
+The minimum time in hours it takes to shut down all servers in the grid.
+Example
+
+Input:
+2
+3 1
+3 3
+
+Output:
+2
+3
+
+Author: 	rajatkhanduja
+Date Added: 	8-08-2012
+Time Limit: 	1 sec
+Source Limit: 	50000 Bytes
+Languages: 	ADA, ASM, BASH, BF, C, C99 strict, CAML, CLOJ, CLPS, CPP 4.0.0-8, CPP 4.3.2, CS2, D, ERL, FORT, FS, GO, HASK, ICK, ICON, JAR, JAVA, JS, LISP clisp, LISP sbcl, LUA, NEM, NICE, PAS fpc, PAS gpc, PERL, PERL6, PHP, PIKE, PRLG, PYTH, PYTH 3.1.2, RUBY, SCALA, SCM guile, SCM qobi, ST, TCL, TEXT, WSPC
+
+
+
