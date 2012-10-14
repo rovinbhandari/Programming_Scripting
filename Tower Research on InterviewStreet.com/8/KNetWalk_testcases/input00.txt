@@ -1,0 +1,11 @@
+1
+abbaabb
+9
+0 1 b:2
+0 2 a
+2 3 a
+2 4 abb
+3 5 abb
+3 6 a:2
+4 7 abba
+4 8 aabb
