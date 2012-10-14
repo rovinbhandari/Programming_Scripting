@@ -1,0 +1,32 @@
+ Little Ben has found a way to predict prices of a security in the market : 
+
+If the current price is pi and the price 1 second ago was pi-1, the price after 1 second pi+1 is given by the relation : 
+
+pi+1 = (alpha * pi + beta * pi-1) %n
+
+where alpha,beta,n are constants.
+
+Little Ben also has a general trading strategy which he believes enables him to make consistent & handsome profits if the direction of price movements of any security in the market is alternating between up & down. So, if at any time in the market, prices of a security follow the sequence p1,p2,p3,p4.. such that either p1 > p2 < p3 > p4 … or p1 < p2 > p3 < p4 … ( lets call such price sequences anti-monotonic ), it enables Little Ben to trade profitably. Since the actual prices in the market do not form an anti monotonic sequence all the time, Little Ben would choose the longest anti-monotonic subsequence of prices and invest at those points only.
+
+Input:
+
+The file line contains number of test cases T(<=55)
+The next T lines contain 6 integers:
+p1, p2, alpha, beta, n, k,   where k is the length of the sequence that you have to consider.
+
+Output:
+output T lines, one for each test case, which is the length of longest anti monotonic sub-sequence.
+
+Sample Input:
+2
+1 1 1 1 500 12
+3 4 2 3 10 9
+
+Sample Output:
+2
+5
+
+Constraints:
+alpha, beta fit in 32 bit signed integers.
+0< n < 2^31
+0< k <= 10^7

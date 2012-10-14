@@ -1,0 +1,29 @@
+ Ken is running an electronic trading firm, which has servers spread across the globe, interconnected by high speed data cables. To reduce the cost of operations, the connections between servers are kept minimal, that is, the underlying structure is a tree. All connections are bidirectional. Whenever data is sent from a source server to some destination server, the data packet has to pass through several connections. Every connection is given a label and whenever a packet goes through a connection, the label corresponding to the connection is transmitted along with the packet. If a data packet passes through several connections, all the associated labels are concatenated in the order in which the data packet passes through the connections, and transmitted with the original data packet. You can assume that data always goes from source to destination along the shortest possible path.
+
+Ken suspects that there is a bug in his code for handling data transmission, because his code totally breaks down when the string that is received along with the data is exactly S. He wants to know which paths on his network are affected due to this bug, i.e. he wants to know how many pairs of vertices (u,v) are there such that when data is transmitted from u to v along the network, the string received with the data is exactly S.
+
+Input:
+The first line contains T(<25), the number of test cases, followed by T test cases. The first line of each test case contains the string S(0<|S|<=104). S will consist only of characters 'a' and 'b'. The next line contains N(<=105), the number of nodes in the graph. The next N-1 lines describe connections in the network (recall that the underlying graph is a tree). Each connection is described by two integers u and v(u,v are between 0 and N-1 inclusive), and a string y(0<|y|<=105). y will either be just a string over 'a' and 'b', or y is of the form "x:r", where x is a string over 'a' and 'b', and r is a non negative integer. In second case, the actual label associated with the connection is formed by concatenating the string x r times. For example, if y is "abbb", then the label is simply "abbb". However, if y is "abb:4", then the label is "abbabbabbabb".
+
+Output:
+For each test case, output a single number, which is the number of affected paths.
+
+Sample Input:
+1
+abbaabb
+9
+0 1 b:2
+0 2 a
+2 3 a
+2 4 abb
+3 5 abb
+3 6 a:2
+4 7 abba
+4 8 aabb
+
+Sample Output:
+5
+
+Explanation: the five pair of vertices are: (5,1), (5,4), (2,8), (7,2), (4,5)
+
+Warning: Huge I/O. use printf/scanf in C/C++.

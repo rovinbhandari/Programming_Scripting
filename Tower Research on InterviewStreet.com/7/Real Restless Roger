@@ -1,0 +1,39 @@
+
+
+Roger is a futures trader who has to trade in very peculiar kind of contracts, which are described using an ordered pair of integers (a,b). Buying 1 share of (a,b) means that you buy 1 share of commodity a and (simultaneously) sell one share of commodity b. If the contract (a,b) is available at P, it automatically means that contract (b,a) is available at price -P. A set of contracts is defined as "complete" if, buying all contracts in the set results in no net change in the number of shares of any commodity that you hold. 
+
+The cost of each contract is a multiple of 0.5, i.e. cost of some of the contracts is integral while some of the contracts have price of the form (x+0.5), where x is an integer. Like many any of us, Roger hates dealing with real numbers. Therefore, if any "complete" set of contracts exists whose cost is fractional, he wants to be notified immediately. In addition, Roger also wants to maintain a list of all the contracts whose cost is not an integer. 
+
+In order to do away with his dislike for real numbers, Roger has devised a simple algorithm. He starts with an empty list and starts adding only fractional-cost contracts to the list. He wants to be notified when the contract he adds results in a "complete" set with fractional cost in his list of contracts. Once he is done adding all contracts, if every "complete set" in his list of contracts has integral cost, he wants to be notified otherwise.
+
+Input:
+The first line of the input will contain an integer T, specifying the number of test cases. Each test case will begin with a line containing two integers, N and M. N is the number of commodities and M is the number of fractional-cost contracts. Next there will be M lines, each containing two integers ai and bi (1 <= ai,bi <= N), indicating that the ith commodity allows you to buy one share of ai and sell one share of bi.
+
+Output:
+If there is no fractional cost complete set of contracts, print "Yes" on one line. Otherwise, print "No: i", where i(1 <= i <= M) is the index of the first contract in the input whose addition results in fractional-cost "complete" set.
+
+Limits:
+1 <= T <= 55
+2 <= N <= 1000000
+1 <= M <= 1000000
+No contract will be stated more than once.
+
+Example:
+
+Input:
+2
+3 3
+1 2
+2 3
+3 1
+4 4
+1 2
+3 4
+2 3
+1 4
+
+Output:
+No: 3
+Yes
+
+Warning: Huge I/O. In C++, using printf/scanf should suffice.
