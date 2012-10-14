@@ -1,0 +1,49 @@
+ Little Ben has generalized his prediction model, and he is now able to predict prices of some securities a day in advance using the same formula for predicting markets as in one of the previous questions:
+
+Pi+1 = ( X Pi + Y Pi-1 ) % q
+
+where Pi is the price of the security on the ith day.
+
+However, Little Ben realized that if he exploited his prediction to make huge profits everyday, soon the markets around the globe would tumble, which is not good for world economy. Therefore, to save the world, Little Ben decides to exploit his predictions only when the current price is equal to V, and go on a vacation on days when it's not.
+
+Unfortunately, on a day when the price of a security was U and Little Ben was out on vacation, he missed his flight for coming back home. Even worse, the price on the next day turned out to be V, and Little Ben missed his chance to make money. To prevent such cases in the future, Little Ben wants to plan out his vacations well, so he is looking for a tool which given the current day number d since the day he missed his flight, would tell him the number of days after which the price V will reappear.
+
+Input 
+The first line indicates the number of test cases T, followed by T test cases. The first line of each test case contains the values X,Y,q,V,U and R ( R being the number of queries that follow ). The rest of values are exactly as explained above. The next R lines will contain a single non negative integer d, which is the day number.
+
+Output
+For each query, output the number of days after which the price V will reappear. If V will never reappear, output -1.
+
+Limits:
+T<30
+X,Y,U,V are non negative integers.
+q is a prime and q<= 10^5
+R<=10^5
+d is non negative and its in 64 bit signed integer.
+
+Sample Input:
+2
+2 3 11 5 1 6
+1
+40
+11
+23
+15
+133
+3 1 7 3 2 4
+1
+5
+9
+23
+
+Sample Output:
+0
+1
+0
+8
+6
+8
+0
+1
+1
+0

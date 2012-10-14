@@ -1,0 +1,37 @@
+ Big Shark Joe is a trader known to have the ability to swing markets when he gets active. Today, he is looking to liquidate huge positions in securities; he knows that the street is going to know about this pretty quickly and hence he needs to be fast to avoid taking a hit on his profitability while selling. In his process of liquidating, there are two chief operations he repeatedly needs to perform:
+a] Calculate the total notional value (sum of prices of the shares) of a group of securities he would sell next 
+b] When Joe gets (always bad) news that the market has tanked as a result of his actions, he needs to set the prices of the news-affected securities to their new values. He realizes that doing this repeatedly is a momentous task and he needs a good automated way to quickly do this, while he concentrates on taking his selling decisions. 
+ 
+For our purpose, we model the above scenario as follows:
+There are N securities S1,S2 ... SN and Joe has 1 contract of each. Lets say the prices of these are initially P1, P2, ... PN. 
+Operation [a] is the task of finding the sum of securities from i to j such that 1 <= i <= j <= N.
+In Operation [b], whenever news arrives about the change in price of securities i to j, where 1 <= i <= j <= N, the new price of each security Sk for i <= k <= j is given by Pk' = max(Pk - 20, Pk - floor(Pk/3)).
+ 
+Input:
+The first line contains number of test cases T (<10). This is followed by T test cases. Each test case begins with an integer N, the number of securities (1 <= N <= 10^5). The next line contains N integers P1, P2, ... PN such that each 0 <= Pi <= 100. The next line contains the number of operations Q that we need to perform (Q <= 10^5). The next Q lines contain an operation on each, which is described using 3 integers:
+t i j
+t = 0 indicates we need to perform operation [a], which is to print the sum of prices of securities from i to j, both inclusive.
+t = 1 indicates we need to perform operation [b], which is to modify the prices of securities i to j, both inclusive, as per the formula given above. 
+ 
+Output:
+For each operation of type t = 0, output one line, which contains the sum of prices (single integer). There is no output for operations of type t = 1.
+ 
+Sample Input:
+1
+6
+32 5 12 22 56 5
+5
+0 2 4
+1 3 5
+0 5 6
+1 1 4
+0 3 6
+ 
+Sample Output:
+39
+43
+59
+ 
+Warning: huge I/O, do not use cin/cout in C++, use scanf/printf instead.
+
+ 

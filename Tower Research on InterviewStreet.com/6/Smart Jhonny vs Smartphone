@@ -1,0 +1,55 @@
+ Smart Jhonny has bought a new smart phone and he is analyzing the security features of this phone. The first Security feature he comes across is pattern lock. The lock involves a 3*3 grid numbered as follows:
+
+1 2 3
+4 5 6
+7 8 9
+
+To set the lock, Jhonny must pick an ordering for the nine numbers on the grid and move his fingers from number to number in that order. This leaves behind a trail of lines connecting each number to the next.  For example, if Jhonny chooses the permutation 1 2 3 6 5 4 7 8 9, then he gets the following trail:
+
+1-2-3
+        |
+4-5-6
+ |     
+7-8-9
+ 
+
+The first point Jhonny noted was that there are several possible orderings that can generate the same trail of lines.  This is because, for example, a line from 1 to 3 is indistinguishable from a line from 1 to 2 to 3 or a line from 2 to 1 to 3. Now Jhonny is worried about how secure his password really is. Security of a permutation(P) is defined as the number of permutations(Q), Q ≠ P, that generate the same trail as P. Smart Jhonny is very nervous about security of his password, so you decide to calm him down by writing a program that can compute the security of any password.
+
+Input:
+The first line of the input will contain an integer T(<=10^5), specifying the number of test cases. This will be followed by T lines. Each line will contain 9 integers a1, a2, ..., a9. The integers will be from 1 to 9 inclusive and no integer will be repeated (i.e. they will specify an ordering of the numbers 1 to 9).
+
+Output:
+Output T lines. Each line should contain a single integer, the number of other orderings that generate the same trail as the corresponding ordering in the input.
+
+Example:
+Input:
+5
+1 2 3 4 5 6 7 8 9
+1 3 9 7 4 2 6 8 5
+5 1 6 4 2 9 8 7 3
+3 2 5 8 6 4 7 1 9
+4 5 2 8 3 1 6 7 9
+
+Output:
+7
+1
+1
+9
+1
+
+Explanation:
+In the first case, there are 7 other orderings that make the same
+trail. They are:
+9 8 7 6 5 4 3 2 1
+2 1 3 4 5 6 7 8 9
+9 8 7 6 5 4 3 1 2
+1 2 3 4 5 6 7 9 8
+8 9 7 6 5 4 3 2 1
+2 1 3 4 5 6 7 9 8
+8 9 7 6 5 4 3 1 2
+
+In the second case, there is only one other ordering that makes the
+same trail:
+5 8 6 2 4 7 9 3 1
+
+Warning: Huge I/O. Using printf/scanf in C++ should suffice.

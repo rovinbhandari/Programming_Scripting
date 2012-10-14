@@ -1,0 +1,18 @@
+ In the world of finance, there are many products which are very similar to one-another, quite often allowing us to convert from one to another. Some of these conversions are impossible, some are possible but expensive while others are extremely easy and cheap. Through our connections to exchanges the world over, we have the ability to quickly decide the possibility and the current cost of conversion between any 2 products. Sometimes this conversion may not be possible directly, but there could be a series of transactions such as A -> B, B -> C and C -> D which effectively convert A to D.
+
+Terry is running a trading desk, and has all the data regarding the conversions that are possible and the cost of each. Terry's clients are calling him all day offering to pay price P for converting X to Y, which is profitable to Terry only if he can convert X to Y in the real markets at a price less than P. Terry needs to accept or reject any client's offer as quickly as possible, and at the same time he doesn't want to take any offer which will be unprofitable to him.
+
+Input:
+
+The first line contains T(<=16), the number of test cases, followed by T test cases. The first line of each test case contains a pair of integers N(<=10^3) and M(<=5000) denoting the number of products and the number of "direct" conversions respectively. The next M lines contain three integers: u,v,w meaning that product#u can be converted to product#v after paying price w(0<=|w| <=10^6, u,v will be between 0 and N-1). The next line contains a single integer Q(<=10^5), which the number of calls Terry will have to answer. This is followed by Q lines, each containing a pair of integers u,v indicating that we want to know the minimum price that can be accepted for converting the product#u to product#v (u,v lie between 0 and N-1).
+
+The market is such that you can always convert from any product to any product, though the price can become very large. Also, the market is efficient, that means no series of transactions can convert product A to product A at negative cost.
+
+Output:
+For each test case, output exactly Q lines, each having the required answer.
+
+Sample I/O can be downloaded.
+
+Warning: Huge I/O. For C/C++, using scanf/printf should suffice.
+
+==rb== Time limit is perhaps 3s.
