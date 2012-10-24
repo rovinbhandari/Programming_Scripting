@@ -7,7 +7,7 @@
 static int* _apspl_ = NULL;
 static ui _n_ = 0;
 
-void initAM(ui n)
+void FWinitAM(ui n)
 {
 	_n_ = n;
 	_apspl_ = malloc(sizeof(int) * _n_ * _n_);
@@ -23,13 +23,15 @@ void _inittoINFINITY_()
 		_apspl_[i] = INFINITY;
 }
 
-void FWpopulateAM(ui u, ui v, int w);
+void FWpopulateAM(ui u, ui v, int w)
 {
-	static usi isinittoINFINITY = 0;
+	assert(u < _n_);
+	assert(v < _n_);
+	static usi isinittoINFINITY = FALSE;
 	if(!isinittoINFINITY)
 	{
 		_inittoINFINITY_();
-		isinittoINFINITY = 1;
+		isinittoINFINITY = TRUE;
 	}
 	assert(w < INFINITY);
 	if(w < _apspl_[u * _n_ + v])
@@ -46,11 +48,37 @@ void FWcomputeAPSPL()
 {
 	int i, j, k;
 	for(k = 0; k < _n_; k++)
-		for(i = 0; i < n; i++)
-			for(j = 0; j < n; j++)
+		for(i = 0; i < _n_; i++)
+			for(j = 0; j < _n_; j++)
 				if(_apspl_[i * _n_ + k] + _apspl_[k * _n_ + j]
 						> _apspl_[i * _n_ + j])
 					_apspl_[i * _n_ + j] = _apspl_[i * _n_ + k]
 										 + _apspl_[k * _n_ + j];
 }
+
+boolean FWqueryshortestpath(ui u, ui v, int* w)
+{
+	assert(u < _n_);
+	assert(v < _n_);
+	*w = _apspl_[u * _n_ + v];
+	if(*w >= INFINITY)
+		return FALSE;
+	else
+		return TRUE;
+}
+
+void FWprintAM(FILE* outputfilestream)
+{
+	int i;
+	fprintf(outputfilestream, "\n");
+	for(i = 1; i <= _n_ * _n_; i++)
+	{
+		fprintf(outputfilestream, "%d\t", _apspl_[i - 1]);
+		if(!(i % _n_))
+			fprintf(outputfilestream, "\n");
+	}
+	fprintf(outputfilestream, "\n");
+}
+
+
 
