@@ -22,16 +22,15 @@ int main(void)
 	FWprintAM(stderr);
 
 	ui i, j;
-	printf("\n");
+	fprintf(stderr, "\n");
 	for(i = 0; i < n; i++)
 		for(j = 0; j < n; j++)
 			if(FWqueryshortestpath(i, j, &w))
 				fprintf(stderr, "%u --> %u : %d\n", i, j, w);
 			else
 				fprintf(stderr, "%u --> %u : INFINITY\n", i, j);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("\n");
 	scanf("%u", &q);
 	while(q--)
 	{
@@ -42,7 +41,6 @@ int main(void)
 		else
 			printf("%u --> %u : INFINITY\n", u, v);
 	}
-	printf("\n");
 
 	return 0;
 }

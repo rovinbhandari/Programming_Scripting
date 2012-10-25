@@ -47,11 +47,13 @@ void FWassigntoAM(int* source)
 void FWcomputeAPSPL()
 {
 	int i, j, k;
+	for(i = 0; i < _n_; i++)
+		_apspl_[i * _n_ + i] = 0;
 	for(k = 0; k < _n_; k++)
 		for(i = 0; i < _n_; i++)
 			for(j = 0; j < _n_; j++)
 				if(_apspl_[i * _n_ + k] + _apspl_[k * _n_ + j]
-						> _apspl_[i * _n_ + j])
+						< _apspl_[i * _n_ + j])
 					_apspl_[i * _n_ + j] = _apspl_[i * _n_ + k]
 										 + _apspl_[k * _n_ + j];
 }
