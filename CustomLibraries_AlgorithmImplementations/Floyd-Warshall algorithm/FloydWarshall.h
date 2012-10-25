@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 #define DBG 1						// Debug
-#define INFINITY	2000000001		// 2 * 10^9 + 1
+#define INFINITY	1000000001		// 1 * 10^9 + 1
 
 typedef unsigned int ui;
 typedef unsigned short int usi;
@@ -23,7 +23,7 @@ typedef enum _boolean
 						boolean;
 
 void FWinitAM(ui n);	// can be as large as 10^3.
-void FWpopulateAM(ui u, ui v, int w);	// w can be as large as 10^9
+void FWpopulateAM(ui u, ui v, int w);	// w can be as large as 5 * 10^8
 void FWassigntoAM(int* source);	// source is an n * n 1D array. \
 								   does not alter the source.
 void FWcomputeAPSPL();	// APSPL = All-Pair Shortest Path-Lengths.
