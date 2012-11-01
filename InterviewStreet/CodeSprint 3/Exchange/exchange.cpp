@@ -49,30 +49,47 @@ void printbitset()
 
 set<usi> indicescomputed;
 
-void isolatepartofbitset(usi i, ui bigindex, ui smallindex)
+void isolatepartofbitset(usi i, ui& bigindex, ui& smallindex)	// indices are inclusive
 {
-
+	if(i == k)
+		bigindex = smallindex = 0;
+	bigindex = MAP(i, k) - 1;
+	i--;
+	smallindex = MAP(i, k);
 }
 
 void individualcomputetransitions(usi root)
 {
 	assert(indicescomputed.insert(root).second);
 	// isolate the part of bitset used by root.
+	// => from root + 1 to k
 	// check if the size of this part is non-zero. terminate if zero.
-	// check if this part has any 1. if found, recursively compute \
-	   the transistions of the index pointed to (say, child).
-	// isolate the part of bitset used by child.
-	// traverse this part and add 1's to all the indices for which \
-	   the child has 1's.
+	if(root + 1 == k)
+		return;
+	// iteratively check if this part has any 1. if found, recursively \
+	   compute the transistions of the index pointed to (say, child).
+	for(usi child = root + 1; child <= k; child++)
+	{
+		if(exchange[MAP(root, child)])
+			individualcomputetransitions(child);
+		// isolate the part of bitset used by child.
+		// => from child + 1 to k
+		// traverse this part and add 1's to all the indices for which \
+		   the child has 1's.
+		for(usi childiterator = child + 1; childiterator <= k; childiterator++)
+			if(exchange[MAP(child, childiterator)])
+				exchange.set(MAP(root, childiterator), true);
+	}
 }
 
 void computetransitions()
 {
-	for(usi i = 1; i <= k; i++)
-	{
-		if(!indicescomputed.find(i))
+	for(usi i = 1; i < k; i++)
+		// if i is present in indicescomputed, it is taken \
+		   care of already, otherwise, \
+		   individualcomputetransitions(i) needs to be evoked.
+		if(indicescomputed.find(i) == indicescomputed.end())
 			individualcomputetransitions(i);
-	}
 }
 
 void individualsmallestvalue(usi i)
