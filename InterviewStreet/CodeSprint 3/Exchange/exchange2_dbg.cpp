@@ -7,7 +7,8 @@
 #include <iostream>
 using namespace std;
 
-#define DBG true
+#define DBG false
+//#define DBG true
 /*
 	
 	//DBG_BEGIN
@@ -192,12 +193,29 @@ set<usi> individualcomputetransitions(usi x)
 
 void computetransitions()
 {
-	for(usi i = 1; i < k; i++)
+	for(usi i = 1; i <= k; i++)
 		// if i is present in indicescomputed, it is taken \
 		   care of already, otherwise, \
 		   individualcomputetransitions(i) needs to be evoked.
 		if(indicescomputed.find(i) == indicescomputed.end())
 			individualcomputetransitions(i);
+	
+	//TODO: optimize or find a way to eliminate the following loops.
+	for(usi j1 = 2; j1 <= k; j1++)
+	{
+		for(usi i1 = 1; i1 < j1; i1++)
+		{
+			if(exchange[MAP(i1, j1)])
+			{
+				for(usi j2 = j1 + 1; j2 <= k; j2++)
+				{
+					exchange.set(MAP(j1, j2), 
+						exchange[MAP(i1, j2)] ||
+						exchange[MAP(j1, j2)]);
+				}
+			}
+		}
+	}
 	
 	//DBG_BEGIN
 	if(DBG)
@@ -223,7 +241,9 @@ void smallestpermutation()
 	// for each i starting from 1, find the smallest value \
 	   that can be reached from i. Once found, swap the \
 	   current value at i in permutation[] with that value.
-	for(usi i = 1; i < sizepermutation - 1; i++)
+	for(usi i = 1; i < sizepermutation - 1; i++) // the last value will \
+													be automatically \
+													adjusted.
 	{
 		usi minvalue = permutation[i], minindex = i;
 		for(usi j = i + 1; j < sizepermutation; j++)
@@ -346,20 +366,21 @@ int main(void)
 	}
 	//DBG_END
 
-	/*
 	smallestpermutation();
 
 	//DBG_BEGIN
-	cerr << "smallest permutation :";
-	for(i = 0; i < sizepermutation; i++)
-		cerr << " "
-			 << permutation[i];
-	cerr << endl;
+	if(DBG)
+	{
+		cerr << "smallest permutation :";
+		for(i = 0; i < sizepermutation; i++)
+			cerr << " "
+				 << permutation[i];
+		cerr << endl;
+	}
 	//DBG_END
 
 	for(i = 1; i < sizepermutation; i++)
 		printf(FORMATusi " ", permutation[i]);
-	*/
 
 	return 0;
 }
