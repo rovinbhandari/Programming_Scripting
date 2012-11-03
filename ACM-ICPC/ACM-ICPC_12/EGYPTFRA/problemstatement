@@ -1,0 +1,49 @@
+Egyption Fractions
+
+Problem code: EGYPTFRA
+	
+
+    My Submissions
+    All Submissions
+
+All submissions for this problem are available.
+
+A fraction a/b is called in its lowest form if gcd(a, b) = 1. It is possible to express a/b using the sum of a finite number of reciprocals of natural numbers. For example, 2/7 can be written as 1/4 + 1/28. Such a representation is called an Egyptian fraction representation of a/b. For each fraction, there could be multiple Egyptian fraction representations.
+
+Let two sets of reciprocals be (p1, p2, ..., pn) and (q1, q2, ..., qk). We say, the first is lexicographically lesser than the second if there is some m, 1 ≤ m ≤ min(n,k) such that,
+
+p1 = q1, p2 = q2, ..., pm-1 = qm-1 and pm ≤ qm.
+
+Given a set of fractions in the lowest form, the problem is to generate the lexicographically least Egyptian fraction for each input fraction.
+Input
+
+The input consists of several lines, each line consisting of a pair of numbers separated by a blank space. The end of the input is signaled by a line containing the pair of numbers 1 and 1. Each pair on a single line will be positive numbers, co-prime to each other (except for the last line). The first number on any line is always less than or equal to the second number on the line.
+Output
+
+For each pair of numbers a and b on a line, output a sequence of numbers, representing the denominators of the lexicographically least Egyptian Fraction of a/b. The denominators should be sorted in ascending order. There should be a blank space separating one denominator from the next. You should NOT output the Egyptian Fraction representation of the last line, representing 1/1 = 1.
+Sample Input
+
+1 4
+2 7
+5 9
+1 1
+
+Sample Output
+
+4
+4 28
+2 18
+
+Author: 	admin
+Date Added: 	2-11-2012
+Time Limit: 	3 sec
+Source Limit: 	50000 Bytes
+Languages: 	C, CPP 4.3.2, JAVA
+
+
+Comments
+riturajr @ 3 Nov 2012 02:34 PM
+what is constraints ..??
+shilp_adm @ 3 Nov 2012 03:22 PM
+The constraints on A, B: A <= B <= 1000
+

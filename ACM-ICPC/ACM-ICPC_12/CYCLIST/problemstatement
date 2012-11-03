@@ -1,0 +1,56 @@
+The Adventure of the Solitary Cyclist, II
+
+Problem code: CYCLIST
+	
+
+    My Submissions
+    All Submissions
+
+A cyclist, bored of congested roads, decides that she no longer wants to go the shortest route from her hostel to the college. She has decided that it is safer to follow routes with bicycle lanes. Roads have cycle lanes in both directions - however, they have gaps in their cycle-lane coverage.
+
+For this question, you are given a network of roads. With each road, there is a score, of the percentage of its length supporting a bicycle lane. You can assume that the percentages are unique floating-point values.
+
+The "safety-factor" of a path from hostel to college is the least score of a road on that path. You have to compute the path from hostel to college, with the largest safety-factor.
+Input
+
+The input consists of several lines. The first line is a number saying how many networks are present in the input. This is followed by lines describing each network.
+
+The first line of each network has a single number (let’s call it v) -- the number of vertices in the network. This is followed by a number of lines, each describing a road. Each road is given as three numbers separated by spaces - the first two being the nodes connected by the edge, and the third a floating-point number representing the percentage of cycle-lane coverage (between 0 and 100, inclusive). The end of the list of roads for a network is denoted by three "-1"s in a line. The college is always assumed to be node 1 and the hostel is always assumed to be the node with the highest index. There is at most one road between any pair of vertices. There is certainly at least one path that connects the hostel and the college.
+Output
+
+The output should have several lines. The i-th line describes the safety factor of the i-th network in the input. The output should be within 10-6 of the answer.
+Sample Input
+
+2
+4
+1 2 4.0
+1 3 7.0
+1 4 1.0
+2 3 5.0
+2 4 3.0
+3 4 2.0
+-1 -1 -1
+4
+1 2 40.0
+1 3 8.0
+1 4 11.0
+2 3 21.0
+3 4 30.0
+-1 -1 -1
+
+Sample Output
+
+3
+21
+
+Author: 	admin
+Tester: 	shilp_adm
+Date Added: 	2-11-2012
+Time Limit: 	3 sec
+Source Limit: 	50000 Bytes
+Languages: 	C, CPP 4.3.2, JAVA
+
+
+Comments
+shilp_adm @ 3 Nov 2012 03:21 PM
+The constraint on V: V <= 1000
