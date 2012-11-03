@@ -1,0 +1,39 @@
+Presti Digitator
+
+Problem code: PRESTI
+	
+
+    Submit
+    My Submissions
+    All Submissions
+
+Presti Digitator, the world-famous magician, is highly dissatisfied with his way of shuffling cards. Just yesterday, a perky guy in the audience demanded that he shuffle the cards once again, and he was aghast to see that the bottom card had not changed. Even though Mr. Digitator pacified the crowd with a few excellent tricks, the whole experience left him sad. He thinks that his shuffling leaves too many cards unchanged. He has decided to return to the drawing board, and retrain himself.
+
+He thinks that a "good" shuffle should leave no card in its old position. Assume that cards are numbered sequentially starting from 1. For example, if there are 4 cards initially arranged in the order 1,2,3,4, a shuffle of 2,3,4,1 would be considered good, while 3,2,1,4 would be bad since 2 and 4 are unchanged in the shuffled order. Digitator wonders whether good shuffles are rare - he would like to know, how many good shuffles of a given deck of cards there are.
+Input
+
+For this question, you are given a series of numbers on distinct lines. The first line contains a number (let’s call it n) denotes how many decks there are to shuffle.
+
+This is followed by n lines, each containing a positive number less than or equal to 20. Each such number denotes the number of cards in that deck.
+Output
+
+The output should have several lines. The i-th line is the number of good shuffles for the number of cards described in the i-th line. The output will fit inside a 64-bit integer.
+SampleInput
+
+2
+2
+4
+
+Sample Output
+
+1
+9
+
+Author: 	admin
+Date Added: 	2-11-2012
+Time Limit: 	3 sec
+Source Limit: 	50000 Bytes
+Languages: 	C, CPP 4.3.2, JAVA
+
+
+
