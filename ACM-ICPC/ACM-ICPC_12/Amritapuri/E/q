@@ -1,0 +1,40 @@
+Problem E: Sequence
+Given a sequence S of '0' and '1' of length N, a subsequence of S is obtained by omitting some elements of S without changing the order of the remaining elements of S.
+
+Given a subarray of a sequence S starting from some position 'a' and ending at some position 'b' (1 <= a <= b <= N), both inclusive, denoted by S(a,b), you have report the length of longest non-decreasing subsequence of S(a,b). By non-decreasing, we mean that a '0' never appears after a '1' in the subsequence.
+Input (STDIN):
+The first line contains T, the number of test cases. Then T test case follow, each test case being in the following format.
+The first line contains N, the length of sequence S. The next line contains a string of 0's and 1's of length exactly N. The next line contains Q, which means that you have to answer Q queries. The next Q lines contain a pair of integers a,b (1 <= a <= b <= N), meaning that you have to report the length of longest non decreasing subsequence of S(a,b).
+There is no blank line between test cases.
+Output (STDOUT):
+Output Q lines per test case, which is the answer for each query. Do not print a blank line between test cases.
+Constraints:
+1 <= T <= 10
+1 <= N <= 100,000
+1 <= Q <= 100,000
+Sample Input:
+1
+13
+0011101001110
+6
+1 13
+4 13
+1 9
+6 9
+3 3
+6 10
+
+Sample Output:
+9
+6
+6
+3
+1
+4
+
+Explanation:
+In the first query, the longest subsequence is formed by picking 1st,2nd,3rd,4th,5th,7th,10th,11th,12th digits of the sequence.
+In the second query, you can pick the 6th, 8th, 9th, 10th, 11th and 12th digits.
+
+Time limit : 3s
+Memory limit : 64MB

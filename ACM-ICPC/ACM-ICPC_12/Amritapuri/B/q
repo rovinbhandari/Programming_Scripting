@@ -1,0 +1,37 @@
+Problem B: Sticks
+You have N sticks - the length of the ith stick being L[i]. You also have M 3-dimensional boxes - the length, breadth and height of the jth box being A[j], B[j] and C[j]. What is the maximum number of sticks which can fit in the boxes? A stick can be fit in a box if it can be placed within it without bending or cutting it. A box can hold any number of fitting sicks (assume that the sticks do not intersect each other).
+Input (STDIN):
+The first line contains the number of test cases T. T test cases follow.
+For each test case, the first line contains integers N and M on the first line. The next N lines contain the lengths of each stick, and the M lines after that contain the dimensions of each box denoted by 3 space-separated integers.
+There is a blank line after each test case.
+
+Output (STDOUT):
+For each test case, output a single integer which is the number of sticks which can fit in the boxes.
+Constraints:
+1 <= T <= 10
+1 <= N <= 50,000
+1 <= M <= 50,000
+1 <= L[i] <= 100,000
+1 <= A[i],B[i],C[i] <= 30,000
+Sample Input:
+2
+4 2
+1
+8
+4
+2
+1 2 2
+2 3 2
+
+1 1
+12
+6 8 9
+Sample Output:
+3
+1
+
+Explanation:
+For the first test case, the sticks of length 1 and 2 can fit in either of the 2 boxes, while the stick of length 4 can only fit in the second box.
+For the second test case, the stick of length 12 can fix in the box of dimensions 6 X 8 X 9.
+Time limit : 1s
+Memory limit : 32MB
