@@ -1,0 +1,24 @@
+Problem A: Pair socks
+You have N socks in your cupboard. The color of each sock can either be red, green, blue, or white. Can you form complete pairs from these socks?
+Input (STDIN):
+The first line contains the number of test cases T. The next T lines contain a string c having N characters. The ith character of the string is either 'R', 'G', 'B' or 'W', denoting that the ith sock has color red, green, blue, or white respectively. There is no blank line between test cases.
+Output (STDOUT):
+For each test case, output "YES" if all socks can be grouped in pairs, or "NO" otherwise.
+Constraints:
+1 <= T <= 1000
+The string c contains at most 50 characters.
+Each character of c is either 'R', 'G', 'B' or 'W'.
+Sample Input:
+2
+RGGGRG
+RGBGRW
+Sample Output:
+YES
+NO
+
+Explanation:
+For the first test case, RGGGRG implies that you have 2 red and 4 green socks, with which we can form 1 pair of red and 2 pairs of green socks.
+For the second test case, RGBR implies that we have 2 red, 1 green and 1 blue socks. With this, we can form 1 pair of red socks, but we will then be left with 1 green and 1 blue socks which can't be used to form a pair.
+
+Time limit : 1s
+Memory limit : 32MB
