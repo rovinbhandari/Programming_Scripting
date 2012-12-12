@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Magical Bridges</title>
+</head>
+<body>
+<h1 style="font-family: Arial;"><small>ACM International Collegiate
+Programming Contest, Asia-Amritapuri Site, 2011</small></h1>
+<h2>Problem F: Magical Bridges<br>
+</h2>
+<p align="justify">
+Hogwarts School of Witchcraft and Wizardry has a circular lane having N
+towers numbered 1 to <b>N</b>. Towers <i>i</i> and <i>i</i>+1 are
+adjacent to each other for 1 &#8804; <i>i</i>
+&lt; N and also towers 1 and N are adjacent to each other. Each of
+these towers has exactly <b>F</b> number of floors, numbered
+1,2,3,..,F-1,F from bottom to top. Floors <i>i</i> and <i>i</i>+1 in
+a tower are adjacent to each other and it takes one second to move
+between them. It also takes one second to move between floor 1 of a
+tower and floor 1 of its adjacent tower.
+Apart from these, there are <b>M</b> bridges designed for a quick
+escape in case of a Death Eater attack, each of which connects two
+floors of different towers. Each of these bridges is given as <i>bi fi
+bj fj t</i>, meaning it takes <i>t</i> seconds to move along this
+bridge that connects the floor <i>fi</i> of tower <i>bi</i> and
+the floor <i>fj</i> of tower <i>bj</i>. All ways are bidirectional.
+</p>
+<p align="justify">
+Given <i>(qbi,qfi)</i> and <i>(qbj,qfj)</i>, find the minimum time in
+seconds it takes to reach floor qfj of tower qbj, starting from floor qfi
+of tower qbi. You have to answer a lot of such queries.</p>
+<h3>Input (STDIN):</h3>
+<p align="justify">
+The first line contains the number of test cases T. T cases follow.
+Each test case consists of N F M in the first line. N is the number of
+towers, F is the number of floors in each tower and M is the number of
+bridges. M lines follow, each of the form <i>bi fi bj fj t</i>, as
+mentioned in the
+problem statement. Next line contains Q, the number of queries and Q
+lines follow, each of the form <i>qbi qfi qbj qfj.</i></p>
+<h3>Output (STDOUT):</h3>
+<p align="justify">
+For each query of the form <i>qbi qfi qbj qfj</i>, output one line
+denoting the minimum time in seconds it takes to reach the floor <i>qfj</i>
+of tower <i>qbj</i>,
+starting from the floor <i>qfi</i> of tower <i>qbi.</i></p>
+<h3>Constraints:</h3>
+1 &#8804; T &#8804; 3<br>
+2 &#8804; N, M &#8804; 100<br>
+2 &#8804; F &#8804; 1,000,000<br>
+1 &#8804; t &#8804; 1,000,000<br>
+1 &#8804; Q &#8804; 100,000<br>
+1 &#8804; bi, bj, qbi, qbj &#8804; N<br>
+1 &#8804; fi, fj, qfi, qfj &#8804; F<br>
+<br>
+Time Limit : 5s<br>
+Memory Limit : 64 MB<br>
+<h3>Sample Input:</h3>
+<span style="font-family: Courier New,Courier,monospace;">
+1<br>
+5 4 3<br>
+1 3 2 4 3<br>
+2 3 3 3 2<br>
+3 4 5 3 1<br>
+5<br>
+1 3 2 3<br>
+1 3 3 2<br>
+1 1 3 4<br>
+3 3 4 4<br>
+4 3 4 4<br>
+</span><br>
+<h3>Sample Output:</h3>
+<span style="font-family: Courier New,Courier,monospace;">
+4</span><br style="font-family: Courier New,Courier,monospace;">
+<span style="font-family: Courier New,Courier,monospace;">5</span><br
+ style="font-family: Courier New,Courier,monospace;">
+<span style="font-family: Courier New,Courier,monospace;">4</span><br
+ style="font-family: Courier New,Courier,monospace;">
+<span style="font-family: Courier New,Courier,monospace;">6</span><br
+ style="font-family: Courier New,Courier,monospace;">
+<span style="font-family: Courier New,Courier,monospace;">1</span><br>
+<!-- <h3>Explanation:</h3> -->
+<br>
+<br>
+<br>
+</body>
+</html>
