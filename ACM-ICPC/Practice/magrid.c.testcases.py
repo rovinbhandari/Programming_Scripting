@@ -3,13 +3,13 @@
 import sys
 import random
 
-t = 5
+t = 500
 print t
 for i in range(0, t):
-	#r = random.randint(2, 10)
-	#c = random.randint(2, 10)
-	r = random.randint(2, 500)
-	c = random.randint(2, 500)
+	r = random.randint(2, 5)
+	c = random.randint(2, 5)
+	#r = random.randint(2, 500)
+	#c = random.randint(2, 500)
 	print r, c
 	for j in range(1, r + 1):
 		for k in range(1, c + 1):
