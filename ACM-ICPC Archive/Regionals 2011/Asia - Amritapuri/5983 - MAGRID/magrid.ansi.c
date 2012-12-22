@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 
 #define RCMAX 500
 
@@ -78,6 +79,8 @@ int minstr()
 		}
 	}
 	#endif
+
+	#ifdef OLD
 	minvalue = 0;
 	i = p[r - 1][c - 1].row;
 	j = p[r - 1][c - 1].col;
@@ -86,7 +89,7 @@ int minstr()
 		if(minvalue > s[i][j])
 			minvalue = s[i][j];
 		#ifdef DBG
-			printf("s[%d][%d] = %d\nminvalue = %d\n", i, j, s[i][j], minvalue);
+		printf("s[%d][%d] = %d\nminvalue = %d\n", i, j, s[i][j], minvalue);
 		#endif
 		tempi = i;
 		i = p[i][j].row;
@@ -94,6 +97,30 @@ int minstr()
 	}
 	while(i != -1);
 	return 1 - minvalue;
+	#endif
+
+	#ifndef OLD
+	minvalue = INT_MAX;
+	i = 0;
+	j = 0;
+	for(steplength = 1; steplength <= (r - 1) + (c - 1); steplength++)
+	{
+		if(minvalue > s[i][j])
+			minvalue = s[i][j];
+		if(i < r - 2 && j < c - 2)
+		{
+			if(s[i + 1][j] > s[i][j + 1])
+				i++;
+			else
+				j++;
+		}
+		else if(i == r - 1)
+			j++;
+		else
+			i++;
+	}
+	return 1 - minvalue;
+	#endif
 }
 
 int main(void)
