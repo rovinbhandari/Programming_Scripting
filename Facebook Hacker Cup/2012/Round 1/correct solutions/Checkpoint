@@ -1,0 +1,71 @@
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <string>
+#include <queue>
+#include <cassert>
+#define rep(i,a,n) for(int i=a;i<n;i++)
+#define in(n) scanf("%d",&n)
+#define inl(n) scanf("%lld",&n)
+#define out(n) printf("%d ",n)
+#define outln(n) printf("%d\n",n)
+#define outl(n) printf("%lld ",n)
+#define outlln(n) printf("%lld\n",n)
+#define LL long long 
+#define pb push_back
+#define maxn 10000010
+using namespace std;
+long long pts[maxn];
+int main()
+{
+	memset(pts,-1,sizeof(pts));
+	for(int da=0;da<=maxn;da++)
+	{
+		long long ret = 1;
+		for(int db=1;;db++)
+		{
+			ret *= (da+db);
+			ret /= db;
+			if(ret>maxn)break;
+			if(pts[ret]!=-1 && pts[ret] < da+db)break;
+			if(pts[ret]==-1)pts[ret] = da+db;
+			else pts[ret] = min(pts[ret],(long long)da+db);
+
+		}
+	}
+	int X,kase=1;
+	in(X);
+	while(X--)
+	{
+		int n;
+		in(n);
+		long long res = -1;
+		for(int i=1;i*i<=n;i++)
+		{
+			if(n%i)continue;
+			int j = n/i;
+			if(res==-1) res = pts[i]+pts[j];
+			else res = min(res,pts[i]+pts[j]);
+		}
+		printf("Case #%d: %lld\n",kase,res);
+		kase++;
+
+	}
+	return 0;
+}

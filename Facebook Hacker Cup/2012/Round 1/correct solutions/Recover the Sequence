@@ -1,0 +1,88 @@
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <string>
+#include <queue>
+#include <cassert>
+#define rep(i,a,n) for(int i=a;i<n;i++)
+#define in(n) scanf("%d",&n)
+#define inl(n) scanf("%lld",&n)
+#define out(n) printf("%d ",n)
+#define outln(n) printf("%d\n",n)
+#define outl(n) printf("%lld ",n)
+#define outlln(n) printf("%lld\n",n)
+#define LL long long 
+#define pb push_back
+#define maxn 10010
+using namespace std;
+int T[maxn],n,pos=0,R[maxn];
+string S;
+void get(int low,int high);
+void gogo(int low,int high)
+{
+	if(low<high)
+	{
+		int mid = low+(high-low+1)/2;
+		gogo(low,mid-1);
+		gogo(mid,high);
+		get(low,high);
+	}
+}
+void get(int low,int high)
+{
+	int mid = low+(high-low+1)/2;
+	int l=low,h=mid,cc=0;
+	while(l<=mid-1 && h<=high)
+	{
+		assert(pos<(int)S.size());
+		if(S[pos] =='1')R[cc++] = T[l++];
+		else R[cc++] = T[h++];
+		pos++;
+	}
+	while(l<=mid-1)R[cc++]=T[l++];
+	while(h<=high)R[cc++]=T[h++];
+	for(int i=0;i<cc;i++)
+	{
+		T[low+i] = R[i];
+	}
+	return;
+}
+int main()
+{
+	int X;
+	in(X);
+	for(int kase=1;kase<=X;kase++)
+	{
+		pos=0;
+		in(n);
+		cin>>S;
+		for(int i=0;i<n;i++)T[i]=i;
+		gogo(0,n-1);
+		for(int i=0;i<n;i++)R[T[i]]=i;
+		long long res = 1;
+		for(int i=0;i<n;i++)
+		{
+			res = 31*res + (R[i]+1);
+			res %= 1000003;
+		}
+		printf("Case #%d: %lld\n",kase,res);
+	}
+
+	return 0;
+}
