@@ -4,6 +4,9 @@
 #include <vector>
 using namespace std;
 
+// by encoding the input string and stack into numbers, \
+   try memoizing the values in a map for better performance.
+
 bool isMatching(char a, char b)
 {
 	return a == '(' && b == ')';
@@ -18,6 +21,13 @@ bool isBalanced(string in, string st)
 	else if(in[0] == ')')
 		return !st.empty() && isMatching(st[0], in[0])
 						   && isBalanced(in.substr(1), st.substr(1));
+	else if(in[0] == 'o')
+		return isBalanced('(' + in.substr(1), '(' + st)
+			   || isBalanced(in.substr(1), st);
+	else if(in[0] == 'c')
+		return (!st.empty() && isMatching(st[0], ')')
+						   && isBalanced(in.substr(1), st.substr(1)))
+			   || isBalanced(in.substr(1), st);
 	else
 		cerr << "GG" << endl;
 }
@@ -52,7 +62,6 @@ int main(void)
 					pars.push_back(c);
 			}
 		}
-		cerr << "pars = " << pars << endl;
 		if(isBalanced(pars, ""))
 			printf("Case #%d: %s\n", i + 1, "YES");
 		else
