@@ -1,0 +1,16 @@
+set cc=84
+set expandtab
+set ts=2
+set sw=2
+syntax on
+set autoindent
+set rnu
+set nu
+set noeol
+set tabpagemax=100
+if has('gui_running')
+    if has('gui_win32')   
+        set guifont=Consolas:h11:b
+        colorscheme koehler
+    endif
+endif
