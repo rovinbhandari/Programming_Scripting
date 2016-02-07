@@ -8,14 +8,14 @@ Africa,Cape Verde,Praia
 Africa,Central African Republic,Bangui 
 Africa,Chad,N'Djamena 
 Africa,Comoros,Moroni 
-Africa,D.R Congo,Kinshasa 
+Africa,Democratic Republic of the Congo,Kinshasa 
 Africa,Djibouti,Djibouti-city
 Africa,Egypt,Cairo 
 Africa,Equatorial Guinea,Malabo 
 Africa,Eritrea,Asmara 
 Africa,Ethiopia,Addis Ababa 
 Africa,Gabon,Libreville 
-Africa,Gambia,Banjul 
+Africa,The Gambia,Banjul 
 Africa,Ghana,Accra 
 Africa,Guinea,Conakry 
 Africa,Guinea-Bissau,Bissau 
@@ -36,7 +36,7 @@ Africa,Nigeria,Abuja
 Africa,Qatar,Doha 
 Africa,Republic of the Congo,Brazzaville 
 Africa,Rwanda,Kigali 
-Africa,São Tomé and Príncipe,Sao Tome
+Africa,Sao Tome and Principe,Sao Tome
 Africa,Senegal,Dakar 
 Africa,Seychelles,Victoria 
 Africa,Sierra Leone,Freetown 
@@ -46,7 +46,7 @@ Africa,South Sudan,Juba
 Africa,Sudan,Khartoum 
 Africa,Swaziland,Mata-utu 
 Africa,Tanzania,Dodoma
-Africa,Togo,Lomé 
+Africa,Togo,Lome 
 Africa,Tonga,Nuku?alofa 
 Africa,Tunisia,Tunis 
 Africa,Uganda,Kampala 
@@ -63,8 +63,8 @@ Asia,Cameroon,Yaoundé
 Asia,China,Beijing 
 Asia,Christmas Island (Australia),Flying Fish Cove 
 Asia,Cocos (Keeling) Islands (Australia),"West Island, Cocos Islands "
-Asia,East Timor (Timor-Leste),Dili 
-Asia,Hong Kong (China),Hong Kong City
+Asia,East Timor,Dili 
+Asia,Hong Kong,Hong Kong City
 Asia,India,New Delhi 
 Asia,Indonesia,Jakarta 
 Asia,Iran,Tehran 
@@ -80,9 +80,9 @@ Asia,Kyrgyzstan,Bishkek
 Asia,Laos,Vientiane 
 Asia,Lebanon,Beirut 
 Asia,Malaysia,Kuala Lumpur 
-Asia,Maldives,Malé 
+Asia,Maldives,Male 
 Asia,Mongolia,Ulan Bator 
-Asia,Myanmar,Naypyidaw 
+Asia,Burma,Naypyidaw 
 Asia,Nepal,Kathmandu 
 Asia,North Korea,Pyongyang 
 Asia,Oman,Muscat 
@@ -117,12 +117,12 @@ Europe,Cyprus,Nicosia
 Europe,Czech Republic,Prague 
 Europe,Denmark,Copenhagen 
 Europe,Estonia,Tallinn 
-Europe,Faroe Islands (Denmark),Tórshavn 
+Europe,Faroe Islands (Denmark),Torshavn 
 Europe,Finland,Helsinki 
 Europe,France,Paris 
 Europe,Georgia,Tbilisi 
 Europe,Germany,Berlin 
-Europe,Gibraltar (UK),Gibraltar 
+Europe,Gibraltar,Gibraltar 
 Europe,Greece,Athens 
 Europe,Guernsey (UK),Saint Peter Port
 Europe,Hungary,Budapest 
@@ -168,7 +168,7 @@ North America,Bermuda (UK),Hamilton
 North America,British Virgin Islands (UK),Road Town 
 North America,Canada,Ottawa 
 North America,Cayman Islands (UK),George Town 
-North America,Costa Rica,San José 
+North America,Costa Rica,San Jose 
 North America,Cuba,Havana 
 North America,Curacao (Netherlands),Willemstad 
 North America,Dominica,Roseau 
@@ -185,7 +185,7 @@ North America,Mexico,Mexico City
 North America,Montserrat (UK),"Brades, Plymouth"
 North America,Nicaragua,Managua 
 North America,Panama,Panama City 
-North America,Puerto Rico (USA),San Juan 
+North America,Puerto Rico,San Juan 
 North America,Saint Kitts and Nevis,Basseterre 
 North America,Saint Lucia,Castries 
 North America,Saint Martin,Philipsburg
@@ -194,7 +194,7 @@ North America,Saint Vincent and the Grenadines,Kingstown
 North America,Sint Maarten (Netherlands),Philipsburg
 North America,Trinidad and Tobago,Port Of Spain 
 North America,Turks and Caicos Islands (UK),Cockburn Town 
-North America,United States,Washington D.C. 
+North America,The United States of America,Washington D.C. 
 North America,United States Virgin Islands (USA),Charlotte Amalie 
 North America,Saint Barthelemy,"Gustavia, Saint Barthélemy"
 Oceania,American Samoa (USA),Pago Pago 
@@ -205,7 +205,7 @@ Oceania,French Polynesia (France),Papeete
 Oceania,Marshall Islands,Majuro 
 Oceania,Micronesia,Palikir 
 Oceania,Nauru,Yaren
-Oceania,New Caledonia (France),Nouméa 
+Oceania,New Caledonia (France),Noumea 
 Oceania,New Zealand,Wellington 
 Oceania,Niue (New Zealand),Alofi 
 Oceania,Norfolk Island (Australia),Kingston 
@@ -228,7 +228,7 @@ South America,Ecuador,Quito
 South America,Falkland Islands (UK),Stanley 
 South America,French Guiana (France),Cayenne 
 South America,Guyana,Georgetown 
-South America,Paraguay,Asunción 
+South America,Paraguay,Asuncion 
 South America,Peru,Lima 
 South America,"Saint Helena, Ascension, and Tristan da Cunha (UK)",Jamestown
 South America,Suriname,Paramaribo 

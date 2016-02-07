@@ -4,6 +4,8 @@ from os import listdir
 from os.path import isfile, join
 import csv
 
+DBG = not True
+
 class Country:
   Name = ""
   Capital = ""
@@ -19,24 +21,32 @@ class Country:
 
   def Print(self):
     print("COUNTRY\t[{0}\n\t\t{1}\n\t\t{2}\n\t\t{3}\n\t\t{4}]".format(
-            self.Continet,
+            self.Continent,
             self.Name,
             self.Capital,
             self.MapFile,
             self.LocationFile))
+
+def dbg(x):
+  if not DBG:
+    return
+  if type(x) is Country:
+    x.Print()
+  else:
+    print(x)
 
 def CountryInfoFromCsv():
   with open("list-of-countries-in-the-world.csv") as csvfile:
     reader = csv.reader(csvfile, delimiter=',', quotechar='"')
     for row in reader:
       country = Country()
-      country.Continent = row[0]
-      country.Name = row[1]
-      country.Capital = row[2]
+      country.Continent = row[0].strip()
+      country.Name = row[1].strip()
+      country.Capital = row[2].strip()
       yield country
 
 def MapsFilesFromDirectory(directory, keyfunc):
-  files = [f for f in listdir(directory) if isfile(join(mypath, f))]
+  files = [join(directory, f) for f in listdir(directory) if isfile(join(directory, f))]
   filepaths = {}
   for i in files:
     key = keyfunc(os.path.basename(i))
@@ -49,7 +59,7 @@ def CheckAndAssociateMapFiles(maps, country, associatefunc):
     associatefunc(maps[normalizedname])
   else:  
     # TODO: check inexact name
-    print("{0} not found.".format(normalizedname))
+    dbg("{0} not found.".format(normalizedname))
 
 def GenData():
   countries = []
@@ -61,13 +71,8 @@ def GenData():
                   "C:\\Users\\Rovin\\maps\\CountryLocationMaps",
                   lambda s : s[7:-4])
   for i in countryinfo:
+     dbg(i)
      CheckAndAssociateMapFiles(countrymaps, i, i.AssignMapFile)
      CheckAndAssociateMapFiles(locationmaps, i, i.AssignLocationFile)
      countries.append(i)
-  for i in countries:
-    print()
-    i.Print()
-
-
-  # Browse Maps Directory
-
+  return countries
