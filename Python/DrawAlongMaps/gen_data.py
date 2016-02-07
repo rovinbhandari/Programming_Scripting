@@ -58,7 +58,6 @@ def CheckAndAssociateMapFiles(maps, country, associatefunc):
   if normalizedname in maps:
     associatefunc(maps[normalizedname])
   else:  
-    # TODO: check inexact name
     dbg("{0} not found.".format(normalizedname))
 
 def GenData():

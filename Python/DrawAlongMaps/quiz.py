@@ -15,8 +15,9 @@ Score = {"m": 0, "r": 0}
 ExitGame = False
 
 data = GenData()
-data = [x for x in data if not x.MapFile == ""]
+data = [x for x in data if not x.MapFile == "" and x.Continent in PlayFor]
 datasize = len(data)
+playedindices = [-1]
 
 def ShowScore():
   print("Score: Mimi={0}, Rainy={1}".format(Score["m"], Score["r"]))
@@ -25,8 +26,19 @@ def ClearScreen():
   print(chr(27) + "[2J")
 
 def Play():
-  index = random.randint(0, datasize)
-  # TODO: index should be non-repeating.
+  global data
+  global datasize
+  global playedindices
+  global ExitGame
+  index = -1
+  if len(playedindices) == datasize + 1:
+    ExitGame = True
+    print("No more unique countries left!")
+    ShowWinner()
+    return
+  while index in playedindices:
+    index = random.randint(0, datasize - 1)
+  playedindices.append(index)  
   choice = data[index]
   ClearScreen()
   print("3..")
@@ -58,6 +70,7 @@ def InputHandler(state):
     os.system(state.LocationFile);
     return InputHandler(state)
   elif command == "x":
+    ClearScreen()
     ShowWinner()
     ExitGame = True
     return
@@ -71,7 +84,6 @@ def InputHandler(state):
   return
 
 def ShowWinner():
-  ClearScreen()
   ShowScore()
   winner = ""
   if Score["m"] > Score["r"]:
