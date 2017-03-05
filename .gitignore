@@ -3,6 +3,7 @@
 .*.swp
 
 # dir
+.vs
 .vscode
 .dropbox
 
@@ -22,6 +23,16 @@
 [Dd]ebug/
 [Rr]elease/
 output/
+lib/debug
+lib/release
+*.dll
+*.pdb
+*.cache
+obj
+objd
+bin
+build
+*.exe
 
 # dat
 *.rar
@@ -33,4 +44,7 @@ output/
 *.7z
 *.mp3
 *.flv
+*.suo
+*.user
 *.nupkg
+packages
