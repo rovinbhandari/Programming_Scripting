@@ -21,3 +21,16 @@
 *.7z
 *.mp3
 *.flv
+lib/debug
+lib/release
+Debug
+Release
+*.suo
+*.user
+obj
+objd
+bin
+build
+*.exe
+packages
+*.dll
