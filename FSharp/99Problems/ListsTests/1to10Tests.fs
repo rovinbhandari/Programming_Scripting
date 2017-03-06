@@ -1,4 +1,4 @@
-﻿module ListsTestz
+﻿module _1to10Tests
 
 open NUnit.Framework
 open FsCheck
@@ -62,3 +62,40 @@ let ``check flattened valid list``() =
 let ``check compressed valid list``() =
     let res = Lists._1to10.Compress [1; 1; 2; 2; 2; 3; 1; 1; 4; 4]
     res |> should equal [1; 2; 3; 1; 4]
+
+[<Test>]
+let ``check repetition of element to form a valid list``() =
+    let res = Lists._1to10.Repeat 'a' 8
+    res |> should equal ['a';'a';'a';'a';'a';'a';'a';'a';]
+    let res = Lists._1to10.Repeat [1] 2
+    res |> should equal [[1]; [1]]
+
+[<Test>]
+let ``check occurrences of element in valid list``() =
+    let res = Lists._1to10.COAH 1 [1; 1; 2; 2; 2; 3; 1; 1; 1; 4]
+    res |> should equal 2
+    let res = Lists._1to10.COAH 1 [1; 1; 1; 4]
+    res |> should equal 3
+    let res = Lists._1to10.COAH 'a' ['a';'a';'a';'a';'a';'a';'a';'a';]
+    res |> should equal 8
+    let res = Lists._1to10.COAH 1 []
+    res |> should equal 0
+    let res = Lists._1to10.COAH 1 [1]
+    res |> should equal 1
+    let res = Lists._1to10.COAH 1 [2]
+    res |> should equal 0
+
+[<Test>]
+let ``check sublist of a valid list``() =
+    let res = Lists._1to10.Sublist [1; 1; 2; 2; 2; 3; 1; 1; 1; 4] 4
+    res |> should equal [2; 3; 1; 1; 1; 4]
+
+[<Test>]
+let ``check packing of a valid list``() =
+    let res = Lists._1to10.Pack [1; 1; 2; 2; 2; 3; 1; 1; 1; 4]
+    res |> should equal [[1; 1]; [2; 2; 2]; [3]; [1; 1; 1]; [4]]
+
+[<Test>]
+let ``check encoding of a valid list``() =
+    let res = Lists._1to10.Encode [1; 1; 2; 2; 2; 3; 1; 1; 1; 4]
+    res |> should equal [(2, 1); (3, 2); (1, 3); (3, 1); (1, 4)]
