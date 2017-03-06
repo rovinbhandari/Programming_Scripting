@@ -34,3 +34,6 @@ build
 *.exe
 packages
 *.dll
+*.pdb
+*.cache
+.vs

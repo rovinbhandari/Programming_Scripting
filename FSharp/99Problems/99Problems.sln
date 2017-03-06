@@ -7,7 +7,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tryouts", "Tryouts\Tryouts.
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lists", "Lists\Lists.fsproj", "{B7D47CBB-DA07-4B3C-8514-6AF8E2E66284}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lists-Tests", "Lists-Tests\Lists-Tests.fsproj", "{C4E86642-34A8-485E-A54C-F81595DC4941}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ListsTests", "ListsTests\ListsTests.fsproj", "{40CC2DC7-8DD5-42DB-A6A0-DD07ED7A3343}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{B7D47CBB-DA07-4B3C-8514-6AF8E2E66284}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7D47CBB-DA07-4B3C-8514-6AF8E2E66284}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7D47CBB-DA07-4B3C-8514-6AF8E2E66284}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C4E86642-34A8-485E-A54C-F81595DC4941}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C4E86642-34A8-485E-A54C-F81595DC4941}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C4E86642-34A8-485E-A54C-F81595DC4941}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C4E86642-34A8-485E-A54C-F81595DC4941}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40CC2DC7-8DD5-42DB-A6A0-DD07ED7A3343}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40CC2DC7-8DD5-42DB-A6A0-DD07ED7A3343}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40CC2DC7-8DD5-42DB-A6A0-DD07ED7A3343}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40CC2DC7-8DD5-42DB-A6A0-DD07ED7A3343}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
