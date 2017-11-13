@@ -50,6 +50,7 @@
     <Compile Include="1to10Tests.fs" />
     <Content Include="packages.config" />
     <Content Include="App.config" />
+    <Compile Include="11to20Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
