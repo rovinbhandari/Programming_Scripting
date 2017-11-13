@@ -22,14 +22,20 @@ void CreateIndex(
     foreach (var word in words)
     {
         var lword = word.ToLower();
-        //Console.Write($"{lword} ");
+        //Console.WriteLine($"{lword} ");
         var keys = lword.Distinct();
         foreach (var key in keys)
         {
+            if (!(key >= 'a' && key <= 'z'))    // TODO: need to fix this to support non-English dictionaries
+            {
+                continue;
+            }
+
             if (index[key - 'a'] == null)
             {
                 index[key - 'a'] = new List<string>();
             }
+
             index[key - 'a'].Add(lword);
         }
     }
