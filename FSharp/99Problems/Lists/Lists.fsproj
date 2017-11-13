@@ -53,6 +53,7 @@
     <Compile Include="1to10.fs" />
     <Content Include="packages.config" />
     <Content Include="App.config" />
+    <Compile Include="11to20.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
