@@ -1,4 +1,5 @@
-#r "R:\CxCache\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll"
+//#r "R:\CxCache\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll"
+#r "C:\CxCache\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll"
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,8 +7,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 #region Constants
-const string WordListFilePath = @"R:\GitHub\Programming_Scripting\C#\ScrabbleHelper\EngWordList.txt";
-const string IndexListFilePath = @"R:\GitHub\Programming_Scripting\C#\ScrabbleHelper\Index.json";
+const string ReposRoot = @"C:\git";
+//const string ReposRoot = @"R:\GitHub";
+const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EngWordList.txt";
+const string IndexListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\Index.json";
 #endregion Constants
 
 List<string>[] index = null;
@@ -137,6 +140,7 @@ void Print(IEnumerable<string> words)
     var wordsList = words.ToList();
     wordsList.Sort();
     var wordsArray = wordsList.ToArray();
+    Console.WriteLine($"Found {wordsArray.Length} matches.");
     for(var i = 0; i < wordsArray.Length; i+= 3)
     {
         Console.WriteLine(
