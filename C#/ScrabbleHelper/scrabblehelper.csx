@@ -105,7 +105,22 @@ IEnumerable<string> AnchoredLookup(
     var regexPattern = "\\b" + pattern.Replace(".", $"[{chars}]{{1}}").Replace("?", $"[{chars}]?").Replace("*", "\\w*").Replace("#", $"[{chars}]*") + "\\b";
     Console.WriteLine($"Using pattern to search: {regexPattern}");
     var regex = new Regex(regexPattern);
-    return wordsWithProvidedChars.Where(word => regex.IsMatch(word));
+    var allowedChars = chars + pattern;
+
+    // remove words which do not match the regex
+    // remove words which have more character repetitions than allowed in chars
+    // TODO: optimize the filtering below!
+    return wordsWithProvidedChars
+           .Where(word => regex.IsMatch(word))
+           .Where(word =>
+               {
+                   foreach (var c in word.Distinct())
+                   {
+                       if (word.Count(ch => ch == c) > allowedChars.Count(ch => ch == c))
+                           return false;
+                   }
+                   return true;
+               }); 
 }
 
 void LookupAndPrint(
