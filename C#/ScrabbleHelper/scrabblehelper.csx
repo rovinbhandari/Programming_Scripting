@@ -1,5 +1,3 @@
-//#r "R:\CxCache\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll"
-#r "C:\CxCache\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll"
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,80 +5,23 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 #region Constants
-const string ReposRoot = @"C:\git";
-//const string ReposRoot = @"R:\GitHub";
-const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EngWordList.txt";
-const string IndexListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\Index.json";
+//const string ReposRoot = @"C:\git";
+const string ReposRoot = @"R:\GitHub";
+const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EnUsTwl.txt";
 #endregion Constants
 
 List<string>[] index = null;
 
-// this needs to run once before using any of the lookups
-void CreateIndex(
+// this one would be used the most.
+void AnchoredLookupAndPrint(
+    string chars,
+    string pattern,
     string wordListFile = WordListFilePath,
-    string indexFile = IndexListFilePath)
+    bool forceRead = false,
+    Func<string, string, bool, IEnumerable<string>> lookup = null)
 {
-    var words = File.ReadAllLines(wordListFile);
-    var index = new List<string>[26];
-    foreach (var word in words)
-    {
-        var lword = word.ToLower();
-        //Console.WriteLine($"{lword} ");
-        var keys = lword.Distinct();
-        foreach (var key in keys)
-        {
-            if (!(key >= 'a' && key <= 'z'))    // TODO: need to fix this to support non-English dictionaries
-            {
-                continue;
-            }
-
-            if (index[key - 'a'] == null)
-            {
-                index[key - 'a'] = new List<string>();
-            }
-
-            index[key - 'a'].Add(lword);
-        }
-    }
-
-    var j = Newtonsoft.Json.JsonConvert.SerializeObject(index);
-    using (var writer = new StreamWriter(indexFile))
-    {
-        writer.Write(j);
-    }
-}
-
-IEnumerable<string> LookupIntersection(
-    string chars,
-    string indexFile = IndexListFilePath,
-    bool forceRead = false)
-{
-    var uniqChars = GetUniqChars(chars);
-    LoadIndex(indexFile, forceRead);
-    var intersection = new HashSet<string>(index[uniqChars.First() - 'a']);
-    foreach (var c in uniqChars)
-    {
-        // Runs one more iteration than necessary.
-        intersection.IntersectWith(index[c - 'a']);
-    }
-
-    return intersection;
-}
-
-IEnumerable<string> LookupUnion(
-    string chars,
-    string indexFile = IndexListFilePath,
-    bool forceRead = false)
-{
-    var uniqChars = GetUniqChars(chars);
-    LoadIndex(indexFile, forceRead);
-    var union = new HashSet<string>();
-    foreach (var c in uniqChars)
-    {
-        union.UnionWith(index[c - 'a']);
-    }
-
-    return union;
+    var foundWords = AnchoredLookup(chars, pattern, wordListFile, forceRead, lookup);
+    Print(foundWords);
 }
 
 // pattern can be of the form: *.x.*.y.*
@@ -89,19 +30,20 @@ IEnumerable<string> LookupUnion(
 // x and y are fixed characters (anchors)
 // * can be replaced with # to match any number of provided characters
 // . can be replaced with ? to match 0 or 1 times one of the provided characters
+// TODO: * is not supported with the current filtering.
 IEnumerable<string> AnchoredLookup(
     string chars,
     string pattern,
-    Func<string, string, bool, IEnumerable<string>> lookup = null,
-    string indexFile = IndexListFilePath,
-    bool forceRead = false)
+    string wordListFile = WordListFilePath,
+    bool forceRead = false,
+    Func<string, string, bool, IEnumerable<string>> lookup = null)
 {
     if (lookup == null)
     {
         lookup = LookupUnion;
     }
 
-    var wordsWithProvidedChars = lookup(chars, indexFile, forceRead);
+    var wordsWithProvidedChars = lookup(chars, wordListFile, forceRead);
     var regexPattern = "\\b" + pattern.Replace(".", $"[{chars}]{{1}}").Replace("?", $"[{chars}]?").Replace("*", "\\w*").Replace("#", $"[{chars}]*") + "\\b";
     Console.WriteLine($"Using pattern to search: {regexPattern}");
     var regex = new Regex(regexPattern);
@@ -123,10 +65,43 @@ IEnumerable<string> AnchoredLookup(
                }); 
 }
 
+IEnumerable<string> LookupIntersection(
+    string chars,
+    string wordListFile = WordListFilePath,
+    bool forceRead = false)
+{
+    var uniqChars = GetUniqChars(chars);
+    CreateIndex(wordListFile, forceRead);
+    var intersection = new HashSet<string>(index[uniqChars.First() - 'a']);
+    foreach (var c in uniqChars)
+    {
+        // Runs one more iteration than necessary.
+        intersection.IntersectWith(index[c - 'a']);
+    }
+
+    return intersection;
+}
+
+IEnumerable<string> LookupUnion(
+    string chars,
+    string wordListFile = WordListFilePath,
+    bool forceRead = false)
+{
+    var uniqChars = GetUniqChars(chars);
+    CreateIndex(wordListFile, forceRead);
+    var union = new HashSet<string>();
+    foreach (var c in uniqChars)
+    {
+        union.UnionWith(index[c - 'a']);
+    }
+
+    return union;
+}
+
 void LookupAndPrint(
     string chars,
     Func<string, string, bool, IEnumerable<string>> lookup = null,
-    string indexFile = IndexListFilePath,
+    string wordListFile = WordListFilePath,
     bool forceRead = false)
 {
     if (lookup == null)
@@ -134,26 +109,14 @@ void LookupAndPrint(
         lookup = LookupIntersection;
     }
 
-    var foundWords = lookup(chars, indexFile, forceRead);
-    Print(foundWords);
-}
-
-// this one would be used the most.
-void AnchoredLookupAndPrint(
-    string chars,
-    string pattern,
-    Func<string, string, bool, IEnumerable<string>> lookup = null,
-    string indexFile = IndexListFilePath,
-    bool forceRead = false)
-{
-    var foundWords = AnchoredLookup(chars, pattern, lookup, indexFile, forceRead);
+    var foundWords = lookup(chars, wordListFile, forceRead);
     Print(foundWords);
 }
 
 void Print(IEnumerable<string> words)
 {
     var wordsList = words.ToList();
-    wordsList.Sort();
+    wordsList.Sort();   // TODO: sort by score
     var wordsArray = wordsList.ToArray();
     Console.WriteLine($"Found {wordsArray.Length} matches.");
     for(var i = 0; i < wordsArray.Length; i+= 3)
@@ -180,25 +143,35 @@ private string ArrayLookup(string[] arr, int index)
     }
 }
 
-private void LoadIndex(
-    string indexFile = IndexListFilePath,
+private void CreateIndex(
+    string wordListFile = WordListFilePath,
     bool forceRead = false)
 {
     if (index == null || forceRead)
     {
-        if (!File.Exists(indexFile))
+        var words = File.ReadAllLines(wordListFile);
+        index = new List<string>[26];
+        foreach (var word in words)
         {
-            throw new FileNotFoundException($"index file not found @ {indexFile}");
+            var lword = word.ToLower();
+            //Console.WriteLine($"{lword} ");
+            var keys = lword.Distinct();
+            foreach (var key in keys)
+            {
+                if (!(key >= 'a' && key <= 'z'))    // TODO: need to fix this to support non-English dictionaries
+                {
+                    continue;
+                }
+
+                if (index[key - 'a'] == null)
+                {
+                    index[key - 'a'] = new List<string>();
+                }
+
+                index[key - 'a'].Add(lword);
+            }
         }
 
-        var jsonIndex = "";
-        using (var reader = new StreamReader(indexFile))
-        {
-            jsonIndex = reader.ReadToEnd();
-        }
-
-        index = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>[]>(jsonIndex);
-        Console.WriteLine($"Index populated from file @ {indexFile}");
         foreach (var i in index)
         {
             //Console.WriteLine(i.Count());
