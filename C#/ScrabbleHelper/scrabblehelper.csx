@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 #region Constants
-//const string ReposRoot = @"C:\git";
-const string ReposRoot = @"R:\GitHub";
+const string ReposRoot = @"C:\git";
+//const string ReposRoot = @"R:\GitHub";
 const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EnUsTwl.txt";
 #endregion Constants
 
@@ -20,8 +20,23 @@ void AnchoredLookupAndPrint(
     bool forceRead = false,
     Func<string, string, bool, IEnumerable<string>> lookup = null)
 {
-    var foundWords = AnchoredLookup(chars, pattern, wordListFile, forceRead, lookup);
-    Print(foundWords);
+    if (!chars.Contains(' '))
+    {
+        var foundWords = AnchoredLookup(chars, pattern, wordListFile, forceRead, lookup);
+        Print(foundWords);
+    }
+    else    // TODO: this should be handled by AnchoredLookup(...) instead.
+    {
+        var allFoundWords = new List<string>();
+        var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToLower().ToCharArray();
+        chars = chars.Replace(" ", "");
+        foreach(var l in alpha)
+        {
+            allFoundWords.AddRange(AnchoredLookup(chars + l, pattern, wordListFile, forceRead, lookup));
+        }
+
+        Print(allFoundWords);
+    }
 }
 
 // pattern can be of the form: *.x.*.y.*
