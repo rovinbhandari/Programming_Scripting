@@ -5,12 +5,15 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 #region Constants
-const string ReposRoot = @"C:\git";
-//const string ReposRoot = @"R:\GitHub";
+//const string ReposRoot = @"C:\git";
+const string ReposRoot = @"R:\GitHub";
 const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EnUsTwl.txt";
 #endregion Constants
 
 List<string>[] index = null;
+
+// TODO: make it runnable with Roslyn\csc.exe from console
+// TODO: Add Norwegian support
 
 // this one would be used the most.
 void AnchoredLookupAndPrint(
@@ -131,7 +134,7 @@ void LookupAndPrint(
 void Print(IEnumerable<string> words)
 {
     var wordsList = words.ToList();
-    wordsList.Sort();   // TODO: sort by score
+    wordsList.Sort();   // TODO: append score, remove duplicates
     var wordsArray = wordsList.ToArray();
     Console.WriteLine($"Found {wordsArray.Length} matches.");
     for(var i = 0; i < wordsArray.Length; i+= 3)
