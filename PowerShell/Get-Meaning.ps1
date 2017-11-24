@@ -1,4 +1,5 @@
 # TODO: Build caching!!!!!
+# TODO: Doesn't work with (gc $file -TotalCount X)[Y..(X-1)] | Get-Meaning, where X > Y
 Function Get-Meaning($keywords)
 {
   # To insert a Line that will separate one meaning  from another

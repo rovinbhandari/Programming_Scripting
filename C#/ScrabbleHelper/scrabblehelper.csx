@@ -7,13 +7,15 @@ using System.Text.RegularExpressions;
 #region Constants
 //const string ReposRoot = @"C:\git";
 const string ReposRoot = @"R:\GitHub";
+//const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\NbNoNsf.txt";
 const string WordListFilePath = ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EnUsTwl.txt";
+const string Alpha = "abcdefghijklmnopqrstuvwxyzæøå";
 #endregion Constants
 
-List<string>[] index = null;
+List<string>[] hash = null;
 
 // TODO: make it runnable with Roslyn\csc.exe from console
-// TODO: Add Norwegian support
+// TODO: refactor so that different languages can be used in the same session
 
 // this one would be used the most.
 void AnchoredLookupAndPrint(
@@ -31,9 +33,8 @@ void AnchoredLookupAndPrint(
     else    // TODO: this should be handled by AnchoredLookup(...) instead.
     {
         var allFoundWords = new List<string>();
-        var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToLower().ToCharArray();
         chars = chars.Replace(" ", "");
-        foreach(var l in alpha)
+        foreach(var l in Alpha.ToCharArray())
         {
             allFoundWords.AddRange(AnchoredLookup(chars + l, pattern, wordListFile, forceRead, lookup));
         }
@@ -90,11 +91,11 @@ IEnumerable<string> LookupIntersection(
 {
     var uniqChars = GetUniqChars(chars);
     CreateIndex(wordListFile, forceRead);
-    var intersection = new HashSet<string>(index[uniqChars.First() - 'a']);
+    var intersection = new HashSet<string>(hash[Alpha.IndexOf(uniqChars.First())]);
     foreach (var c in uniqChars)
     {
         // Runs one more iteration than necessary.
-        intersection.IntersectWith(index[c - 'a']);
+        intersection.IntersectWith(hash[Alpha.IndexOf(c)]);
     }
 
     return intersection;
@@ -110,7 +111,7 @@ IEnumerable<string> LookupUnion(
     var union = new HashSet<string>();
     foreach (var c in uniqChars)
     {
-        union.UnionWith(index[c - 'a']);
+        union.UnionWith(hash[Alpha.IndexOf(c)]);
     }
 
     return union;
@@ -133,8 +134,8 @@ void LookupAndPrint(
 
 void Print(IEnumerable<string> words)
 {
-    var wordsList = words.ToList();
-    wordsList.Sort();   // TODO: append score, remove duplicates
+    var wordsList = words.Distinct().ToList();
+    wordsList.Sort();   // TODO: append score
     var wordsArray = wordsList.ToArray();
     Console.WriteLine($"Found {wordsArray.Length} matches.");
     for(var i = 0; i < wordsArray.Length; i+= 3)
@@ -165,10 +166,10 @@ private void CreateIndex(
     string wordListFile = WordListFilePath,
     bool forceRead = false)
 {
-    if (index == null || forceRead)
+    if (hash == null || forceRead)
     {
         var words = File.ReadAllLines(wordListFile);
-        index = new List<string>[26];
+        hash = new List<string>[Alpha.Length];
         foreach (var word in words)
         {
             var lword = word.ToLower();
@@ -176,23 +177,24 @@ private void CreateIndex(
             var keys = lword.Distinct();
             foreach (var key in keys)
             {
-                if (!(key >= 'a' && key <= 'z'))    // TODO: need to fix this to support non-English dictionaries
+                if (!(Alpha.Contains(key)))
                 {
                     continue;
                 }
 
-                if (index[key - 'a'] == null)
+                var index = Alpha.IndexOf(key);
+                if (hash[index] == null)
                 {
-                    index[key - 'a'] = new List<string>();
+                    hash[index] = new List<string>();
                 }
 
-                index[key - 'a'].Add(lword);
+                hash[index].Add(lword);
             }
         }
 
-        foreach (var i in index)
+        foreach (var i in hash)
         {
-            //Console.WriteLine(i.Count());
+            Console.WriteLine(i?.Count());
         }
     }
 }
