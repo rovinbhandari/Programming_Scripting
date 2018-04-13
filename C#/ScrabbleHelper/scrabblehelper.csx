@@ -18,6 +18,7 @@ string[] Alpha = new[] {
     "abcdefghijklmnopqrstuvwxyz",
     "abcdefghijklmnopqrstuvwxyzæøå"
 };
+const int MaxChars = 50;
 enum Lang { en, nb }
 #endregion Constants
 
@@ -46,12 +47,28 @@ void AnchoredLookupAndPrint(
     {
         var allFoundWords = new ConcurrentBag<string>();
         chars = chars.Replace(" ", "");
-        Parallel.ForEach(Alpha[(int)lang].ToCharArray(), l =>
+        try
         {
-            var words = AnchoredLookup(chars + l, pattern, lang, forceRead, lookup);
-            foreach(var w in words)
-                allFoundWords.Add(w);
-        });
+            CreateIndex(lang, forceRead);
+            Parallel.ForEach(Alpha[(int)lang].ToCharArray(), l =>
+            {
+                var words = AnchoredLookup(chars + l, pattern, lang, false, lookup);
+                foreach (var w in words)
+                    allFoundWords.Add(w);
+            });
+        }
+        catch(AggregateException ae)
+        {
+            ae.Handle(e =>
+            {
+                Console.WriteLine($"{e}; {e.Message}; {e.InnerException}");
+                return true;
+            });
+        }
+        catch(ArgumentException re)
+        {
+            Console.WriteLine($"{re}; {re.Message}");
+        }
 
         Print(allFoundWords.ToArray());
     }
@@ -185,7 +202,7 @@ private void CreateIndex(
     if (hash == null || forceRead)
     {
         var words = File.ReadAllLines(WordListFilePaths[(int)lang]);
-        hash = new List<string>[Alpha[(int)lang].Length];
+        hash = new List<string>[MaxChars];
         foreach (var word in words)
         {
             var lword = word.ToLower();
