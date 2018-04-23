@@ -44,7 +44,7 @@ Function Do-Bookkeeping($content, $before = $true, $subpath = "")
     # verify file exists
     if (-not (Test-Path $path))
     {
-      Write-Host "Creating new file..."
+      Write-Host "Creating new log file @ $path ..."
       echo "" | Out-File -Encoding ascii -Append $path -NoNewLine
     }
 
