@@ -38,6 +38,7 @@ void AnchoredLookupAndPrint(
     if (!Enum.TryParse(language, out Lang lang))
         throw new Exception("unknown language");
     forceRead = forceRead || lang != prevLang;
+    Console.Write("Searching...");
     if (!chars.Contains(' '))
     {
         var foundWords = AnchoredLookup(chars, pattern, lang, forceRead, lookup);
@@ -97,7 +98,8 @@ IEnumerable<string> AnchoredLookup(
 
     var wordsWithProvidedChars = lookup(chars, lang, forceRead);
     var regexPattern = "\\b" + pattern.Replace(".", $"[{chars}]{{1}}").Replace("?", $"[{chars}]?").Replace("*", "\\w*").Replace("#", $"[{chars}]*") + "\\b";
-    Console.WriteLine($"Using pattern to search: {regexPattern}");
+    ////Console.WriteLine($"Using pattern to search: {regexPattern}");
+    Console.Write(".");
     var regex = new Regex(regexPattern);
     var allowedChars = chars + pattern;
 
@@ -170,7 +172,7 @@ void Print(IEnumerable<string> words)
     var wordsList = words.Distinct().ToList();
     wordsList.Sort();   // TODO: append score
     var wordsArray = wordsList.ToArray();
-    Console.WriteLine($"Found {wordsArray.Length} matches.");
+    Console.WriteLine($" Found {wordsArray.Length} matches.");
     for(var i = 0; i < wordsArray.Length; i+= 3)
     {
         Console.WriteLine(
