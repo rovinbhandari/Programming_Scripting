@@ -169,31 +169,53 @@ void LookupAndPrint(
 
 void Print(IEnumerable<string> words)
 {
-    var wordsList = words.Distinct().ToList();
-    wordsList.Sort();   // TODO: append score
-    var wordsArray = wordsList.ToArray();
-    Console.WriteLine($" Found {wordsArray.Length} matches.");
-    for(var i = 0; i < wordsArray.Length; i+= 3)
+    var wordGroups = words.Distinct().GroupBy(w => w.Length);
+    // TODO: append score?
+    var totalMatches = 0;
+    var groupsDict = new Dictionary<int, List<string>>();
+    foreach(var group in wordGroups)
     {
-        Console.WriteLine(
-            string.Format(
-                "{0,-40}\t{1,-40}\t{2}",
-                ArrayLookup(wordsArray, i),
-                ArrayLookup(wordsArray, i + 1),
-                ArrayLookup(wordsArray, i + 2)));
+        groupsDict[group.Key] = group.ToList();
+        totalMatches += group.Count();
     }
+
+    Console.WriteLine($" Found {totalMatches} matches.");
+    var keys = groupsDict.Keys.ToList();
+    keys.Sort();
+    keys.Reverse();
+    foreach (var key in keys)
+    {
+        Columnize(key, groupsDict[key]);
+    }
+    
 }
 
 #region Privates
-private string ArrayLookup(string[] arr, int index)
+private void Columnize(int size, List<string> words)
 {
-    if(index >= arr.Length)
+    words.Sort();
+    Console.WriteLine($"Words of size {size}:");
+    for (var i = 0; i < words.Count(); i+= 3)
+    {
+        Console.WriteLine(
+            string.Format(
+                "{0, -30}\t{1,-30}\t{2,-30}\t{3}",
+                "",
+                ListLookup(words, i),
+                ListLookup(words, i + 1),
+                ListLookup(words, i + 2)));
+    }
+}
+
+private string ListLookup(List<string> words, int index)
+{
+    if(index >= words.Count())
     {
         return null;
     }
     else
     {
-        return arr[index];
+        return words.ElementAt(index);
     }
 }
 
