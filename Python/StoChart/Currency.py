@@ -35,6 +35,9 @@ class NOK:
         if self.end_date < self.start_date:
             raise Exception("End date cannot be less than start date!")
     
+    def DatesAreClose(self, a, b, tolerance = 1):
+        return abs((a - b).days) <= tolerance
+
     def DictReaderToList(self, reader):
         l = [Currency(r[Currency.bizday_title], r[Currency.conversion_title]) for r in reader]
         l.sort()
@@ -47,18 +50,22 @@ class NOK:
         return []
     
     def GetDataFromNorgesBank(self, start_date):
-        csv_url_template = "https://data.norges-bank.no/api/data/EXR/B.USD.NOK.SP?StartPeriod={year}-{month}-{day}&format=csv-:-comma-false-y"
-        csv_url = csv_url_template.format(year=start_date.year, month=start_date.month, day=start_date.day)
+        if self.DatesAreClose(start_date, date.today()):
+            return []
+        csv_url_template = "https://data.norges-bank.no/api/data/EXR/B.USD.NOK.SP?StartPeriod={yyyy_mm_dd}&format=csv-:-comma-false-y"
+        csv_url = csv_url_template.format(yyyy_mm_dd = start_date.strftime("%Y-%m-%d"))
         with requests.Session() as s:
             download = s.get(csv_url)
             content = download.content.decode('utf-8')
-            return self.DictReaderToList(csv.DictReader(content.splitlines()))
+            content_lines = content.splitlines()
+            content_lines[0] = "{0},{1}".format(Currency.bizday_title, Currency.conversion_title)
+            return self.DictReaderToList(csv.DictReader(content_lines))
     
     def UpdateCache(self, values):
         with open(self.file_path, 'w') as f:
-            f.write("{0},{1}".format(self.bizday_title, self.conversion_title))
+            f.write("{0},{1}".format(Currency.bizday_title, Currency.conversion_title) + "\n")
             for v in values:
-                f.write(str(v))
+                f.write(str(v) + "\n")
 
     def GetData(self):
         cache = self.GetDataFromCache()
@@ -68,11 +75,11 @@ class NOK:
             cache_end_date = cache[-1].bizday
             #    ==========csd===========ced===========
             # 1:  ^nsd
-            # 2:                 ^nsd
+            # 2:                    ^nsd
             # 3:                                ^nsd
             # Case 1: fetch all
             # Case 2, 3: fetch from ced
-            if nb_start_date > cache_start_date:
+            if self.DatesAreClose(nb_start_date, cache_start_date, 4):
                 nb_start_date = cache_end_date
         from_nb = self.GetDataFromNorgesBank(nb_start_date)
         new_values = [e for e in from_nb if not (e in cache)]
@@ -83,7 +90,7 @@ class NOK:
 
 def Test(sd, ed):
     n = NOK(start_date = sd, end_date = ed)
-    c = GetData()
-    print sum([v.conversion for v in c])/float(len(c))
+    c = n.GetData()
+    assert isclose(sum([v.conversion for v in c])/float(len(c)), 7.9, abs_tol=1e-1), "average came out incorrect."
 
 Test(date(2017, 6, 25), date(2018, 6, 25))
