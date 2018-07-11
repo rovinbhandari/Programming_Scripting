@@ -65,14 +65,14 @@ def MSFTinNOK(sd, ed = None):
     mn = MSFTNOK(start_date=sd, end_date=ed)
     nok = mn.AddMissingDates(NOK(mn.start_date, mn.end_date).GetData())
     msft = mn.AddMissingDates(MSFT(mn.start_date, mn.end_date).GetData())
-    Utils.WriteToFile("C:\\temp\\USDNOK.filled.csv", Currency.Header(), nok)
-    Utils.WriteToFile("C:\\temp\\MSFT.filled.csv", Stock.Header(), msft)
-    nok_dates = set([v.bizday for v in nok])
-    msft_dates = set([v.bizday for v in msft])
-    diff1 = nok_dates - msft_dates
-    diff2 = msft_dates - nok_dates
-    Utils.WriteToFile("C:\\temp\\datediff1.csv", "BizDay", diff1)
-    Utils.WriteToFile("C:\\temp\\datediff2.csv", "BizDay", diff2)
+    # Utils.WriteToFile("C:\\temp\\USDNOK.filled.csv", Currency.Header(), nok)
+    # Utils.WriteToFile("C:\\temp\\MSFT.filled.csv", Stock.Header(), msft)
+    # nok_dates = set([v.bizday for v in nok])
+    # msft_dates = set([v.bizday for v in msft])
+    # diff1 = nok_dates - msft_dates
+    # diff2 = msft_dates - nok_dates
+    # Utils.WriteToFile("C:\\temp\\datediff1.csv", "BizDay", diff1)
+    # Utils.WriteToFile("C:\\temp\\datediff2.csv", "BizDay", diff2)
     msftnok = mn.Combine(nok, msft, mn.CurrencyConversion)
     Utils.WriteToFile(mn.file_path, Stock.Header(), msftnok)
 

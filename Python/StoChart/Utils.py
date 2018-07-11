@@ -30,7 +30,8 @@ def GetDataFromWeb(url, header, converter):
 
 def UpdateCache(file_path, header, cache, to_merge):
     if len(to_merge) > 0:
-        new_values = [e for e in to_merge if not (e in cache)]
+        cache_dates = [v.bizday for v in cache]
+        new_values = [e for e in to_merge if not (e.bizday in cache_dates)]
         cache.extend(new_values)
         cache.sort()
         WriteToFile(file_path, header, cache)
