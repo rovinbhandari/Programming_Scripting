@@ -22,7 +22,7 @@ class NOK:
             return []
         csv_url_template = "https://data.norges-bank.no/api/data/EXR/B.USD.NOK.SP?StartPeriod={yyyy_mm_dd}&format=csv-:-comma-false-y"
         csv_url = csv_url_template.format(yyyy_mm_dd = start_date.strftime("%Y-%m-%d"))
-        return Utils.GetDataFromWeb(csv_url, Currency.header(), Currency.DictReaderToList)
+        return Utils.GetDataFromWeb(csv_url, Currency.Header(), Currency.DictReaderToList)
 
     def GetData(self):
         cache = Utils.GetDataFromCache(self.file_path, Currency.DictReaderToList)
@@ -39,7 +39,7 @@ class NOK:
             if Utils.DatesAreClose(nb_start_date, cache_start_date, 4):
                 nb_start_date = cache_end_date
         from_nb = self.GetDataFromNorgesBank(nb_start_date)
-        cache = Utils.UpdateCache(self.file_path, Currency.header(), cache, from_nb)
+        cache = Utils.UpdateCache(self.file_path, Currency.Header(), cache, from_nb)
         return Utils.DateFilter(cache, self.start_date, self.end_date)
 
 def Test(sd, ed):

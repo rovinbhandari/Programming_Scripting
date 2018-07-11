@@ -30,24 +30,33 @@ class MSFT:
         if not last3months:
             csv_url_template += "outputsize=full"
         csv_url = csv_url_template.format(avkey = key)
-        return Utils.GetDataFromWeb(csv_url, Stock.header(), Stock.DictReaderToList)
+        return Utils.GetDataFromWeb(csv_url, Stock.Header(), Stock.DictReaderToList)
     
     def GetData(self):
         cache = Utils.GetDataFromCache(self.file_path, Stock.DictReaderToList)
         av_available_from = date(2000, 1, 1)
         from_av = []
-        if len(cache) == 0 
-            from_av.extend(self.GetDataFromAlphaVantage(av_available_from, False))
+        if len(cache) == 0:
+            from_av = self.GetDataFromAlphaVantage(av_available_from, False)
         else:
-            #TODO
-            if Utils.DatesAreClose(self.start_date, date.today(), 89) and len(from_av) < 4000:
-                from_av.extend(self.GetDataFromAlphaVantage(av_available_from, False))
+            cache_start_date = cache[0].bizday
+            cache_end_date = cache[-1].bizday
+            # assuming that self.start_date will always be after av_available_from
+            if Utils.DatesAreClose(self.end_date, cache_end_date):
+                pass # we're good
+            elif (self.end_date - cache_end_date).days <= 89:
+                from_av = self.GetDataFromAlphaVantage(self.start_date)
             else:
-                from_av.extend(self.GetDataFromAlphaVantage(self.start_date))
-            if len(cache) > 0:
-                cache_start_date = cache[0].bizday
-                cache_end_date = cache[-1].bizday
-                av_start_date = from_av[0].bizday
-                av_end_date = from_av[-1].bizday
-                if not Utils.DatesAreClose(cache_start_date, av_available_from, 500):
+                from_av = self.GetDataFromAlphaVantage(av_available_from, False)
+        cache = Utils.UpdateCache(self.file_path, Stock.Header(), cache, from_av)
+        return Utils.DateFilter(cache, self.start_date, self.end_date)
+
+def TestMSFT(sd, ed):
+    m = MSFT(start_date = sd, end_date = ed, file_name="MSFT.csv")
+    s = m.GetData()
+    print(sum([v.conversion for v in s])/float(len(s)))
+
+TestMSFT(date(2017, 6, 25), date(2018, 6, 25))
+        
+        
             

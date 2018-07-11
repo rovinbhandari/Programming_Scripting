@@ -21,7 +21,7 @@ class Currency:
         return "{0},{1:.6f}".format(self.bizday.strftime("%Y-%m-%d"), self.conversion)
     
     @staticmethod
-    def header():
+    def Header():
         return "{0},{1}".format(Currency.bizday_title, Currency.conversion_title)
 
     @staticmethod

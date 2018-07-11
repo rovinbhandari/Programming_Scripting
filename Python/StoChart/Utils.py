@@ -29,16 +29,17 @@ def GetDataFromWeb(url, header, converter):
         return ConvertAndSort(csv.DictReader(content_lines), converter)
 
 def UpdateCache(file_path, header, cache, to_merge):
-    new_values = [e for e in to_merge if not (e in cache)]
-    cache.extend(new_values)
-    cache.sort()
-    cache_dir = os.path.dirname(file_path)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    with open(file_path, 'w') as f:
-        f.write(header + "\n")
-        for v in cache:
-            f.write(str(v) + "\n")
+    if not (len(to_merge) == 0):
+        new_values = [e for e in to_merge if not (e in cache)]
+        cache.extend(new_values)
+        cache.sort()
+        cache_dir = os.path.dirname(file_path)
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        with open(file_path, 'w') as f:
+            f.write(header + "\n")
+            for v in cache:
+                f.write(str(v) + "\n")
     return cache
     
 def DateFilter(collection, start_date, end_date = None):

@@ -44,7 +44,7 @@ class Stock:
             self.split)
     
     @staticmethod
-    def header():
+    def Header():
         return "{},{},{},{},{},{},{},{},{}".format(
             Stock.bizday_title,
             Stock.open_title,
