@@ -33,14 +33,17 @@ def UpdateCache(file_path, header, cache, to_merge):
         new_values = [e for e in to_merge if not (e in cache)]
         cache.extend(new_values)
         cache.sort()
-        cache_dir = os.path.dirname(file_path)
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-        with open(file_path, 'w') as f:
-            f.write(header + "\n")
-            for v in cache:
-                f.write(str(v) + "\n")
+        WriteToFile(file_path, header, cache)
     return cache
+
+def WriteToFile(file_path, header, values):
+    file_dir = os.path.dirname(file_path)
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+    with open(file_path, 'w') as f:
+        f.write(header + "\n")
+        for v in values:
+            f.write(str(v) + "\n")
     
 def DateFilter(collection, start_date, end_date = None):
     end_date = date.today() if end_date is None else end_date

@@ -47,4 +47,4 @@ def TestNOK(sd, ed):
     c = n.GetData()
     assert isclose(sum([v.conversion for v in c])/float(len(c)), 7.9, abs_tol=1e-1), "average came out incorrect."
 
-TestNOK(date(2017, 6, 25), date(2018, 6, 25))
+# TestNOK(date(2017, 6, 25), date(2018, 6, 25))

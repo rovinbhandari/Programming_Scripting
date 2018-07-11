@@ -13,15 +13,27 @@ class Stock:
     split_title = "SplitCoeff"
 
     def __init__(self, entry):
-        self.bizday = datetime.strptime(entry[Stock.bizday_title], "%Y-%m-%d").date()
-        self.open = float(entry[Stock.open_title])
-        self.high = float(entry[Stock.high_title])
-        self.low = float(entry[Stock.low_title])
-        self.close = float(entry[Stock.close_title])
-        self.adjclose = float(entry[Stock.adjclose_title])
-        self.vol = int(entry[Stock.vol_title])
-        self.div = float(entry[Stock.div_title])
-        self.split = float(entry[Stock.split_title])
+        if entry is None:
+            # Unused so far
+            self.bizday     = date(1, 1, 1)
+            self.open       = 0.0
+            self.high       = 0.0
+            self.low        = 0.0
+            self.close      = 0.0
+            self.adjclose   = 0.0
+            self.vol        = 0
+            self.div        = 0.0
+            self.split      = 0.0
+        else:
+            self.bizday     = datetime.strptime(entry[Stock.bizday_title], "%Y-%m-%d").date()
+            self.open       = float(entry[Stock.open_title])
+            self.high       = float(entry[Stock.high_title])
+            self.low        = float(entry[Stock.low_title])
+            self.close      = float(entry[Stock.close_title])
+            self.adjclose   = float(entry[Stock.adjclose_title])
+            self.vol        = int(entry[Stock.vol_title])
+            self.div        = float(entry[Stock.div_title])
+            self.split      = float(entry[Stock.split_title])
     
     def __lt__(self, other):
         if self.bizday < other.bizday:
@@ -42,6 +54,9 @@ class Stock:
             self.vol,
             self.div,
             self.split)
+    
+    def __eq__(self, other):
+        return str(self) == str(other)
     
     @staticmethod
     def Header():

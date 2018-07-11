@@ -56,4 +56,4 @@ def TestMSFT(sd, ed):
     s = m.GetData()
     assert isclose(sum([v.adjclose for v in s])/float(len(s)), 85.1, abs_tol=1e-1), "average came out incorrect."
 
-TestMSFT(date(2017, 6, 25), date(2018, 6, 25))
+# TestMSFT(date(2017, 6, 25), date(2018, 6, 25))

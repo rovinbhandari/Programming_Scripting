@@ -13,3 +13,4 @@ TODOs
 - [ ] Compute MSFT in NOK
 - [ ] Add visualizations
 - [ ] Add time series prediction
+- [ ] Consolidate common code and repetitions
