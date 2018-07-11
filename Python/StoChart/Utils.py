@@ -29,7 +29,7 @@ def GetDataFromWeb(url, header, converter):
         return ConvertAndSort(csv.DictReader(content_lines), converter)
 
 def UpdateCache(file_path, header, cache, to_merge):
-    if not (len(to_merge) == 0):
+    if len(to_merge) > 0:
         new_values = [e for e in to_merge if not (e in cache)]
         cache.extend(new_values)
         cache.sort()

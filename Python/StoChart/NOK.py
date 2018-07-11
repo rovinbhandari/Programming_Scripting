@@ -42,9 +42,9 @@ class NOK:
         cache = Utils.UpdateCache(self.file_path, Currency.Header(), cache, from_nb)
         return Utils.DateFilter(cache, self.start_date, self.end_date)
 
-def Test(sd, ed):
+def TestNOK(sd, ed):
     n = NOK(start_date = sd, end_date = ed)
     c = n.GetData()
     assert isclose(sum([v.conversion for v in c])/float(len(c)), 7.9, abs_tol=1e-1), "average came out incorrect."
 
-# Test(date(2017, 6, 25), date(2018, 6, 25))
+TestNOK(date(2017, 6, 25), date(2018, 6, 25))

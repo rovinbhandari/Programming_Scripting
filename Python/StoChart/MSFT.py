@@ -25,10 +25,10 @@ class MSFT:
             return []
         key = ""
         with open(self.key_file) as f:
-            key = f.read().split()
+            key = f.read().split()[0]
         csv_url_template = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=MSFT&apikey={avkey}&datatype=csv"
         if not last3months:
-            csv_url_template += "outputsize=full"
+            csv_url_template += "&outputsize=full"
         csv_url = csv_url_template.format(avkey = key)
         return Utils.GetDataFromWeb(csv_url, Stock.Header(), Stock.DictReaderToList)
     
@@ -36,13 +36,13 @@ class MSFT:
         cache = Utils.GetDataFromCache(self.file_path, Stock.DictReaderToList)
         av_available_from = date(2000, 1, 1)
         from_av = []
-        if len(cache) == 0:
+        if len(cache) < 4000:
             from_av = self.GetDataFromAlphaVantage(av_available_from, False)
         else:
-            cache_start_date = cache[0].bizday
             cache_end_date = cache[-1].bizday
             # assuming that self.start_date will always be after av_available_from
-            if Utils.DatesAreClose(self.end_date, cache_end_date):
+            # also assuming that if cache is present, it will have the full history from av_available_from
+            if Utils.DatesAreClose(self.end_date, cache_end_date) or self.end_date < cache_end_date:
                 pass # we're good
             elif (self.end_date - cache_end_date).days <= 89:
                 from_av = self.GetDataFromAlphaVantage(self.start_date)
@@ -54,9 +54,6 @@ class MSFT:
 def TestMSFT(sd, ed):
     m = MSFT(start_date = sd, end_date = ed, file_name="MSFT.csv")
     s = m.GetData()
-    print(sum([v.conversion for v in s])/float(len(s)))
+    assert isclose(sum([v.adjclose for v in s])/float(len(s)), 85.1, abs_tol=1e-1), "average came out incorrect."
 
 TestMSFT(date(2017, 6, 25), date(2018, 6, 25))
-        
-        
-            
