@@ -18,7 +18,7 @@ class NOK:
             raise Exception("End date cannot be less than start date!")
     
     def GetDataFromNorgesBank(self, start_date):
-        if Utils.DatesAreClose(start_date, date.today()):
+        if Utils.DatesAreClose(start_date, date.today(), 0):
             return []
         csv_url_template = "https://data.norges-bank.no/api/data/EXR/B.USD.NOK.SP?StartPeriod={yyyy_mm_dd}&format=csv-:-comma-false-y"
         csv_url = csv_url_template.format(yyyy_mm_dd = start_date.strftime("%Y-%m-%d"))

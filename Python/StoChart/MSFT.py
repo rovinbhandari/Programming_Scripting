@@ -21,7 +21,7 @@ class MSFT:
             raise Exception("Key file does not exist!")
     
     def GetDataFromAlphaVantage(self, start_date, last3months = True):
-        if Utils.DatesAreClose(start_date, date.today()):
+        if Utils.DatesAreClose(start_date, date.today(), 0):
             return []
         key = ""
         with open(self.key_file) as f:
