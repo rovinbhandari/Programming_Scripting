@@ -47,11 +47,12 @@ void AnchoredLookupAndPrint(
     else    // TODO: this should be handled by AnchoredLookup(...) instead.
     {
         var allFoundWords = new ConcurrentBag<string>();
+        var spaces = chars.Count(c => c == ' ');
         chars = chars.Replace(" ", "");
         try
         {
             CreateIndex(lang, forceRead);
-            Parallel.ForEach(Alpha[(int)lang].ToCharArray(), l =>
+            Parallel.ForEach(SpacesToLetters(lang, spaces), l =>
             {
                 var words = AnchoredLookup(chars + l, pattern, lang, false, lookup);
                 foreach (var w in words)
@@ -190,6 +191,41 @@ void Print(IEnumerable<string> words)
     
 }
 
+IEnumerable Combinations<T>(IEnumerable<T> elements, int k)
+{
+    var elem = elements.ToArray();
+    var size = elem.Length;
+
+    if (k > size) yield break;
+
+    var numbers = new int[k];
+
+    for (var i = 0; i < k; i++)
+        numbers[i] = i;
+
+    do
+    {
+        yield return numbers.Select(n => elem[n]);
+    } while (NextCombination(numbers, size, k));
+}
+
+IEnumerable<string> SpacesToLetters(Lang lang = Lang.en, int spaces = 1)
+{
+    var charset = Alpha[(int)lang];
+    foreach (var c in charset)
+    {
+        yield return string.Join("", Enumerable.Repeat(c, spaces));
+    }
+
+    if (spaces > 1)
+    {
+        foreach(IEnumerable<string> c in Combinations<string>(charset.Select(a => "" + a), spaces))
+        {
+            yield return string.Join("", c);
+        }
+    }
+}
+
 #region Privates
 private void Columnize(int size, List<string> words)
 {
@@ -265,5 +301,30 @@ private IEnumerable<char> GetUniqChars(string chars)
     }
 
     return uniqChars;
+}
+
+private bool NextCombination(IList<int> num, int n, int k)
+{
+    bool finished;
+
+    var changed = finished = false;
+
+    if (k <= 0) return false;
+
+    for (var i = k - 1; !finished && !changed; i--)
+    {
+        if (num[i] < n - 1 - (k - 1) + i)
+        {
+            num[i]++;
+
+            if (i < k - 1)
+                for (var j = i + 1; j < k; j++)
+                    num[j] = num[j - 1] + 1;
+            changed = true;
+        }
+        finished = i == 0;
+    }
+
+    return changed;
 }
 #endregion Privates
