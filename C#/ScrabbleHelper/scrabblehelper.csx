@@ -25,7 +25,10 @@ enum Lang { en, nb }
 List<string>[] hash = null;
 Lang prevLang = Lang.en;
 
-// TODO: make it runnable with Roslyn\csc.exe from console
+if (Args.Count() > 0)
+{
+    InvokeWithCmdArgs();
+}
 
 // this one would be used the most.
 void AnchoredLookupAndPrint(
@@ -171,7 +174,6 @@ void LookupAndPrint(
 void Print(IEnumerable<string> words)
 {
     var wordGroups = words.Distinct().GroupBy(w => w.Length);
-    // TODO: append score?
     var totalMatches = 0;
     var groupsDict = new Dictionary<int, List<string>>();
     foreach(var group in wordGroups)
@@ -227,6 +229,43 @@ IEnumerable<string> SpacesToLetters(Lang lang = Lang.en, int spaces = 1)
 }
 
 #region Privates
+private void InvokeWithCmdArgs()
+{
+    try
+    {
+        var nArgs = Args.Count();
+        var lang = "en";
+        var chars = Args[0];
+        var pattern = Args[1];
+        if (nArgs > 2)
+        {
+            lang = Args[2];
+        }
+
+        AnchoredLookupAndPrint(chars, pattern, lang);
+    }
+    catch (Exception e)
+    {
+        var fc = Console.ForegroundColor;
+        var bc = Console.BackgroundColor;
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.BackgroundColor = ConsoleColor.Black;
+        Console.WriteLine("\nUsage:"
+                        + "\n\t csi.exe [path_to]scrabblehelper.csx <characters> <pattern> [<lang>]"
+                        + "\n\t\t <characters>: available letters to play (space for wildcard)"
+                        + "\n\t\t <pattern>:    pattern with constraints (? for optional letter, . for obligatory letter, # for any number of letters)"
+                        + "\n\t\t <lang>:       nb for Norwegian Bokmål, en for English (also default)"
+                        + "\nExamples:"
+                        + "\n\t csi.exe .\\scrabblehelper.csx \"siwlnod\" \"?de..#\""
+                        + "\n\t csi.exe .\\scrabblehelper.csx \"siw nod\" \"?de..#\""
+                        + "\n\t csi.exe .\\scrabblehelper.csx \"s w nod\" \"?de..#\""
+                        );
+        Console.ForegroundColor = fc;
+        Console.BackgroundColor = bc;
+        throw e;
+    }
+}
+
 private void Columnize(int size, List<string> words)
 {
     words.Sort();
