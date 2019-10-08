@@ -12,7 +12,6 @@
             var arr = Console.ReadLine().Split(' ').Select(s => int.Parse((string)s)).ToArray();
             var cuts = CutSticksLogic(arr);
             Console.WriteLine(string.Join<int>(Environment.NewLine, cuts));
-
         }
 
         public static int[] CutSticksLogic(int[] arr)
