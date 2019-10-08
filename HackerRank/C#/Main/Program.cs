@@ -4,7 +4,7 @@
     {
         static void Main()
         {
-            CutSticks.CutSticksRunner();
+            LeftRotation.Runner();
         }
     }
 }
