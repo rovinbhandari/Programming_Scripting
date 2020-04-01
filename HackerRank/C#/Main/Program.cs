@@ -4,7 +4,7 @@
     {
         static void Main()
         {
-            LeftRotation.Runner();
+            Janitor.Runner();
         }
     }
 }
