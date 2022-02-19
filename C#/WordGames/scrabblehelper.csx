@@ -11,8 +11,8 @@ using System;
 //const string ReposRoot = @"C:\git";
 const string ReposRoot = @"R:\GitHub";
 string[] WordListFilePaths = new[] {
-    ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\EnUsTwl.txt",
-    ReposRoot + @"\Programming_Scripting\C#\ScrabbleHelper\NbNoNsf.txt"
+    ReposRoot + @"\Programming_Scripting\C#\WordGames\EnUsTwl.txt",
+    ReposRoot + @"\Programming_Scripting\C#\WordGames\NbNoNsf.txt"
 };
 string[] Alpha = new[] {
     "abcdefghijklmnopqrstuvwxyz",
