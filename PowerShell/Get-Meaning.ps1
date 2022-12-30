@@ -4,10 +4,10 @@ Function Get-Meaning($keywords)
 {
   # To insert a Line that will separate one meaning  from another
   $break = '--------------------------------------------------------------------------------------------'
-  $uri = "https://wordsapiv1.p.mashape.com/words/{0}"
+  $uri = "https://wordsapiv1.p.rapidapi.com/words/{0}"
   $key = Get-Key
   $headers = @{}
-  $headers.Add("X-Mashape-Key", $key)
+  $headers.Add("X-RapidAPI-Key", $key)
   $headers.Add("Accept", "text/json")
 
   $keywords | %{
@@ -16,7 +16,7 @@ Function Get-Meaning($keywords)
 
     Do-Bookkeeping -content "$_"
     try {
-      $response = curl -Uri $uriWithWord -Headers $headers
+      $response = Invoke-WebRequest -Uri $uriWithWord -Headers $headers
     }
     catch {
       Do-Bookkeeping -content "failed" -before $false
@@ -32,11 +32,11 @@ Function Get-Meaning($keywords)
   }
 } 
 
-Function Do-Bookkeeping($content, $before = $true, $subpath = "")
+Function Do-Bookkeeping($content, $before = $true, $subpath = "APIs\WordAPI")
 {
   $monthYear = Get-Date -UFormat "%m_%Y"
-  $filename = "wordapi_mashape_{0}.log" -f $monthYear
-  $path = Join-Path $env:OneDrive -ChildPath $subpath | Join-Path -ChildPath $filename
+  $filename = "wordapi_rapidapi_{0}.log" -f $monthYear
+  $path = Join-Path $env:OneDriveConsumer -ChildPath $subpath | Join-Path -ChildPath $filename
   $limit = 2000
 
   if ($before)
@@ -67,7 +67,7 @@ Function Do-Bookkeeping($content, $before = $true, $subpath = "")
 
 Function Get-Key()
 {
-  $path = Join-Path $env:OneDrive -ChildPath "Documents" | Join-Path -ChildPath "mashape_words_key.txt"
+  $path = Join-Path $env:OneDriveConsumer -ChildPath "APIs\WordAPI" | Join-Path -ChildPath "rapidapi_words_key.txt"
   $key = Get-Content $path
   return $key
 }
