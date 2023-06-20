@@ -4,11 +4,11 @@ Function Get-Meaning($keywords)
 {
   # To insert a Line that will separate one meaning  from another
   $break = '--------------------------------------------------------------------------------------------'
-  $uri = "https://wordsapiv1.p.rapidapi.com/words/{0}"
+  $uri = "https://wordsapiv1.p.rapidapi.com/words/{0}/definitions"
   $key = Get-Key
   $headers = @{}
   $headers.Add("X-RapidAPI-Key", $key)
-  $headers.Add("Accept", "text/json")
+  $headers.Add("X-RapidAPI-Host", "wordsapiv1.p.rapidapi.com")
 
   $keywords | %{
     $response = $null 
@@ -16,11 +16,11 @@ Function Get-Meaning($keywords)
 
     Do-Bookkeeping -content "$_"
     try {
-      $response = Invoke-WebRequest -Uri $uriWithWord -Headers $headers
+      $response = Invoke-WebRequest -Uri $uriWithWord -Headers $headers -Method GET
     }
     catch {
-      Do-Bookkeeping -content "failed" -before $false
-      throw "Couldn't get a response from the endpoint!"
+      Do-Bookkeeping -content ("failed " + $response.StatusCode) -before $false
+      throw ("Couldn't get a successful response from the endpoint! `n " + $response)
     }
     Do-Bookkeeping -content $response.StatusCode -before $false
 
@@ -71,3 +71,5 @@ Function Get-Key()
   $key = Get-Content $path
   return $key
 }
+
+#Get-Meaning "trial"
