@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: webgl-app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/app
+    command: npx vite --host
