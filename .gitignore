@@ -6,6 +6,7 @@
 .vs
 .vscode
 .dropbox
+node_modules
 
 # gen
 *.o
