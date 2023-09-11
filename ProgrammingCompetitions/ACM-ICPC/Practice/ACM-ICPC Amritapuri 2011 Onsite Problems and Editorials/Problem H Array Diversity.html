@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Array Diversity</title>
+</head>
+<body>
+<h1 style="font-family: Arial;"><small>ACM International Collegiate
+Programming Contest, Asia-Amritapuri Site, 2011</small></h1>
+<h2>Problem H: Array Diversity<br>
+</h2>
+Enough with this Harry Potter, please! What are we, twelve-year
+olds?&nbsp; Let's get our teeth into some real pumpkin pasties -- oops,
+programming problems!<br>
+<br>
+Here we go!<br>
+Let's define the diversity of a list of numbers to be the difference
+between the largest and smallest number in the list.<br>
+For example, the diversity of the list (1, -1, 2, 7) = 7 - (-1) = 8.<br>
+<br>
+A substring of a list is considered a non-empty sequence of contiguous
+numbers from the list. For example, for the list (1,3,7), the
+substrings are (1), (3), (7), (1,3), (3,7), (1,3,7). A subsequence of a
+list is defined to be a non-empty sequence of numbers obtained by deleting
+some elements from the list. For example, for the list (1,3,7), the
+subsequences are (1), (3), (7), (1,3), (3,7), (1,7), (1,3,7).<br>
+<br>
+Given a list of length N find the number of substrings and subsequences
+in this list with the maximum diversity. If a substring/subsequence
+having maximum diversity occurs multiple times in the list, each of its
+occurances adds towards the answer. &nbsp; And tell Harry Potter
+your answer.<br>
+<h3>Input (STDIN):</h3>
+The first line contains T, the number of test cases. Then follow T test
+case blocks.<br>
+Each blocks starts with the first line containing the number N.<br>
+The second line contains a list of numbers in this list.<br>
+<h3>Output (STDOUT):</h3>
+For each test case, output the number of substrings and the number of
+subsequences in this list with the maximum diversity.<br>
+Since the answers maybe very large, output them modulo 1000000007.<br>
+<h3>Constraints:</h3>
+T &lt;= 10<br>
+N &lt;= 100,000<br>
+Each number in the list is between 1 and 100,000 inclusive.<br>
+Time Limit: 2 s<br>
+Memory Limit: 32 MB<br>
+<h3>Sample Input:</h3>
+<span style="font-family: Courier New,Courier,monospace;">3<br>
+3<br>
+1 2 3<br>
+4<br>
+1 4 3 4<br>
+3<br>
+3 2 1<br>
+</span><br>
+<h3>Sample Output:</h3>
+<span style="font-family: Courier New,Courier,monospace;">1 2<br>
+3 6<br>
+1 2<br>
+<br>
+</span><br>
+<br>
+<br>
+</body>
+</html>
