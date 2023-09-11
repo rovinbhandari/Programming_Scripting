@@ -1,6 +1,12 @@
+# vim
 .*.swo
 .*.swp
+
+# dir
+.vscode
 .dropbox
+
+# gen
 *.o
 *.opp
 *.a
@@ -12,6 +18,12 @@
 *.out
 *.outpp
 *.exe
+[Bb]in/
+[Dd]ebug/
+[Rr]elease/
+output/
+
+# dat
 *.rar
 *.lzma
 *.zip
@@ -21,3 +33,4 @@
 *.7z
 *.mp3
 *.flv
+*.nupkg

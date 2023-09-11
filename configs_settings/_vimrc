@@ -1,16 +1,29 @@
-set cc=84
 set expandtab
 set ts=2
 set sw=2
 syntax on
 set autoindent
-set rnu
 set nu
 set noeol
 set tabpagemax=100
+
+set hlsearch
+set incsearch
+
+"down arrow
+nnoremap ; j
+"left arrow
+nnoremap j h
+"right arrow
+nnoremap k l
+"up arrow
+nnoremap l k
+
 if has('gui_running')
-    if has('gui_win32')   
-        set guifont=Consolas:h11:b
-        colorscheme koehler
-    endif
+  colorscheme koehler
+  if has('gui_win32')   
+    set guifont=Consolas:h14:b
+  elseif has('gui_gtk3')
+    set guifont=Monospace\ Bold\ 13
+  endif
 endif
