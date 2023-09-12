@@ -5,17 +5,13 @@ WORKDIR /usr/src/app
 RUN chown node:node ./
 USER node
 
-COPY . /usr/src/app
 COPY package*.json ./
-#COPY . .
-
 RUN npm ci && npm cache clean --force 
-COPY . .
-
 RUN npm install three
 RUN npm install --save-dev vite
 
+COPY . /usr/src/app
+
 EXPOSE 8080
 
-#CMD [ "npm", "run", "start" ]
 CMD ["npx", "vite", "--host"]
