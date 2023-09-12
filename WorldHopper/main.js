@@ -24,11 +24,4 @@ function animate() {
 	renderer.render( scene, camera );
 }
 
-// see: https://code.visualstudio.com/docs/containers/debug-node#_configuring-the-application-entry-page
-function onListening() {
-	debug('Application has started');
-}
-
-onListening();
-
 animate();
