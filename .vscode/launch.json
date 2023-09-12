@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Docker Node.js Launch",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "platform": "node",
+            "node": {
+                "package": "${workspaceFolder}/WorldHopper/package.json",
+                "localRoot": "${workspaceFolder}/WorldHopper"
+            },
+            "dockerServerReadyAction": {
+                "action": "openExternally",
+                "uriFormat": "http://localhost:%s",
+                "pattern": "Application has started"
+            }
+        }
+    ]
+}
