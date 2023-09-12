@@ -1,0 +1,1 @@
+This repository contains mainly my programming scribblings and some problem solvings from circa 2003. It is by far not my best work and only a playground to try out things and to archive them for posterity. :)
