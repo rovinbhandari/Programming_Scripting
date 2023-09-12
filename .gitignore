@@ -3,7 +3,6 @@
 .*.swp
 
 # dir
-.vscode
 .dropbox
 node_modules
 
