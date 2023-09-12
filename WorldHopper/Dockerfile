@@ -1,15 +1,19 @@
 FROM node:lts-alpine
 
-RUN mkdir -p /app
-WORKDIR /app
-COPY . /app
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+RUN chown node:node ./
+USER node
 
-RUN npm install
+COPY . /usr/src/app
+COPY package*.json ./
+#COPY . .
+
+RUN npm ci && npm cache clean --force 
+COPY . .
+
 RUN npm install three
 RUN npm install --save-dev vite
-
-COPY package*.json ./
-COPY . .
 
 EXPOSE 8080
 
