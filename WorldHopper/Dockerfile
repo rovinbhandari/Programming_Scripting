@@ -1,17 +1,16 @@
 FROM node:lts-alpine
 
-RUN mkdir -p /usr/src/app
+ENV NODE_ENV=production
+
 WORKDIR /usr/src/app
-RUN chown node:node ./
+COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+RUN npm install --production --silent && mv node_modules ../
+COPY . .
+
+EXPOSE 5173
+
+RUN chown -R node /usr/src/app
 USER node
 
-COPY package*.json ./
-RUN npm ci && npm cache clean --force 
-RUN npm install three
-RUN npm install --save-dev vite
-
-COPY . /usr/src/app
-
-EXPOSE 8080
-
-CMD ["npx", "vite", "--host"]
+CMD ["node", "main.js"]
+#CMD ["npx", "vite", "--host"]
