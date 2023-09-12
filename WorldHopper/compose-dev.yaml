@@ -8,6 +8,7 @@ services:
     image: webgl-app
     ports:
       - "8080:80"
+      - "5173:5173"
     volumes:
       - .:/app
     command: npx vite --host
