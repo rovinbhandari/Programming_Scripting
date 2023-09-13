@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  web:
+  frontend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: frontend
+      dockerfile: ./frontend.Dockerfile
     image: webgl-app
     ports:
       - "8080:80"
