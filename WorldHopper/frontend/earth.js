@@ -21,8 +21,9 @@ function animate() {
     requestAnimationFrame(animate);
 
     // Add any animations or updates here
-	earth.rotation.x += 0.001;
-	earth.rotation.y += 0.001;
-    earth.rotation.z += 0.001;
+	earth.rotation.x += 0.005;
+	earth.rotation.y += 0.005;
+    earth.rotation.z += 0.005;
+
     renderer.render(scene, camera);
 }
