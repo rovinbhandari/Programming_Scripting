@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  backend:
+    build:
+      context: backend
+      dockerfile: ./backend.Dockerfile
+    image: hop-app
+    ports:
+      - "5000:5000"
+      - "5206:5206"
+    volumes:
+      - .:/app
+    command: dotnet hop.dll
   frontend:
     build:
       context: frontend
@@ -12,3 +23,5 @@ services:
     volumes:
       - .:/app
     command: npx vite --host
+    depends_on:
+      - backend

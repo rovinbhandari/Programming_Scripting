@@ -19,6 +19,7 @@ node_modules
 *.out
 *.outpp
 *.exe
+[Oo]bj/
 [Bb]in/
 [Dd]ebug/
 [Rr]elease/
