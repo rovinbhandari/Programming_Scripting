@@ -3,6 +3,7 @@
 .*.swp
 
 # dir
+.vs
 .dropbox
 node_modules
 
@@ -23,6 +24,7 @@ node_modules
 [Dd]ebug/
 [Rr]elease/
 output/
+*.csproj.user
 
 # dat
 *.rar
