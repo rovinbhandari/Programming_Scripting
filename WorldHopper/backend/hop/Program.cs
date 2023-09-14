@@ -4,6 +4,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// TODO: get ports through env variables or config
 builder.Services.AddCors(builder => builder.AddPolicy("whop frontend", builder => { builder.WithOrigins("http://localhost:5173", "http://localhost:8080", "http://localhost:21248").AllowAnyHeader().WithMethods("GET", "OPTIONS", "HEAD"); })); // TODO: policy can be tightened.
 builder.Services.AddControllers();
 var app = builder.Build();
