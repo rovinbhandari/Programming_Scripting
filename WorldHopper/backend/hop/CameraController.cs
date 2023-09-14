@@ -17,6 +17,8 @@ public class CameraController : Controller
         {
             new { X = randomVal(), Y = randomVal(), Z = randomVal() },
         };
+
+        // TODO: Move to middleware
         HttpContext.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:5173");
         HttpContext.Response.Headers.Append("Access-Control-Allow-Methods", "GET");
         return Ok(angles);
