@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "WorldHopper backend: .NET Core Launch (web)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/WorldHopper/backend/hop/bin/Debug/net8.0/hop.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/WorldHopper/backend",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "WorldHopper frontend: Launch Chrome against localhost",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/WorldHopper/frontend/index.html",
+            "sourceMapPathOverrides": {
+                "/source/*": "${workspaceFolder}/WorldHopper/frontend/*"
+            },
+            "cleanUp": "wholeBrowser",
+            "enableContentValidation": true,
+            "disableNetworkCache": true,
+            "pauseForSourceMap": true
+        }
+    ]
+}
