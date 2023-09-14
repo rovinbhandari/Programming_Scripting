@@ -53,3 +53,5 @@ async function RefreshAngles() {
     cameraAngleDeltas.z = responseJson[0].z;
     console.log(cameraAngleDeltas);
 }
+
+// TODO: next thing to figure out is how to get a point on the earth's surface using coordinates.
