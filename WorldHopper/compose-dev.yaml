@@ -13,6 +13,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
   frontend:
+    # TODO: need to specify backend app port as env variable or via config
     build:
       context: frontend
       dockerfile: ./frontend.Dockerfile

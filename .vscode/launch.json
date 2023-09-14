@@ -34,6 +34,16 @@
             "enableContentValidation": true,
             "disableNetworkCache": true,
             "pauseForSourceMap": true
+        },
+        {
+            "type": "pwa-msedge",
+            "request": "launch",
+            "name": "WorldHopper frontend: Launch Edge against localhost",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/WorldHopper/frontend/index.html",
+            "sourceMapPathOverrides": {
+                "/source/*": "${workspaceFolder}/WorldHopper/frontend/*"
+            }
         }
     ]
 }
