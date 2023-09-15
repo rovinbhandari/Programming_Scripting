@@ -18,18 +18,7 @@ const earth = new THREE.Mesh(geometry, material);
 const lat = 60;
 const lon = 10;
 const pointLevitation = 0;
-/*
-const pointGeometry = new THREE.SphereGeometry(earthRadius/100, 32, 32);
-const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000 });
-const point = new THREE.Points(pointGeometry, pointMaterial);
-scene.add(point);
-const phi = Math.PI / 4; // Example latitude in radians
-const theta = Math.PI / 2; // Example longitude in radians
-const x = (1.0 + pointLevitation) * earthRadius * Math.sin(phi) * Math.cos(theta);
-const y = (1.0 + pointLevitation) * earthRadius * Math.sin(phi) * Math.sin(theta);
-const z = (1.0 + pointLevitation) * earthRadius * Math.cos(phi);
-pointGeometry.ve .push(new THREE.Vector3(x, y, z));
-*/
+
 
 const sphericalCoords = {
     radius: earthRadius, // Radius of the sphere
@@ -43,11 +32,14 @@ const cartesianCoords = sphericalToCartesian(
     sphericalCoords.azimuthal
 );
 
-const pointGeometry = new THREE.BufferGeometry().setFromPoints([cartesianCoords]);
-const pointMaterial = new THREE.PointsMaterial({ color: 0xff0000 }); // Red color
-const point = new THREE.Points(pointGeometry, pointMaterial);
+const smallSphereGeometry = new THREE.SphereGeometry(earthRadius/50.0, 32, 32);
+const smallSphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const smallSphere = new THREE.Mesh(smallSphereGeometry, smallSphereMaterial);
 
-earth.add(point); // Add the point to the sphere
+// Position the small sphere on top of the big sphere
+smallSphere.position.set(0, earthRadius, 0); // Adjust the position as needed
+
+earth.add(smallSphere);
 
 scene.add(earth);
 
