@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const backendPort = 5206; // TODO: obtain from env variable or config
+const backendPort = 8080; // TODO: obtain from env variable or config
 
 const earthRadius = 6;
 
