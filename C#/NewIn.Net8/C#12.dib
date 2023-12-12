@@ -1,0 +1,170 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# Primary Constructors
+[Link](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/primary-constructors)
+
+#!csharp
+
+// formerly, records could have default constructors
+public record Person(string FirstName, string LastName);
+Console.WriteLine(new Person("Bill", "Gates"));
+
+#!csharp
+
+// however, now, consider the following
+public readonly struct Distance
+{
+    public readonly double Magnitude { get; }
+
+    public readonly double Direction { get; }
+
+    public Distance(double dx, double dy)
+    {
+        Magnitude = Math.Sqrt(dx * dx + dy * dy);
+        Direction = Math.Atan2(dy, dx);
+    }
+}
+
+#!csharp
+
+// it is now equivalent to
+public readonly struct Distance2(double dx, double dy)
+{
+    public readonly double Magnitude { get; } = Math.Sqrt(dx * dx + dy * dy);
+    public readonly double Direction { get; } = Math.Atan2(dy, dx);
+}
+
+#!csharp
+
+new Distance(3, 4).Magnitude == new Distance2(3, 4).Magnitude // should be true
+
+#!markdown
+
+---
+
+#!markdown
+
+# New Collection Expressions
+
+#!csharp
+
+int[] row0 = [1, 2, 3];
+int[] row1 = [4, 5, 6];
+int[] row2 = [7, 8, 9];
+int[][] twoDFromVariables = [row0, row1, row2];
+Console.WriteLine(twoDFromVariables[1][2]); // 6
+
+#!csharp
+
+int[] row0 = [1, 2, 3];
+int[] row1 = [4, 5, 6];
+int[] row2 = [7, 8, 9];
+int[] single = [..row0, ..row1, ..row2]; // spread operator (...) to create a 1D array.
+foreach (var element in single)
+{
+    Console.Write($"{element}, ");
+}
+
+#!markdown
+
+---
+
+#!markdown
+
+# `ref readonly` parameters
+[Link](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-12.0/ref-readonly-parameters)
+
+The ref readonly modifier indicates that the method expects the argument to be a variable rather than an expression that isn't a variable. Examples of expressions that aren't variables are constants, method return values, and properties. If the argument isn't a variable, the compiler issues a warning.
+
+#!csharp
+
+// formerly...
+int readonlyArgument = 44;
+InArgExample(readonlyArgument);
+Console.WriteLine(readonlyArgument);     // readonlyArgument is still 44
+
+void InArgExample(in int number)
+{
+    number = 19; // should throw
+}
+
+#!csharp
+
+// also formerly...
+static void Method(in int argument)
+{
+    // do something
+}
+
+Method(5); // perfectly valid
+
+#!csharp
+
+// however, now...
+public struct ThingType(string name, int value)
+{
+    public string Name { get; set; } = name;
+    public int Value { get; set; } = value;
+}
+
+public static void ForceByRef(ref readonly ThingType thing)
+{
+    // do something
+}
+
+ThingType thing5 = new ThingType("Thing", 5);
+ForceByRef(ref thing5);                     // perfectly valid -> caller is willing to accept changes to the value
+ForceByRef(in thing5);                      // also perfectly valid -> caller is not willing to accept changes to the value
+ForceByRef(thing5);                         // allowed but will cause a warning since it's not clear whether caller is willing to accept changes to the value
+ForceByRef(new ThingType("Thing", 6));      // also allowed since the value is an expression and not a variable
+
+#!markdown
+
+---
+
+#!markdown
+
+# Default parameter values in lambdas
+[Link](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/lambda-expressions)
+
+#!csharp
+
+// formerly, this was illegal. now it's not!
+var IncrementBy = (int source, int increment = 1) => source + increment;
+
+Console.WriteLine(IncrementBy(5)); // 6
+Console.WriteLine(IncrementBy(5, 2)); // 7
+Console.WriteLine(IncrementBy.GetType()); // Not a Func<int, int, int> anymore!
+
+#!markdown
+
+---
+
+#!markdown
+
+# Aliases
+
+#!csharp
+
+// formerly, this was legal:
+using json = System.Text.Json;
+
+// but this was not:
+using Point = (int x, int y); // a 2tuple
+Console.WriteLine(new Point(1, 2));
+var p = new Point(1, 2);
+Console.WriteLine(p.GetType());
+
+// now, both are legal!
+
+#!markdown
+
+---
+
+#!markdown
+
+# Inline Arrays
