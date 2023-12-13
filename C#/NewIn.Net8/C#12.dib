@@ -156,8 +156,7 @@ using json = System.Text.Json;
 // but this was not:
 using Point = (int x, int y); // a 2tuple
 Console.WriteLine(new Point(1, 2));
-var p = new Point(1, 2);
-Console.WriteLine(p.GetType());
+Console.WriteLine(typeof(Point));
 
 // now, both are legal!
 
@@ -168,3 +167,26 @@ Console.WriteLine(p.GetType());
 #!markdown
 
 # Inline Arrays
+
+#!csharp
+
+[System.Runtime.CompilerServices.InlineArray(10)]
+public struct Buffer
+{
+    private int value;
+}
+
+var buffer = new Buffer();
+for (int i = 0; i < 10; i++)
+{
+    buffer[i] = i;
+}
+
+foreach (var i in buffer)
+{
+    Console.Write(i + " ");
+}
+
+#!markdown
+
+---
