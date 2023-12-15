@@ -63,7 +63,7 @@ Console.WriteLine(twoDFromVariables[1][2]); // 6
 int[] row0 = [1, 2, 3];
 int[] row1 = [4, 5, 6];
 int[] row2 = [7, 8, 9];
-int[] single = [..row0, ..row1, ..row2]; // spread operator (...) to create a 1D array.
+int[] single = [..row0, ..row1, ..row2]; // spread operator (..) to create a 1D array.
 foreach (var element in single)
 {
     Console.Write($"{element}, ");
@@ -111,16 +111,19 @@ public struct ThingType(string name, int value)
     public int Value { get; set; } = value;
 }
 
+public static ThingType thing5 = new ThingType("Thing", 5);
+
 public static void ForceByRef(ref readonly ThingType thing)
 {
+    Console.WriteLine(thing.Equals(thing5));
     // do something
 }
 
-ThingType thing5 = new ThingType("Thing", 5);
 ForceByRef(ref thing5);                     // perfectly valid -> caller is willing to accept changes to the value
 ForceByRef(in thing5);                      // also perfectly valid -> caller is not willing to accept changes to the value
 ForceByRef(thing5);                         // allowed but will cause a warning since it's not clear whether caller is willing to accept changes to the value
 ForceByRef(new ThingType("Thing", 6));      // also allowed since the value is an expression and not a variable
+ForceByRef(new ThingType("Thing", 5));      // also allowed since the value is an expression and not a variable
 
 #!markdown
 
@@ -138,7 +141,7 @@ var IncrementBy = (int source, int increment = 1) => source + increment;
 
 Console.WriteLine(IncrementBy(5)); // 6
 Console.WriteLine(IncrementBy(5, 2)); // 7
-Console.WriteLine(IncrementBy.GetType()); // Not a Func<int, int, int> anymore!
+Console.WriteLine(IncrementBy.GetType()); // Caveat: Not a Func<int, int, int> anymore!
 
 #!markdown
 
@@ -147,6 +150,7 @@ Console.WriteLine(IncrementBy.GetType()); // Not a Func<int, int, int> anymore!
 #!markdown
 
 # Aliases
+For arbitrary types.
 
 #!csharp
 
