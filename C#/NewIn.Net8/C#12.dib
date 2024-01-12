@@ -89,7 +89,7 @@ Console.WriteLine(readonlyArgument);     // readonlyArgument is still 44
 
 void InArgExample(in int number)
 {
-    number = 19; // should throw
+    number = 19; // should generate a compiler error
 }
 
 #!csharp
@@ -138,10 +138,12 @@ ForceByRef(new ThingType("Thing", 5));      // also allowed since the value is a
 
 // formerly, this was illegal. now it's not!
 var IncrementBy = (int source, int increment = 1) => source + increment;
+var IncrementBy1 = (int source) => source + 1;
 
 Console.WriteLine(IncrementBy(5)); // 6
 Console.WriteLine(IncrementBy(5, 2)); // 7
 Console.WriteLine(IncrementBy.GetType()); // Caveat: Not a Func<int, int, int> anymore!
+Console.WriteLine(IncrementBy1.GetType()); 
 
 #!markdown
 
