@@ -1,6 +1,6 @@
 #!/bin/bash
 
-apps_list=(git vim code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0')
+apps_list=(git vim code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0' copyq)
 
 install_code () {
   sudo apt-get install wget gpg
@@ -32,6 +32,19 @@ check_app () {
   esac
 }
 
+setup_app () {
+  # TODO: add setup for things like crlf, author and ssh keys for git.
+  # git config --global core.autocrlf input
+  # git config --global user.name "<name>"
+  # git config --global user.email "<email>"
+  # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
+  # ssh-keygen -t ed25519 -C "<email>"
+  # eval "$(ssh-agent -s)"
+  # ssh-add ~/.ssh/<file>
+  # cat ~/.ssh/<file>.pub
+  echo "noop"
+}
+
 install_app () {
   case "$1" in
     
@@ -44,6 +57,8 @@ install_app () {
     ;;
 
   esac  
+
+  setup_app
 }
 
 install_apps () {
