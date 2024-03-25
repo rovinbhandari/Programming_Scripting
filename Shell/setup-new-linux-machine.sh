@@ -1,5 +1,6 @@
 #!/bin/bash
 
+prompt_for_user_input=true
 apps_list=(vim git code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0' copyq 'signal-desktop')
 
 install_code () {
@@ -46,16 +47,25 @@ check_app () {
 }
 
 setup_app () {
-  # TODO: add setup for things like crlf, author, default editor and ssh keys for git.
-  # git config --global core.autocrlf input
-  # git config --global user.name "<name>"
-  # git config --global user.email "<email>"
-  # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
-  # ssh-keygen -t ed25519 -C "<email>"
-  # eval "$(ssh-agent -s)"
-  # ssh-add ~/.ssh/<file>
-  # cat ~/.ssh/<file>.pub
-  echo "noop"
+  case "$1" in 
+
+    git)
+      git config --global core.autocrlf input
+      git config --global core.editor "vim"
+      if $prompt_for_user_input
+      then
+        read -p "author name for git: " name_git
+        git config --global user.name "$name_git"
+        read -p "author email for git: " email_git
+        git config --global user.email "$email_git"
+      fi
+    ;;
+
+    *)
+      echo "noop"
+    ;;
+
+  esac
 }
 
 install_app () {
@@ -94,3 +104,16 @@ install_apps () {
 install_apps
 
 # TODO: Clone P_S repo, copy out bash settings, .vimrc etc.
+  # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
+  # ssh-keygen -t ed25519 -C "<email>"
+  # eval "$(ssh-agent -s)"
+  # ssh-add ~/.ssh/<file>
+  # cat ~/.ssh/<file>.pub
+
+# TODO: Don't ask for sudo password too often.
+  # sudo visudo
+
+# TODO: Change locale for date-time.
+
+# TODO: Mouse scroll direction (down scrolls down)
+  # https://askubuntu.com/questions/819662/how-to-invert-touchpad-scrolling-on-ubuntu-16-04
