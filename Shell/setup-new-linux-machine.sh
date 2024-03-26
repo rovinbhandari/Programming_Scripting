@@ -61,6 +61,13 @@ setup_app () {
       fi
     ;;
 
+    vim)
+      if ! test -f ~/.vimrc
+      then
+        wget "https://raw.githubusercontent.com/rovinbhandari/Programming_Scripting/master/configs_settings/_vimrc"
+        mv _vimrc ~/.vimrc
+      fi
+
     *)
       echo "noop"
     ;;
