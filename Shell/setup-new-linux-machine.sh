@@ -67,7 +67,8 @@ setup_app () {
         wget "https://raw.githubusercontent.com/rovinbhandari/Programming_Scripting/master/configs_settings/_vimrc"
         mv _vimrc ~/.vimrc
       fi
-
+    ;;
+    
     *)
       echo "noop"
     ;;
@@ -109,25 +110,25 @@ install_apps () {
 }
 
 # FUNCTIONAL
-# Install useful apps
-install_apps
+  # Install useful apps
+  install_apps
 
-# TODO: Add docker to apps_list
-# TODO: Clone P_S repo, copy out bash settings, .vimrc etc.
-  # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
-  # ssh-keygen -t ed25519 -C "<email>"
-  # eval "$(ssh-agent -s)"
-  # ssh-add ~/.ssh/<file>
-  # cat ~/.ssh/<file>.pub
+  # TODO: Add docker to apps_list
+  # TODO: Clone P_S repo, copy out bash settings, .vimrc etc.
+    # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
+    # ssh-keygen -t ed25519 -C "<email>"
+    # eval "$(ssh-agent -s)"
+    # ssh-add ~/.ssh/<file>
+    # cat ~/.ssh/<file>.pub
 
 # PRODUCTIVITY
-# Pin Terminal to Taskbar (Dock)
-# TODO: Mouse scroll direction (down scrolls down)
-  # https://askubuntu.com/questions/819662/how-to-invert-touchpad-scrolling-on-ubuntu-16-04
-# TODO: Don't ask for sudo password too often.
-  # sudo visudo
-# TODO: Add extra keyboard layouts
-# TODO: Set timezone
+  # Pin Terminal to Taskbar (Dock)
+  # TODO: Mouse scroll direction (down scrolls down)
+    # https://askubuntu.com/questions/819662/how-to-invert-touchpad-scrolling-on-ubuntu-16-04
+  # TODO: Don't ask for sudo password too often.
+    # sudo visudo
+  # TODO: Add extra keyboard layouts
+  # TODO: Set timezone
 
 # VISUAL/COSMETIC
   # TODO: Change to dark theme
