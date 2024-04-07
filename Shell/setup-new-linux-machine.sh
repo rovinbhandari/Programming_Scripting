@@ -1,7 +1,8 @@
 #!/bin/bash
 
 prompt_for_user_input=true
-apps_list=(vim git code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0' copyq 'signal-desktop')
+essential_apps_list=(vim git code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0')
+useful_apps_list=(copyq 'signal-desktop' 'spotify-client')
 dock_apps=(firefox Nautilus Terminal code) # to be used for searching for appropriate .desktop files in /usr/share/applcations
 dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'code.desktop']" # static string for simpler implementation in the beginning
 
@@ -31,6 +32,11 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
     sudo apt update && sudo apt install signal-desktop
   }
 
+  install_spotify () {
+    # TODO: Consider using .deb package from spotify's repository to avoid UI prompt
+    snap install spotify
+  }
+
   check_app () {
     case "$1" in
 
@@ -40,6 +46,10 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
 
       *netcore-runtime-*)
         dotnet --list-runtimes | grep "${1##*-}"
+      ;;
+
+      spotify-client)
+        which spotify
       ;;
 
       *)
@@ -73,7 +83,7 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
       ;;
 
       *)
-        echo "noop"
+        echo "setup: noop"
       ;;
 
     esac
@@ -88,6 +98,10 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
 
       signal-desktop)
         install_signal
+      ;;
+
+      spotify-client)
+        install_spotify
       ;;
 
       *)
@@ -133,11 +147,15 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
   }
 
 main () {
+  # OPTIONS
+    # TODO: evaluate options, so that only essential stuff is done by default
+  
   # FUNCTIONAL
     # Install useful apps
-    install_apps apps_list
+    install_apps essential_apps_list
+    install_apps useful_apps_list
 
-    # TODO: Add docker to apps_list
+    # TODO: Add docker to essential_apps_list
     # TODO: Clone P_S repo, copy out bash settings, .vimrc etc.
       # git remote set-url origin ssh://git@github.com/<username>/<repo>.git
       # ssh-keygen -t ed25519 -C "<email>"
@@ -155,6 +173,7 @@ main () {
     # TODO: Don't ask for sudo password too often.
       # sudo visudo
     # TODO: Add extra keyboard layouts
+      # https://askubuntu.com/a/1033461
     # TODO: Set timezone
 
   # VISUAL/COSMETIC
