@@ -2,7 +2,7 @@
 
 prompt_for_user_input=true
 essential_apps_list=(vim git code 'dotnet-sdk-8.0' 'aspnetcore-runtime-8.0')
-useful_apps_list=(copyq 'signal-desktop' 'spotify-client')
+useful_apps_list=(copyq 'signal-desktop' spotify synapse 'unified-remote')
 dock_apps=(firefox Nautilus Terminal code) # to be used for searching for appropriate .desktop files in /usr/share/applcations
 dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'code.desktop']" # static string for simpler implementation in the beginning
 
@@ -37,6 +37,14 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
     snap install spotify
   }
 
+  install_urserver () {
+    mkdir /tmp/ur/
+    cd /tmp/ur/
+    wget -O urserver.deb https://www.unifiedremote.com/download/linux-x64-deb
+    sudo dpkg -i urserver.deb
+    cd -
+  }
+
   check_app () {
     case "$1" in
 
@@ -48,8 +56,8 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
         dotnet --list-runtimes | grep "${1##*-}"
       ;;
 
-      spotify-client)
-        which spotify
+      unified-remote)
+        test -f /opt/urserver/urserver-start
       ;;
 
       *)
@@ -77,8 +85,11 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
       vim)
         if ! test -f ~/.vimrc
         then
+          mkdir /tmp/.vim
+          cd /tmp/.vim/
           wget "https://raw.githubusercontent.com/rovinbhandari/Programming_Scripting/master/configs_settings/_vimrc"
           mv _vimrc ~/.vimrc
+          cd -
         fi
       ;;
 
@@ -100,8 +111,12 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
         install_signal
       ;;
 
-      spotify-client)
+      spotify)
         install_spotify
+      ;;
+
+      unified-remote)
+        install_urserver
       ;;
 
       *)
