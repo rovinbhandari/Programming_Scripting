@@ -93,6 +93,18 @@ dock_apps_initial_string="['firefox_firefox.desktop', 'org.gnome.Nautilus.deskto
         fi
       ;;
 
+      unified-remote)
+        rulesFile=/etc/udev/rules.d/38-unified-remote.rules
+        if ! test -f /dev/uinput
+        then
+          echo "uinput device not found" >&2
+        elif ! test -f $rulesFile
+        then
+          sudo echo "KERNEL==\"uinput\", GROUP=\"$USER\", TAG+=\"uaccess\"" > $rulesFile
+          echo "System restart pending."
+        fi
+      ;;
+
       *)
         echo "setup: noop"
       ;;
@@ -192,7 +204,7 @@ main () {
     # TODO: Set timezone
 
   # VISUAL/COSMETIC
-    # TODO: Change to dark theme
+    # TODO: Change system them to dark
     # TODO: Change locale (Formats) for date-time to UK.
 }
 
