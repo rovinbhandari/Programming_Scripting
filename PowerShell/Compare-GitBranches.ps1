@@ -430,25 +430,72 @@ function Get-BulkFileDetails {
     return $details
 }
 
-function Format-FileRef {
-    <# Returns a markdown link if file exists in working tree, otherwise a code span #>
+function Get-GitHubBaseUrl {
+    <# Derives a browsable GitHub/hosted-git base URL from the origin remote #>
     [CmdletBinding()]
-    param([string]$Path, [string]$RepoPath)
+    param()
 
-    $testPath = $Path
-    if ($testPath.StartsWith('"') -and $testPath.EndsWith('"')) {
-        $testPath = $testPath.Substring(1, $testPath.Length - 2)
+    $remoteUrl = Invoke-Git @('remote', 'get-url', 'origin')
+    if (-not $remoteUrl) { return $null }
+
+    $url = ($remoteUrl | Select-Object -First 1).Trim()
+
+    # SSH: git@github.com:user/repo.git
+    if ($url -match '^git@github\.com:(.+?)(?:\.git)?$') {
+        return "https://github.com/$($Matches[1])"
     }
-    $fullPath = Join-Path $RepoPath $testPath
+    # HTTPS: https://github.com/user/repo.git
+    if ($url -match '^https?://github\.com/(.+?)(?:\.git)?$') {
+        return "https://github.com/$($Matches[1])"
+    }
+    # Generic SSH: git@host:user/repo.git
+    if ($url -match '^git@([^:]+):(.+?)(?:\.git)?$') {
+        return "https://$($Matches[1])/$($Matches[2])"
+    }
+    # Generic HTTPS
+    if ($url -match '^https?://([^/]+)/(.+?)(?:\.git)?$') {
+        return "https://$($Matches[1])/$($Matches[2])"
+    }
+
+    Write-Log "Could not derive browsable URL from remote: $url" -Level WARN
+    return $null
+}
+
+function Format-FileRef {
+    <# Returns a markdown link: local relative link if file exists in working tree,
+       GitHub blob URL for remote-only files, or code span as last resort #>
+    [CmdletBinding()]
+    param(
+        [string]$Path,
+        [string]$RepoPath,
+        [string]$Branch,
+        [string]$GitHubBaseUrl
+    )
+
+    $cleanPath = $Path
+    if ($cleanPath.StartsWith('"') -and $cleanPath.EndsWith('"')) {
+        $cleanPath = $cleanPath.Substring(1, $cleanPath.Length - 2)
+    }
+
+    # Try local file first
+    $fullPath = Join-Path $RepoPath $cleanPath
     if (Test-Path -LiteralPath $fullPath) {
-        $urlPath = $testPath -replace '\\', '/' -replace ' ', '%20'
-        $displayName = $testPath -replace '\|', '\|'
+        $urlPath = $cleanPath -replace '\\', '/' -replace ' ', '%20'
+        $displayName = $cleanPath -replace '\|', '\|'
         return "[$displayName]($urlPath)"
     }
-    else {
-        $escapedPath = $Path -replace '\|', '\|'
-        return "``$escapedPath``"
+
+    # Fall back to GitHub blob URL for remote-only files
+    if ($GitHubBaseUrl -and $Branch) {
+        $urlPath = [Uri]::EscapeUriString(($cleanPath -replace '\\', '/'))
+        $ghBranch = $Branch -replace '^origin/', ''
+        $displayName = $cleanPath -replace '\|', '\|'
+        return "[$displayName]($GitHubBaseUrl/blob/$ghBranch/$urlPath)"
     }
+
+    # No link possible
+    $escapedPath = $Path -replace '\|', '\|'
+    return "``$escapedPath``"
 }
 
 #endregion
@@ -549,6 +596,7 @@ function Format-Markdown {
     [void]$sb.AppendLine("base: $($Data.Base)")
     [void]$sb.AppendLine("compare_to: $($Data.CompareTo)")
     [void]$sb.AppendLine("repository: $($Data.RepoPath)")
+    [void]$sb.AppendLine("local_branch: $($Data.LocalBranch)")
     [void]$sb.AppendLine("git_version: $($Data.GitVersion)")
     if ($Data.IncludePath) {
         [void]$sb.AppendLine("scoped_to: [$($Data.IncludePath -join ', ')]")
@@ -636,6 +684,12 @@ function Format-Markdown {
     [void]$sb.AppendLine("Changes from ``$($Data.Base)`` to ``$($Data.CompareTo)``, sorted by most changes first.")
     [void]$sb.AppendLine("")
     if ($Data.NumStat -and @($Data.NumStat).Count -gt 0) {
+        # Build a status map from NameStatus so we know which branch each file belongs to
+        $fileStatusMap = @{}
+        foreach ($ns in $Data.NameStatus) {
+            $fileStatusMap[$ns.Path] = $ns.Status.Substring(0,1)
+            if ($ns.OldPath) { $fileStatusMap[$ns.OldPath] = 'D' }
+        }
         $sorted = @($Data.NumStat | Sort-Object Total -Descending)
         [void]$sb.AppendLine("| # | File | +Lines | -Lines | Total | |")
         [void]$sb.AppendLine("|--:|---|--:|--:|--:|---|")
@@ -646,7 +700,9 @@ function Format-Markdown {
                          elseif ($entry.Total -ge 20) { $emojiYellow }
                          elseif ($entry.Total -gt 0) { $emojiGreen }
                          else { $emojiWhite }
-            $fileRef = Format-FileRef -Path $entry.Path -RepoPath $Data.RepoPath
+            $fStatus = if ($fileStatusMap.ContainsKey($entry.Path)) { $fileStatusMap[$entry.Path] } else { 'M' }
+            $fBranch = if ($fStatus -eq 'D') { $Data.Base } else { $Data.CompareTo }
+            $fileRef = Format-FileRef -Path $entry.Path -RepoPath $Data.RepoPath -Branch $fBranch -GitHubBaseUrl $Data.GitHubBaseUrl
             [void]$sb.AppendLine("| $rank | $fileRef | $($entry.Insertions) | $($entry.Deletions) | $($entry.Total) | $indicator |")
         }
         [void]$sb.AppendLine("")
@@ -684,7 +740,7 @@ function Format-Markdown {
                     [void]$sb.AppendLine("| File | Lines | Last Modified | Commit |")
                     [void]$sb.AppendLine("|---|--:|---|---|")
                     foreach ($item in $group.Group) {
-                        $fileRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath
+                        $fileRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
                         $d = if ($Data.FileDetails.ContainsKey("A:$($item.Path)")) { $Data.FileDetails["A:$($item.Path)"] } else { $null }
                         $lc = if ($d) { $d.LineCount } else { [char]0x2014 }
                         $dt = if ($d -and $d.Date) { $d.Date } else { [char]0x2014 }
@@ -696,7 +752,7 @@ function Format-Markdown {
                     [void]$sb.AppendLine("| File | Lines | Last Modified | Commit |")
                     [void]$sb.AppendLine("|---|--:|---|---|")
                     foreach ($item in $group.Group) {
-                        $fileRef = "``$($item.Path)``"
+                        $fileRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
                         $d = if ($Data.FileDetails.ContainsKey("D:$($item.Path)")) { $Data.FileDetails["D:$($item.Path)"] } else { $null }
                         $lc = if ($d) { $d.LineCount } else { [char]0x2014 }
                         $dt = if ($d -and $d.Date) { $d.Date } else { [char]0x2014 }
@@ -708,7 +764,7 @@ function Format-Markdown {
                     [void]$sb.AppendLine("| File | +Lines | -Lines |")
                     [void]$sb.AppendLine("|---|--:|--:|")
                     foreach ($item in $group.Group) {
-                        $fileRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath
+                        $fileRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
                         $ns = $Data.NumStat | Where-Object { $_.Path -eq $item.Path } | Select-Object -First 1
                         $ins = if ($ns) { $ns.Insertions } else { [char]0x2014 }
                         $del = if ($ns) { $ns.Deletions } else { [char]0x2014 }
@@ -719,8 +775,8 @@ function Format-Markdown {
                     [void]$sb.AppendLine("| On ``$($Data.Base)`` | On ``$($Data.CompareTo)`` |")
                     [void]$sb.AppendLine("|---|---|")
                     foreach ($item in $group.Group) {
-                        $oldRef = Format-FileRef -Path $item.OldPath -RepoPath $Data.RepoPath
-                        $newRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath
+                        $oldRef = Format-FileRef -Path $item.OldPath -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                        $newRef = Format-FileRef -Path $item.Path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
                         [void]$sb.AppendLine("| $oldRef | $newRef |")
                     }
                 }
@@ -757,11 +813,13 @@ function Format-Markdown {
             foreach ($path in $sortedPaths) {
                 $match = $Data.BaseBlobMatches | Where-Object { $_.Path -eq $path }
                 if ($match) {
-                    $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath }) -join ', '
-                    [void]$sb.AppendLine("| $emojiGreen | ``$path`` | Identical content at: $matchPaths |")
+                    $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl }) -join ', '
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiGreen | $fileRef | Identical content at: $matchPaths |")
                 }
                 else {
-                    [void]$sb.AppendLine("| $emojiRed | ``$path`` | **No match — truly unique to ``$($Data.Base)``** |")
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiRed | $fileRef | **No match — truly unique to ``$($Data.Base)``** |")
                 }
             }
             [void]$sb.AppendLine("")
@@ -781,11 +839,13 @@ function Format-Markdown {
             foreach ($path in $sortedPaths) {
                 $match = $Data.CompareBlobMatches | Where-Object { $_.Path -eq $path }
                 if ($match) {
-                    $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath }) -join ', '
-                    [void]$sb.AppendLine("| $emojiGreen | $(Format-FileRef -Path $path -RepoPath $Data.RepoPath) | Identical content at: $matchPaths |")
+                    $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl }) -join ', '
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiGreen | $fileRef | Identical content at: $matchPaths |")
                 }
                 else {
-                    [void]$sb.AppendLine("| $emojiRed | $(Format-FileRef -Path $path -RepoPath $Data.RepoPath) | **No match — truly unique to ``$($Data.CompareTo)``** |")
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiRed | $fileRef | **No match — truly unique to ``$($Data.CompareTo)``** |")
                 }
             }
             [void]$sb.AppendLine("")
@@ -804,7 +864,7 @@ function Format-Markdown {
 
         if ($Data.ContentChunks.Count -gt 0) {
             foreach ($path in $Data.SharedModifiedList | Sort-Object) {
-                $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath
+                $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
                 [void]$sb.AppendLine("### $fileRef")
                 [void]$sb.AppendLine("")
                 if ($Data.ContentChunks.ContainsKey($path)) {
@@ -1000,6 +1060,14 @@ try {
     $script:Telemetry.GitVersion = $gitVersion
     Write-Log "Git: $gitVersion" -Level VERBOSE
 
+    # Resolve GitHub browsable URL for remote file links
+    $gitHubBaseUrl = Get-GitHubBaseUrl
+    if ($gitHubBaseUrl) {
+        Write-Log "GitHub base URL: $gitHubBaseUrl" -Level VERBOSE
+    } else {
+        Write-Log "No browsable remote URL detected; remote files will not be hyperlinked" -Level WARN
+    }
+
     # Validate branches
     Write-Log "Validating branches..." -Level VERBOSE
     if (-not (Test-BranchExists $Base)) {
@@ -1176,6 +1244,8 @@ try {
         NameStatus             = $nameStatus
         FileDetails            = $fileDetails
         ContentChunks          = $contentChunks
+        GitHubBaseUrl          = $gitHubBaseUrl
+        LocalBranch            = $currentBranch
     }
 
     # Finalize telemetry (before report generation so duration is available in the report)
