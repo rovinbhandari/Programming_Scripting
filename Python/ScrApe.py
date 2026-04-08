@@ -616,7 +616,7 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         result["error"] = "Non-article resource, skipped"
         return result
 
-    _safe_print(f"  \U0001F34C Grabbing: {url}")
+    _safe_print(f"  🍌 Grabbing: {url}")
 
     if session is None:
         session = requests.Session()
@@ -627,22 +627,22 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
 
     # Wayback fallback: if the direct grab failed, ask the archive
     if err and wayback:
-        _safe_print(f"    \U0001F4BE {err} \u2014 checking Wayback Machine...")
+        _safe_print(f"    🐒 {err} — asking the old monkeys...")
         wb_url = wayback_lookup(url)
         if wb_url:
-            _safe_print(f"    \U0001F4BE Found archived copy")
+            _safe_print(f"    🐒 Fossilized banana found!")
             resp, err2 = fetch_page(wb_url, session)
             if err2:
-                _safe_print(f"    \U0001F480 Wayback also failed: {err2}")
+                _safe_print(f"    💀 Fossilized banana was rotten: {err2}")
             else:
                 err = None  # clear the original error
                 result["wayback"] = wb_url
         else:
-            _safe_print(f"    \U0001F480 No Wayback snapshot available")
+            _safe_print(f"    💀 Even the elder apes have forgotten this one")
 
     if err:
         result["error"] = err
-        _safe_print(f"    \U0001F480 {err}")
+        _safe_print(f"    💀 {err}")
         return result
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -781,14 +781,16 @@ def main(argv=None):
     print("          |  \\._   _./  |")
     print("          \\   \\ `~` /   /")
     print("           '._ '-=-' _.'")
-    print("              '~---~'   \U0001F34C ScrApe!")
+    print("              '~---~'   🍌 ScrApe!")
     print()
-    print(f"Ape out!  \u2014 {TODAY}")
+    print(f"Ape out!  — {TODAY}")
     print(f"Nest:    {outdir}")
     print(f"Bananas: {len(urls)}")
     print(f"Troop:   {workers} ape{'s' if workers != 1 else ''}")
     if args.limit:
         print(f"Limit:   {args.limit}")
+    if args.wayback:
+        print(f"Wayback: 🐒 Elder apes on standby")
     print()
 
     os.makedirs(outdir, exist_ok=True)
