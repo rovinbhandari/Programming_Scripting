@@ -542,6 +542,136 @@ function Find-BlobMatches {
     return $matches
 }
 
+function Find-FuzzyRenames {
+    <#
+    .SYNOPSIS
+        For files still unmatched after exact blob matching, detect probable
+        renames+edits by comparing basenames.  When two files share the same
+        filename (at different paths), compute content similarity between their
+        blobs via git diff --numstat.  Searches ALL files on the other branch
+        (not just unmatched ones) so it catches cases where the renamed copy
+        also exists at the original path as a shared file.
+    #>
+    [CmdletBinding()]
+    param(
+        [string[]]$UnmatchedBase,         # paths unique to Base with no blob match
+        [hashtable]$BaseFiles,            # path -> blob (all Base files)
+        [string[]]$UnmatchedCompare,      # paths unique to CompareTo with no blob match
+        [hashtable]$CompareFiles,         # path -> blob (all CompareTo files)
+        [int]$MinSimilarityPct = 50       # minimum similarity % to count as a fuzzy match
+    )
+
+    Write-Log "Scanning for fuzzy renames among $($UnmatchedBase.Count) base / $($UnmatchedCompare.Count) compare unmatched files" -Level VERBOSE
+
+    if ($UnmatchedBase.Count -eq 0 -and $UnmatchedCompare.Count -eq 0) { return @() }
+
+    # Build basename -> list-of-paths index for ALL files on each branch
+    $allCompareByName = @{}
+    foreach ($path in $CompareFiles.Keys) {
+        $name = [System.IO.Path]::GetFileName($path)
+        if (-not $allCompareByName.ContainsKey($name)) {
+            $allCompareByName[$name] = [System.Collections.Generic.List[string]]::new()
+        }
+        $allCompareByName[$name].Add($path)
+    }
+
+    $allBaseByName = @{}
+    foreach ($path in $BaseFiles.Keys) {
+        $name = [System.IO.Path]::GetFileName($path)
+        if (-not $allBaseByName.ContainsKey($name)) {
+            $allBaseByName[$name] = [System.Collections.Generic.List[string]]::new()
+        }
+        $allBaseByName[$name].Add($path)
+    }
+
+    # Helper: compute similarity between two blobs
+    $computeSimilarity = {
+        param([string]$BlobA, [string]$BlobB)
+        if ($BlobA -eq $BlobB) { return 100 }
+
+        $raw = Invoke-Git @('diff', '--numstat', $BlobA, $BlobB)
+        if ($raw) {
+            $parts = ($raw | Select-Object -First 1) -split '\t'
+            $ins = 0; $del = 0
+            if ($parts[0] -ne '-') { $ins = [int]$parts[0] }
+            if ($parts[1] -ne '-') { $del = [int]$parts[1] }
+            $totalChanged = $ins + $del
+            $aLineCount  = @(Invoke-Git @('cat-file', '-p', $BlobA)).Count
+            $bLineCount = @(Invoke-Git @('cat-file', '-p', $BlobB)).Count
+            $maxLines = [Math]::Max($aLineCount, $bLineCount)
+            if ($maxLines -eq 0) { $maxLines = 1 }
+            $sim = [Math]::Round((1 - ($totalChanged / (2 * $maxLines))) * 100)
+            if ($sim -lt 0) { $sim = 0 }
+            return $sim
+        }
+        return 0
+    }
+
+    $matches = @()
+
+    # Match unmatched Base files against ALL CompareTo files (at different paths)
+    foreach ($basePath in $UnmatchedBase) {
+        $baseName = [System.IO.Path]::GetFileName($basePath)
+        if (-not $allCompareByName.ContainsKey($baseName)) { continue }
+
+        $baseBlob = $BaseFiles[$basePath]
+        $bestSim = -1; $bestMatch = $null
+
+        foreach ($comparePath in $allCompareByName[$baseName]) {
+            if ($comparePath -eq $basePath) { continue }  # skip same path (shared file)
+            $compareBlob = $CompareFiles[$comparePath]
+            $sim = & $computeSimilarity $baseBlob $compareBlob
+            Write-Log "  Fuzzy: $basePath <-> $comparePath  similarity=$sim%" -Level DEBUG
+            if ($sim -gt $bestSim) { $bestSim = $sim; $bestMatch = $comparePath }
+        }
+
+        if ($bestSim -ge $MinSimilarityPct -and $bestMatch) {
+            $matches += [PSCustomObject]@{
+                BasePath     = $basePath
+                ComparePath  = $bestMatch
+                Similarity   = $bestSim
+                Type         = 'FuzzyRename'
+            }
+            Write-Log "Fuzzy match: $basePath -> $bestMatch ($bestSim%)" -Level VERBOSE
+        }
+    }
+
+    # Match unmatched CompareTo files against ALL Base files (at different paths)
+    # Skip files already matched from the Base side above
+    $alreadyMatchedCompare = [System.Collections.Generic.HashSet[string]]::new(
+        [string[]]@($matches | ForEach-Object { $_.ComparePath }))
+
+    foreach ($comparePath in $UnmatchedCompare) {
+        if ($alreadyMatchedCompare.Contains($comparePath)) { continue }
+        $compareName = [System.IO.Path]::GetFileName($comparePath)
+        if (-not $allBaseByName.ContainsKey($compareName)) { continue }
+
+        $compareBlob = $CompareFiles[$comparePath]
+        $bestSim = -1; $bestMatch = $null
+
+        foreach ($baseCandidate in $allBaseByName[$compareName]) {
+            if ($baseCandidate -eq $comparePath) { continue }
+            $baseBlob = $BaseFiles[$baseCandidate]
+            $sim = & $computeSimilarity $baseBlob $compareBlob
+            Write-Log "  Fuzzy: $comparePath <-> $baseCandidate  similarity=$sim%" -Level DEBUG
+            if ($sim -gt $bestSim) { $bestSim = $sim; $bestMatch = $baseCandidate }
+        }
+
+        if ($bestSim -ge $MinSimilarityPct -and $bestMatch) {
+            $matches += [PSCustomObject]@{
+                BasePath     = $bestMatch
+                ComparePath  = $comparePath
+                Similarity   = $bestSim
+                Type         = 'FuzzyRename'
+            }
+            Write-Log "Fuzzy match: $comparePath -> $bestMatch ($bestSim%)" -Level VERBOSE
+        }
+    }
+
+    Write-Log "Found $($matches.Count) fuzzy rename matches" -Level VERBOSE
+    return $matches
+}
+
 function Get-SharedFileAnalysis {
     <#
     .SYNOPSIS
@@ -646,6 +776,7 @@ function Format-Markdown {
     [void]$sb.AppendLine("| — Modified content | $($Data.SharedModified) |")
     [void]$sb.AppendLine("| Unique to ``$($Data.Base)`` | $($Data.UniqueToBase) |")
     [void]$sb.AppendLine("| — Renames/moves (identical content elsewhere) | $($Data.RenamesOnBase) |")
+    [void]$sb.AppendLine("| — Probable renames with edits (fuzzy match) | $($Data.FuzzyRenames.Count) |")
     [void]$sb.AppendLine("| — Truly unique (no content match) | $($Data.TrulyUniqueToBase) |")
     [void]$sb.AppendLine("| Unique to ``$($Data.CompareTo)`` | $($Data.UniqueToCompare) |")
     [void]$sb.AppendLine("| — Renames/moves (identical content elsewhere) | $($Data.RenamesOnCompare) |")
@@ -851,20 +982,29 @@ function Format-Markdown {
         if ($Data.UniqueToBaseFiles.Count -gt 0) {
             [void]$sb.AppendLine("### Files only on ``$($Data.Base)`` ($($Data.UniqueToBase))")
             [void]$sb.AppendLine("")
-            [void]$sb.AppendLine("$emojiRed = truly unique | $emojiGreen = identical content elsewhere (rename/move)")
+            [void]$sb.AppendLine("$emojiRed = truly unique | $emojiYellow = probable rename with edits | $emojiGreen = identical content elsewhere (rename/move)")
             [void]$sb.AppendLine("")
-            [void]$sb.AppendLine("| | File | Blob Match on ``$($Data.CompareTo)`` |")
+            [void]$sb.AppendLine("| | File | Match on ``$($Data.CompareTo)`` |")
             [void]$sb.AppendLine("|---|---|---|")
-            # Sort: truly unique first (no blob match = 0), then renames (= 1)
+            # Sort: truly unique first (0), then fuzzy (1), then exact blob match (2)
             $sortedPaths = @($Data.UniqueToBaseFiles.Keys | Sort-Object | Sort-Object {
-                $p = $_; if ($Data.BaseBlobMatches | Where-Object { $_.Path -eq $p }) { 1 } else { 0 }
+                $p = $_
+                if ($Data.BaseBlobMatches | Where-Object { $_.Path -eq $p }) { 2 }
+                elseif ($Data.FuzzyRenames | Where-Object { $_.BasePath -eq $p }) { 1 }
+                else { 0 }
             })
             foreach ($path in $sortedPaths) {
                 $match = $Data.BaseBlobMatches | Where-Object { $_.Path -eq $path }
+                $fuzzy = $Data.FuzzyRenames | Where-Object { $_.BasePath -eq $path }
                 if ($match) {
                     $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl }) -join ', '
                     $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
                     [void]$sb.AppendLine("| $emojiGreen | $fileRef | Identical content at: $matchPaths |")
+                }
+                elseif ($fuzzy) {
+                    $matchRef = Format-FileRef -Path $fuzzy.ComparePath -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiYellow | $fileRef | Probable rename+edit ($($fuzzy.Similarity)% similar): $matchRef |")
                 }
                 else {
                     $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
@@ -877,20 +1017,29 @@ function Format-Markdown {
         if ($Data.UniqueToCompareFiles.Count -gt 0) {
             [void]$sb.AppendLine("### Files only on ``$($Data.CompareTo)`` ($($Data.UniqueToCompare))")
             [void]$sb.AppendLine("")
-            [void]$sb.AppendLine("$emojiRed = truly unique | $emojiGreen = identical content elsewhere (rename/move)")
+            [void]$sb.AppendLine("$emojiRed = truly unique | $emojiYellow = probable rename with edits | $emojiGreen = identical content elsewhere (rename/move)")
             [void]$sb.AppendLine("")
-            [void]$sb.AppendLine("| | File | Blob Match on ``$($Data.Base)`` |")
+            [void]$sb.AppendLine("| | File | Match on ``$($Data.Base)`` |")
             [void]$sb.AppendLine("|---|---|---|")
-            # Sort: truly unique first (no blob match = 0), then renames (= 1)
+            # Sort: truly unique first (0), then fuzzy (1), then exact blob match (2)
             $sortedPaths = @($Data.UniqueToCompareFiles.Keys | Sort-Object | Sort-Object {
-                $p = $_; if ($Data.CompareBlobMatches | Where-Object { $_.Path -eq $p }) { 1 } else { 0 }
+                $p = $_
+                if ($Data.CompareBlobMatches | Where-Object { $_.Path -eq $p }) { 2 }
+                elseif ($Data.FuzzyRenames | Where-Object { $_.ComparePath -eq $p }) { 1 }
+                else { 0 }
             })
             foreach ($path in $sortedPaths) {
                 $match = $Data.CompareBlobMatches | Where-Object { $_.Path -eq $path }
+                $fuzzy = $Data.FuzzyRenames | Where-Object { $_.ComparePath -eq $path }
                 if ($match) {
                     $matchPaths = ($match.MatchPaths | ForEach-Object { Format-FileRef -Path $_ -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl }) -join ', '
                     $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
                     [void]$sb.AppendLine("| $emojiGreen | $fileRef | Identical content at: $matchPaths |")
+                }
+                elseif ($fuzzy) {
+                    $matchRef = Format-FileRef -Path $fuzzy.BasePath -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                    $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
+                    [void]$sb.AppendLine("| $emojiYellow | $fileRef | Probable rename+edit ($($fuzzy.Similarity)% similar): $matchRef |")
                 }
                 else {
                     $fileRef = Format-FileRef -Path $path -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
@@ -993,7 +1142,7 @@ function Format-PlainText {
     [void]$sb.AppendLine("Total files on $($Data.CompareTo): $($Data.CompareFileCount)")
     [void]$sb.AppendLine("Shared paths identical: $($Data.SharedIdentical)")
     [void]$sb.AppendLine("Shared paths modified:  $($Data.SharedModified)")
-    [void]$sb.AppendLine("Unique to $($Data.Base):         $($Data.UniqueToBase) (renames: $($Data.RenamesOnBase), truly unique: $($Data.TrulyUniqueToBase))")
+    [void]$sb.AppendLine("Unique to $($Data.Base):         $($Data.UniqueToBase) (renames: $($Data.RenamesOnBase), fuzzy: $($Data.FuzzyRenames.Count), truly unique: $($Data.TrulyUniqueToBase))")
     [void]$sb.AppendLine("Unique to $($Data.CompareTo):      $($Data.UniqueToCompare) (renames: $($Data.RenamesOnCompare), truly unique: $($Data.TrulyUniqueToCompare))")
     [void]$sb.AppendLine("")
 
@@ -1021,8 +1170,12 @@ function Format-PlainText {
         [void]$sb.AppendLine("-" * 40)
         foreach ($path in $Data.UniqueToBaseFiles.Keys | Sort-Object) {
             $match = $Data.BaseBlobMatches | Where-Object { $_.Path -eq $path }
+            $fuzzy = $Data.FuzzyRenames | Where-Object { $_.BasePath -eq $path }
             if ($match) {
                 [void]$sb.AppendLine("  $path  -> identical content at: $($match.MatchPaths -join ', ')")
+            }
+            elseif ($fuzzy) {
+                [void]$sb.AppendLine("  $path  -> probable rename+edit ($($fuzzy.Similarity)% similar): $($fuzzy.ComparePath)")
             }
             else {
                 [void]$sb.AppendLine("  $path  [TRULY UNIQUE]")
@@ -1036,8 +1189,12 @@ function Format-PlainText {
         [void]$sb.AppendLine("-" * 40)
         foreach ($path in $Data.UniqueToCompareFiles.Keys | Sort-Object) {
             $match = $Data.CompareBlobMatches | Where-Object { $_.Path -eq $path }
+            $fuzzy = $Data.FuzzyRenames | Where-Object { $_.ComparePath -eq $path }
             if ($match) {
                 [void]$sb.AppendLine("  $path  -> identical content at: $($match.MatchPaths -join ', ')")
+            }
+            elseif ($fuzzy) {
+                [void]$sb.AppendLine("  $path  -> probable rename+edit ($($fuzzy.Similarity)% similar): $($fuzzy.BasePath)")
             }
             else {
                 [void]$sb.AppendLine("  $path  [TRULY UNIQUE]")
@@ -1207,6 +1364,21 @@ try {
 
     Write-Log "Truly unique: Base=$($trulyUniqueToBase.Count) Compare=$($trulyUniqueToCompare.Count) Renames=$($renamesOnBase + $renamesOnCompare)" -Level VERBOSE
 
+    # 5b. Fuzzy rename detection (same filename, different path, edited content)
+    Write-Log "Detecting fuzzy renames (same filename, edited content)..." -Level VERBOSE
+    $fuzzyRenames = @(Find-FuzzyRenames `
+        -UnmatchedBase $trulyUniqueToBase `
+        -BaseFiles $baseFilesAll `
+        -UnmatchedCompare $trulyUniqueToCompare `
+        -CompareFiles $compareFilesAll)
+    $script:Telemetry.FuzzyRenames = $fuzzyRenames.Count
+
+    # 5c. Recompute truly unique after fuzzy matching
+    $fuzzyBasePaths = @($fuzzyRenames | ForEach-Object { $_.BasePath })
+    $fuzzyComparePaths = @($fuzzyRenames | ForEach-Object { $_.ComparePath })
+    $trulyUniqueToBase = @($trulyUniqueToBase | Where-Object { $_ -notin $fuzzyBasePaths })
+    $trulyUniqueToCompare = @($trulyUniqueToCompare | Where-Object { $_ -notin $fuzzyComparePaths })
+
     # 6. Diff stat and name-status
     Write-Log "Running diff stat..." -Level VERBOSE
     if ($IncludePath -and $IncludePath.Count -gt 0) {
@@ -1288,6 +1460,7 @@ try {
         UniqueToCompareFiles   = $uniqueToCompare
         BaseBlobMatches        = $baseBlobMatches
         CompareBlobMatches     = $compareBlobMatches
+        FuzzyRenames           = $fuzzyRenames
         DiffStat               = $diffStat
         NumStat                = $numStat
         NameStatus             = $nameStatus
@@ -1332,7 +1505,7 @@ try {
     Write-Host "  Base:      $Base ($($baseFiles.Count) files)"
     Write-Host "  CompareTo: $CompareTo ($($compareFiles.Count) files)"
     Write-Host "  Shared identical: $($sharedAnalysis.Identical.Count) | Modified: $($sharedAnalysis.Modified.Count)"
-    Write-Host "  Unique to $Base`: $($uniqueToBase.Count) (renames: $renamesOnBase, truly unique: $($trulyUniqueToBase.Count))"
+    Write-Host "  Unique to $Base`: $($uniqueToBase.Count) (renames: $renamesOnBase, fuzzy: $($fuzzyRenames.Count), truly unique: $($trulyUniqueToBase.Count))"
     Write-Host "  Unique to $CompareTo`: $($uniqueToCompare.Count) (renames: $renamesOnCompare, truly unique: $($trulyUniqueToCompare.Count))"
     Write-Host "  Report: $OutputPath" -ForegroundColor Cyan
     Write-Host "  Log:    $LogPath" -ForegroundColor DarkGray
