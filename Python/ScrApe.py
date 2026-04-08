@@ -217,6 +217,26 @@ def fetch_page(url: str, session: requests.Session) -> tuple[requests.Response |
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Wayback Machine fallback
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WAYBACK_API = "https://archive.org/wayback/available?url={}"
+
+
+def wayback_lookup(url: str) -> str | None:
+    """Ask the Wayback Machine if it has a snapshot. Returns the archived URL or None."""
+    try:
+        r = requests.get(WAYBACK_API.format(url), timeout=10)
+        r.raise_for_status()
+        snap = r.json().get("archived_snapshots", {}).get("closest", {})
+        if snap.get("available"):
+            return snap["url"]
+    except Exception:
+        pass
+    return None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Metadata extraction
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -583,7 +603,8 @@ def generate_summary_table(results: list[dict], path: str):
 
 def process_url(url: str, outdir: str, session: requests.Session | None = None,
                 dry_run: bool = False, overwrite: bool = False,
-                delay: float = DEFAULT_DELAY) -> dict:
+                delay: float = DEFAULT_DELAY,
+                wayback: bool = False) -> dict:
     """One ape, one banana. Grab, peel, save. Returns the loot report."""
     result = {"url": url, "success": False, "filename": "", "error": "", "template": ""}
 
@@ -595,7 +616,7 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         result["error"] = "Non-article resource, skipped"
         return result
 
-    _safe_print(f"  🍌 Grabbing: {url}")
+    _safe_print(f"  \U0001F34C Grabbing: {url}")
 
     if session is None:
         session = requests.Session()
@@ -603,9 +624,25 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
 
     _domain_wait(url, delay)
     resp, err = fetch_page(url, session)
+
+    # Wayback fallback: if the direct grab failed, ask the archive
+    if err and wayback:
+        _safe_print(f"    \U0001F4BE {err} \u2014 checking Wayback Machine...")
+        wb_url = wayback_lookup(url)
+        if wb_url:
+            _safe_print(f"    \U0001F4BE Found archived copy")
+            resp, err2 = fetch_page(wb_url, session)
+            if err2:
+                _safe_print(f"    \U0001F480 Wayback also failed: {err2}")
+            else:
+                err = None  # clear the original error
+                result["wayback"] = wb_url
+        else:
+            _safe_print(f"    \U0001F480 No Wayback snapshot available")
+
     if err:
         result["error"] = err
-        _safe_print(f"    💀 {err}")
+        _safe_print(f"    \U0001F480 {err}")
         return result
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -698,6 +735,8 @@ Examples:
                      help="Write a JSON log of all results to FILE")
     beh.add_argument("--summary-table", metavar="FILE",
                      help="Write a markdown summary table of results to FILE")
+    beh.add_argument("--wayback", action="store_true",
+                     help="Try Wayback Machine if direct grab fails")
 
     return p
 
@@ -773,7 +812,7 @@ def main(argv=None):
     def _do(url):
         return process_url(url, outdir, session=None,
                            dry_run=args.dry_run, overwrite=args.overwrite,
-                           delay=args.delay)
+                           delay=args.delay, wayback=args.wayback)
 
     if workers == 1:
         # Sequential mode (legacy behaviour)
@@ -782,7 +821,7 @@ def main(argv=None):
         for url in to_process:
             r = process_url(url, outdir, session,
                             dry_run=args.dry_run, overwrite=args.overwrite,
-                            delay=args.delay)
+                            delay=args.delay, wayback=args.wayback)
             results.append(r)
             counts["processed"] += 1
             counts["ok" if r["success"] else "fail"] += 1
