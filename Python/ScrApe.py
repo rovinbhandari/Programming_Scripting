@@ -1,32 +1,48 @@
-"""
-web_clipper.py — Bulk web article → Obsidian markdown clipper
+r"""
+ScrApe.py — ScrApe: bulk web article → Obsidian markdown clipper
 
-Downloads web pages and converts them to Obsidian-compatible markdown files
-using template-based frontmatter (Wikipedia, GoodReads, or Default article).
+              __,__
+     .--.  .-"     "-.  .--.
+    / .. \/  .-. .-.  \/ .. \
+   | |  '|  /   Y   \  |'  | |
+   | \   \  \ 0 | 0 /  /   / |
+    \ '- ,\.-"`` ``"-./, -' /
+     `'-' /_   ^ ^   _\ '-'`
+         |  \._   _./  |
+         \   \ `~` /   /
+          '._ '-=-' _.'
+             '~---~'
+                          🍌 ScrApe!
 
-Generic tool: works with any list of URLs from a file, command-line, or stdin.
+ScrApe swings through the web, grabs pages by the fistful, and
+peels them into tasty Obsidian-compatible markdown clippings.
+Knows three banana flavours: Wikipedia, GoodReads, and Default.
 
-Usage examples:
-    # From a URL-list file (one URL per line, blank lines and non-URLs ignored)
-    python web_clipper.py -i urls.txt -o E:\\vault\\Clippings
+Usage — let the ape loose:
+    # Feed ape a bunch of URLs from a file
+    python ScrApe.py -i urls.txt -o E:\\vault\\Clippings
 
-    # Specific URLs on the command line
-    python web_clipper.py -o ./output --urls https://en.wikipedia.org/wiki/Ecotone https://paulgraham.com/love.html
+    # Point ape at specific trees
+    python ScrApe.py -o ./output --urls https://en.wikipedia.org/wiki/Ecotone https://paulgraham.com/love.html
 
-    # Dry run with limit
-    python web_clipper.py -i urls.txt -o ./output --dry-run --limit 5
+    # Let ape sniff before grabbing (dry run)
+    python ScrApe.py -i urls.txt -o ./output --dry-run --limit 5
 
-    # Pocket-export mode: read URLs from a Pocket-style markdown file and
-    # annotate it with wikilinks/failure notes after processing
-    python web_clipper.py -i pocket_export.md -o E:\\vault\\Clippings\\Pocket --annotate-source
-    # Parallel download with 10 workers (default), sequential with 1
-    python web_clipper.py -i urls.txt -o ./output --workers 10
-    python web_clipper.py -i urls.txt -o ./output --workers 1
-    # Read URLs from stdin (pipe from another command)
-    some_command | python web_clipper.py -o ./output --stdin
+    # Pocket-export mode: ape reads your Pocket bookmarks and
+    # scribbles notes back into the file after grabbing
+    python ScrApe.py -i pocket.md -o E:\\vault\\Clippings\\Pocket --annotate-source
 
-    # Force re-download even if file exists
-    python web_clipper.py -i urls.txt -o ./output --overwrite
+    # Unleash the whole troop (parallel, default 10 apes)
+    python ScrApe.py -i urls.txt -o ./output --workers 10
+
+    # One careful ape only
+    python ScrApe.py -i urls.txt -o ./output --workers 1
+
+    # Pipe bananas from another command
+    some_command | python ScrApe.py -o ./output --stdin
+
+    # Ape smash existing files and re-grab
+    python ScrApe.py -i urls.txt -o ./output --overwrite
 """
 
 import argparse
@@ -91,13 +107,13 @@ _domain_meta_lock = threading.Lock()            # protects the two dicts above
 
 
 def _safe_print(*args, **kwargs):
-    """Thread-safe print."""
+    """Thread-safe ooh-ooh to stdout."""
     with _print_lock:
         print(*args, **kwargs)
 
 
 def _domain_wait(url: str, delay: float):
-    """Enforce a per-domain cooldown so parallel workers don't hammer one host."""
+    """Ape waits politely between grabs from the same tree."""
     host = (urlparse(url).hostname or "unknown").lower()
     with _domain_meta_lock:
         if host not in _domain_locks:
@@ -117,7 +133,7 @@ def _domain_wait(url: str, delay: float):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def detect_template(url: str) -> str:
-    """Classify a URL into a template type: 'wikipedia', 'goodreads', or 'default'."""
+    """Sniff the URL to pick the right banana flavour."""
     host = (urlparse(url).hostname or "").lower()
     if re.search(r"(^|\.)wikipedia\.org$", host):
         return "wikipedia"
@@ -173,8 +189,7 @@ def resolve_links(tag, base_url: str):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def fetch_page(url: str, session: requests.Session) -> tuple[requests.Response | None, str | None]:
-    """GET a URL. Returns (response, error_string_or_None).
-    Falls back to minimal headers if the first attempt returns a thin page."""
+    """Swing out and grab a page. If the branch looks thin, try a sneakier grab."""
     try:
         resp = session.get(url, timeout=REQUEST_TIMEOUT, allow_redirects=True)
         resp.raise_for_status()
@@ -528,7 +543,7 @@ def generate_summary_table(results: list[dict], path: str):
     fail = [r for r in results if not r["success"]]
 
     lines = [
-        "# Web Clipper — Summary",
+        "# ScrApe — Loot Report",
         "",
         f"Run date: **{TODAY}**",
         f"Processed: **{len(results)}** · Succeeded: **{len(ok)}** · Failed: **{len(fail)}**",
@@ -569,8 +584,7 @@ def generate_summary_table(results: list[dict], path: str):
 def process_url(url: str, outdir: str, session: requests.Session | None = None,
                 dry_run: bool = False, overwrite: bool = False,
                 delay: float = DEFAULT_DELAY) -> dict:
-    """Fetch, convert, and save one URL. Returns a result dict.
-    Thread-safe: uses _safe_print, _domain_wait, and creates its own session if needed."""
+    """One ape, one banana. Grab, peel, save. Returns the loot report."""
     result = {"url": url, "success": False, "filename": "", "error": "", "template": ""}
 
     template = detect_template(url)
@@ -581,7 +595,7 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         result["error"] = "Non-article resource, skipped"
         return result
 
-    _safe_print(f"  Fetching: {url}")
+    _safe_print(f"  🍌 Grabbing: {url}")
 
     if session is None:
         session = requests.Session()
@@ -591,7 +605,7 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
     resp, err = fetch_page(url, session)
     if err:
         result["error"] = err
-        _safe_print(f"    ✗ {err}")
+        _safe_print(f"    💀 {err}")
         return result
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -605,25 +619,25 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
             filename, content = clip_default(url, soup)
     except Exception as e:
         result["error"] = f"Parse error: {e}"
-        _safe_print(f"    ✗ {e}")
+        _safe_print(f"    💀 {e}")
         return result
 
     if not filename:
         result["error"] = "Could not determine title"
-        _safe_print(f"    ✗ No title")
+        _safe_print(f"    💀 No title")
         return result
 
     result["filename"] = filename
 
     if dry_run:
         result["success"] = True
-        _safe_print(f"    ⊘ [DRY] {filename}.md ({template})")
+        _safe_print(f"    🙊 [DRY] {filename}.md ({template})")
         return result
 
     filepath = os.path.join(outdir, filename + ".md")
     if os.path.exists(filepath) and not overwrite:
         result["success"] = True
-        _safe_print(f"    ⊘ Exists: {filename}.md")
+        _safe_print(f"    🙈 Already got: {filename}.md")
         return result
 
     os.makedirs(outdir, exist_ok=True)
@@ -631,7 +645,7 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         f.write(content)
 
     result["success"] = True
-    _safe_print(f"    ✓ {filename}.md ({template})")
+    _safe_print(f"    🍌 {filename}.md ({template})")
     return result
 
 
@@ -641,8 +655,8 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="web_clipper",
-        description="Bulk-download web articles as Obsidian-compatible markdown clippings.",
+        prog="ScrApe",
+        description="ScrApe — an ape that swings through the web and peels pages into Obsidian markdown.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -718,10 +732,22 @@ def main(argv=None):
 
     outdir = os.path.abspath(args.output)
     workers = max(1, args.workers)
-    print(f"web_clipper — {TODAY}")
-    print(f"Output:  {outdir}")
-    print(f"URLs:    {len(urls)}")
-    print(f"Workers: {workers}")
+    print("              __,__")
+    print('     .--.  .-"     "-.  .--.')
+    print("    / .. \\/  .-. .-.  \\/ .. \\")
+    print("   | |  '|  /   Y   \\  |'  | |")
+    print("   | \\   \\  \\ 0 | 0 /  /   / |")
+    print('    \\ \'- ,\\.-"`` ``"-./, -\' /')
+    print("     `'-' /_   ^ ^   _\\ '-'`")
+    print("          |  \\._   _./  |")
+    print("          \\   \\ `~` /   /")
+    print("           '._ '-=-' _.'")
+    print("              '~---~'   \U0001F34C ScrApe!")
+    print()
+    print(f"Ape out!  \u2014 {TODAY}")
+    print(f"Nest:    {outdir}")
+    print(f"Bananas: {len(urls)}")
+    print(f"Troop:   {workers} ape{'s' if workers != 1 else ''}")
     if args.limit:
         print(f"Limit:   {args.limit}")
     print()
@@ -774,17 +800,17 @@ def main(argv=None):
 
     # Summary
     print()
-    print(f"── Summary ─────────────────────")
-    print(f"  Processed : {counts['processed']}")
-    print(f"  Succeeded : {counts['ok']}")
-    print(f"  Failed    : {counts['fail']}")
-    print(f"  Skipped   : {counts['skip']}")
+    print(f"── Ape Report ──────────────────")
+    print(f"  Grabbed  : {counts['processed']}")
+    print(f"  Peeled   : {counts['ok']}  🍌")
+    print(f"  Dropped  : {counts['fail']}  💀")
+    print(f"  Ignored  : {counts['skip']}  🙈")
 
     # Annotate source file
     if args.annotate_source and args.input and not args.dry_run:
-        print(f"\nAnnotating {args.input} ...")
+        print(f"\nScribbling notes on {args.input} ...")
         annotate_source_file(args.input, results)
-        print("Done.")
+        print("Ooh ooh! Done.")
 
     # JSON log
     if args.json_log:
@@ -800,10 +826,10 @@ def main(argv=None):
     # Print failures
     failures = [r for r in results if not r["success"] and r["template"] != "skip"]
     if failures:
-        print(f"\n── Failed ({len(failures)}) ─────────────────")
+        print(f"\n── Dropped bananas ({len(failures)}) ─────────")
         for r in failures:
             print(f"  {r['url']}")
-            print(f"    → {r['error']}")
+            print(f"    💀 {r['error']}")
 
     return 0 if counts["fail"] == 0 else 1
 
