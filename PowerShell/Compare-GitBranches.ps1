@@ -681,7 +681,7 @@ function Format-Markdown {
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine("## Diff Stat")
     [void]$sb.AppendLine("")
-    [void]$sb.AppendLine("Changes from ``$($Data.Base)`` to ``$($Data.CompareTo)``, sorted by most changes first.")
+    [void]$sb.AppendLine("Changes from ``$($Data.Base)`` to ``$($Data.CompareTo)``, sorted by severity.")
     [void]$sb.AppendLine("")
     if ($Data.NumStat -and @($Data.NumStat).Count -gt 0) {
         # Build a status map from NameStatus so we know which branch each file belongs to
@@ -690,24 +690,73 @@ function Format-Markdown {
             $fileStatusMap[$ns.Path] = $ns.Status.Substring(0,1)
             if ($ns.OldPath) { $fileStatusMap[$ns.OldPath] = 'D' }
         }
-        $sorted = @($Data.NumStat | Sort-Object Total -Descending)
+
+        # Assign severity indicator + reason based on status and size
+        # Severity rank: 1=red (review), 2=yellow (moderate), 3=green (minor), 4=white (no change)
+        $annotated = foreach ($entry in $Data.NumStat) {
+            $fStatus = if ($fileStatusMap.ContainsKey($entry.Path)) { $fileStatusMap[$entry.Path] } else { 'M' }
+
+            if ($fStatus -eq 'R' -and $entry.Total -eq 0) {
+                $indicator = $emojiWhite; $reason = 'rename only'; $sevRank = 4
+            }
+            elseif ($fStatus -eq 'R' -and $entry.Total -gt 0) {
+                # Renamed + modified content
+                if ($entry.Total -ge 100) { $indicator = $emojiRed; $reason = "renamed + $($entry.Total) lines changed"; $sevRank = 1 }
+                elseif ($entry.Total -ge 20) { $indicator = $emojiYellow; $reason = "renamed + $($entry.Total) lines changed"; $sevRank = 2 }
+                else { $indicator = $emojiGreen; $reason = "renamed + $($entry.Total) lines changed"; $sevRank = 3 }
+            }
+            elseif ($fStatus -eq 'D') {
+                # Only on Base — would be lost if Base is deleted; full severity
+                if ($entry.Total -ge 100) { $indicator = $emojiRed; $reason = "only on $($Data.Base), $($entry.Deletions) lines lost"; $sevRank = 1 }
+                elseif ($entry.Total -ge 20) { $indicator = $emojiYellow; $reason = "only on $($Data.Base), $($entry.Deletions) lines lost"; $sevRank = 2 }
+                elseif ($entry.Total -gt 0) { $indicator = $emojiGreen; $reason = "only on $($Data.Base), $($entry.Deletions) lines lost"; $sevRank = 3 }
+                else { $indicator = $emojiWhite; $reason = "only on $($Data.Base), empty"; $sevRank = 4 }
+            }
+            elseif ($fStatus -eq 'A') {
+                # New on CompareTo — safe (already on target branch); cap at yellow
+                if ($entry.Total -ge 100) { $indicator = $emojiYellow; $reason = "new on $($Data.CompareTo), $($entry.Insertions) lines"; $sevRank = 2 }
+                elseif ($entry.Total -ge 20) { $indicator = $emojiGreen; $reason = "new on $($Data.CompareTo), $($entry.Insertions) lines"; $sevRank = 3 }
+                elseif ($entry.Total -gt 0) { $indicator = $emojiGreen; $reason = "new on $($Data.CompareTo), $($entry.Insertions) lines"; $sevRank = 3 }
+                else { $indicator = $emojiWhite; $reason = "new empty file on $($Data.CompareTo)"; $sevRank = 4 }
+            }
+            else {
+                # Modified — full severity by size
+                if ($entry.Total -ge 100) { $indicator = $emojiRed; $reason = "modified, $($entry.Total) lines changed"; $sevRank = 1 }
+                elseif ($entry.Total -ge 20) { $indicator = $emojiYellow; $reason = "modified, $($entry.Total) lines changed"; $sevRank = 2 }
+                elseif ($entry.Total -gt 0) { $indicator = $emojiGreen; $reason = "modified, $($entry.Total) lines changed"; $sevRank = 3 }
+                else { $indicator = $emojiWhite; $reason = 'no content change'; $sevRank = 4 }
+            }
+
+            # Change direction rank: 1=deletions only, 2=mixed, 3=additions only, 4=no change
+            $changeRank = if ($entry.Deletions -gt 0 -and $entry.Insertions -eq 0) { 1 }
+                          elseif ($entry.Deletions -gt 0 -and $entry.Insertions -gt 0) { 2 }
+                          elseif ($entry.Insertions -gt 0 -and $entry.Deletions -eq 0) { 3 }
+                          else { 4 }
+
+            [PSCustomObject]@{
+                Entry      = $entry
+                Status     = $fStatus
+                Indicator  = $indicator
+                Reason     = $reason
+                SevRank    = $sevRank
+                ChangeRank = $changeRank
+            }
+        }
+
+        $sorted = @($annotated | Sort-Object SevRank, ChangeRank, { -($_.Entry.Total) })
         [void]$sb.AppendLine("| # | File | +Lines | -Lines | Total | |")
         [void]$sb.AppendLine("|--:|---|--:|--:|--:|---|")
         $rank = 0
-        foreach ($entry in $sorted) {
+        foreach ($item in $sorted) {
             $rank++
-            $indicator = if ($entry.Total -ge 100) { $emojiRed }
-                         elseif ($entry.Total -ge 20) { $emojiYellow }
-                         elseif ($entry.Total -gt 0) { $emojiGreen }
-                         else { $emojiWhite }
-            $fStatus = if ($fileStatusMap.ContainsKey($entry.Path)) { $fileStatusMap[$entry.Path] } else { 'M' }
-            $fBranch = if ($fStatus -eq 'D') { $Data.Base } else { $Data.CompareTo }
+            $entry = $item.Entry
+            $fBranch = if ($item.Status -eq 'D') { $Data.Base } else { $Data.CompareTo }
             $fileRef = Format-FileRef -Path $entry.Path -RepoPath $Data.RepoPath -Branch $fBranch -GitHubBaseUrl $Data.GitHubBaseUrl
-            [void]$sb.AppendLine("| $rank | $fileRef | $($entry.Insertions) | $($entry.Deletions) | $($entry.Total) | $indicator |")
+            [void]$sb.AppendLine("| $rank | $fileRef | $($entry.Insertions) | $($entry.Deletions) | $($entry.Total) | $($item.Indicator) ($($item.Reason)) |")
         }
         [void]$sb.AppendLine("")
-        $totalIns = ($sorted | Measure-Object -Property Insertions -Sum).Sum
-        $totalDel = ($sorted | Measure-Object -Property Deletions -Sum).Sum
+        $totalIns = ($sorted | Measure-Object -Property { $_.Entry.Insertions } -Sum).Sum
+        $totalDel = ($sorted | Measure-Object -Property { $_.Entry.Deletions } -Sum).Sum
         [void]$sb.AppendLine("**$($sorted.Count) files changed, $totalIns insertions(+), $totalDel deletions(-)**")
     }
     else {
