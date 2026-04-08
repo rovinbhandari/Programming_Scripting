@@ -1088,6 +1088,45 @@ function Format-Markdown {
         }
     }
 
+    # Fuzzy renames with different content (moved + edited files)
+    if ($Data.FuzzyRenames.Count -gt 0) {
+        [void]$sb.AppendLine("---")
+        [void]$sb.AppendLine("")
+        [void]$sb.AppendLine("## Probable Renames with Edits ($($Data.FuzzyRenames.Count) pairs)")
+        [void]$sb.AppendLine("")
+        [void]$sb.AppendLine("These files share the same filename but exist at different paths with different content.")
+        [void]$sb.AppendLine("Matched by filename; similarity computed from blob content.")
+        [void]$sb.AppendLine("")
+
+        if ($Data.FuzzyChunks.Count -gt 0) {
+            foreach ($fr in $Data.FuzzyRenames | Sort-Object { $_.Similarity }) {
+                $baseRef = Format-FileRef -Path $fr.BasePath -RepoPath $Data.RepoPath -Branch $Data.Base -GitHubBaseUrl $Data.GitHubBaseUrl
+                $compareRef = Format-FileRef -Path $fr.ComparePath -RepoPath $Data.RepoPath -Branch $Data.CompareTo -GitHubBaseUrl $Data.GitHubBaseUrl
+                [void]$sb.AppendLine("### $baseRef $arrow $compareRef ($($fr.Similarity)% similar)")
+                [void]$sb.AppendLine("")
+                if ($Data.FuzzyChunks.ContainsKey($fr.BasePath)) {
+                    [void]$sb.AppendLine('```diff')
+                    [void]$sb.AppendLine($Data.FuzzyChunks[$fr.BasePath])
+                    [void]$sb.AppendLine('```')
+                }
+                else {
+                    [void]$sb.AppendLine("(diff not available)")
+                }
+                [void]$sb.AppendLine("")
+            }
+        }
+        else {
+            [void]$sb.AppendLine("| Base Path | CompareTo Path | Similarity |")
+            [void]$sb.AppendLine("|---|---|---|")
+            foreach ($fr in $Data.FuzzyRenames | Sort-Object { $_.Similarity }) {
+                [void]$sb.AppendLine("| ``$($fr.BasePath)`` | ``$($fr.ComparePath)`` | $($fr.Similarity)% |")
+            }
+            [void]$sb.AppendLine("")
+            [void]$sb.AppendLine("*(Content chunks skipped — use without ``-SkipContentChunks`` to see diffs)*")
+            [void]$sb.AppendLine("")
+        }
+    }
+
     # Telemetry
     [void]$sb.AppendLine("---")
     [void]$sb.AppendLine("")
@@ -1211,6 +1250,21 @@ function Format-PlainText {
             [void]$sb.AppendLine("  $path")
             if ($Data.ContentChunks.ContainsKey($path)) {
                 foreach ($line in ($Data.ContentChunks[$path] -split "`n")) {
+                    [void]$sb.AppendLine("    $line")
+                }
+            }
+        }
+        [void]$sb.AppendLine("")
+    }
+
+    if ($Data.FuzzyRenames.Count -gt 0) {
+        [void]$sb.AppendLine("PROBABLE RENAMES WITH EDITS ($($Data.FuzzyRenames.Count))")
+        [void]$sb.AppendLine("-" * 40)
+        foreach ($fr in $Data.FuzzyRenames | Sort-Object { $_.Similarity }) {
+            [void]$sb.AppendLine("")
+            [void]$sb.AppendLine("  $($fr.BasePath) -> $($fr.ComparePath) ($($fr.Similarity)% similar)")
+            if ($Data.FuzzyChunks.ContainsKey($fr.BasePath)) {
+                foreach ($line in ($Data.FuzzyChunks[$fr.BasePath] -split "`n")) {
                     [void]$sb.AppendLine("    $line")
                 }
             }
@@ -1437,6 +1491,36 @@ try {
         Write-Progress -Activity "Extracting diff hunks" -Completed
     }
 
+    # 7a. Content chunks for fuzzy rename pairs (diff between blobs at different paths)
+    $fuzzyChunks = @{}
+    if (-not $SkipContentChunks -and $fuzzyRenames.Count -gt 0) {
+        Write-Log "Extracting diff hunks for $($fuzzyRenames.Count) fuzzy rename pairs..." -Level VERBOSE
+        $i = 0
+        foreach ($fr in $fuzzyRenames) {
+            $i++
+            $label = "$($fr.BasePath) -> $($fr.ComparePath)"
+            Write-Progress -Activity "Extracting fuzzy diff hunks" -Status $label -PercentComplete (($i / $fuzzyRenames.Count) * 100)
+            Write-Log "Diffing blobs: $label" -Level DEBUG
+            $baseBlob = $baseFilesAll[$fr.BasePath]
+            $compareBlob = $compareFilesAll[$fr.ComparePath]
+            if ($baseBlob -and $compareBlob -and $baseBlob -ne $compareBlob) {
+                $output = Invoke-Git @('diff', '--unified=3', $baseBlob, $compareBlob)
+                if ($output) {
+                    $allLines = @($output)
+                    if ($allLines.Count -gt $MaxDiffLines) {
+                        $truncated = $allLines | Select-Object -First $MaxDiffLines
+                        $remaining = $allLines.Count - $MaxDiffLines
+                        $fuzzyChunks[$fr.BasePath] = (($truncated -join "`n") + "`n... ($remaining more lines truncated)")
+                    }
+                    else {
+                        $fuzzyChunks[$fr.BasePath] = ($allLines -join "`n")
+                    }
+                }
+            }
+        }
+        Write-Progress -Activity "Extracting fuzzy diff hunks" -Completed
+    }
+
     # Assemble report data
     $reportData = @{
         Base                   = $Base
@@ -1461,6 +1545,7 @@ try {
         BaseBlobMatches        = $baseBlobMatches
         CompareBlobMatches     = $compareBlobMatches
         FuzzyRenames           = $fuzzyRenames
+        FuzzyChunks            = $fuzzyChunks
         DiffStat               = $diffStat
         NumStat                = $numStat
         NameStatus             = $nameStatus
