@@ -99,6 +99,14 @@ REQUEST_TIMEOUT = 30
 DEFAULT_DELAY = 1.5  # seconds between requests (per-domain cooldown)
 DEFAULT_WORKERS = 10
 
+# Image-related constants
+IMAGE_LINK_RE = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.bmp', '.ico'}
+CONTENT_TYPE_MAP = {
+    "image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif",
+    "image/webp": ".webp", "image/svg+xml": ".svg", "image/bmp": ".bmp",
+}
+
 # ── Thread safety ──────────────────────────────────────────────────────────
 _print_lock = threading.Lock()
 _domain_locks: dict[str, threading.Lock] = {}   # per-domain locks
@@ -182,6 +190,112 @@ def resolve_links(tag, base_url: str):
             img["src"] = "https:" + src
         elif src.startswith("/"):
             img["src"] = base_url + src
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Content quality check
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _content_is_thin(markdown: str) -> bool:
+    """Check if clipped markdown body (minus frontmatter) is suspiciously thin."""
+    body = re.sub(r'^---\n.*?\n---\n', '', markdown, count=1, flags=re.DOTALL)
+    lines = [l for l in body.strip().splitlines() if l.strip()]
+    return len(lines) < 5 or len(body.strip()) < 200
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Image downloading
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _guess_image_ext(url: str, content_type: str = "") -> str:
+    """Guess file extension from URL path or Content-Type header."""
+    path = urlparse(url).path
+    _, ext = os.path.splitext(path.split("?")[0])
+    if ext.lower() in IMAGE_EXTENSIONS:
+        return ext.lower()
+    for ct, e in CONTENT_TYPE_MAP.items():
+        if ct in content_type.lower():
+            return e
+    return ".jpg"
+
+
+def _download_single_image(img_url: str, dest_path: str,
+                           session: requests.Session, delay: float) -> bool:
+    """Download one image file. Returns True on success."""
+    try:
+        _domain_wait(img_url, delay)
+        resp = session.get(img_url, timeout=REQUEST_TIMEOUT, stream=True)
+        resp.raise_for_status()
+        ct = resp.headers.get("Content-Type", "")
+        if "image" not in ct and "octet-stream" not in ct:
+            return False
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        with open(dest_path, "wb") as f:
+            for chunk in resp.iter_content(8192):
+                f.write(chunk)
+        return True
+    except Exception:
+        return False
+
+
+def download_and_relink_images(
+    markdown: str, source_url: str, slug: str,
+    assets_dir: str, md_path: str,
+    session: requests.Session, delay: float,
+) -> tuple[str, int, int]:
+    """
+    Download images referenced in markdown to assets_dir/slug/,
+    rewrite image links to relative Obsidian paths.
+
+    Returns (updated_markdown, downloaded_count, failed_count).
+    """
+    img_dir = os.path.join(assets_dir, slug)
+    md_dir = os.path.dirname(md_path)
+    rel_prefix = os.path.relpath(img_dir, md_dir).replace("\\", "/")
+
+    downloaded = 0
+    failed = 0
+    seen_names: set[str] = set()
+
+    def _replace_image(match):
+        nonlocal downloaded, failed
+        alt = match.group(1)
+        img_url = match.group(2).strip()
+
+        # Skip data URIs, empty srcs, and already-local paths
+        if not img_url or img_url.startswith("data:") or not img_url.startswith("http"):
+            return match.group(0)
+
+        # Determine deduplicated local filename
+        url_path = urlparse(img_url).path
+        base_name = os.path.basename(url_path.split("?")[0]) or "image"
+        base_name = sanitize_filename(base_name)
+        if not os.path.splitext(base_name)[1]:
+            base_name += ".jpg"
+        if base_name in seen_names:
+            stem, ext = os.path.splitext(base_name)
+            i = 2
+            while f"{stem}_{i}{ext}" in seen_names:
+                i += 1
+            base_name = f"{stem}_{i}{ext}"
+        seen_names.add(base_name)
+
+        dest = os.path.join(img_dir, base_name)
+        if os.path.exists(dest):
+            downloaded += 1
+            return f"![{alt}]({rel_prefix}/{base_name})"
+
+        if _download_single_image(img_url, dest, session, delay):
+            downloaded += 1
+            _safe_print(f"      📸 {base_name}")
+            return f"![{alt}]({rel_prefix}/{base_name})"
+        else:
+            failed += 1
+            _safe_print(f"      ❌ {img_url}")
+            return match.group(0)  # keep original URL on failure
+
+    updated = IMAGE_LINK_RE.sub(_replace_image, markdown)
+    return updated, downloaded, failed
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -604,9 +718,12 @@ def generate_summary_table(results: list[dict], path: str):
 def process_url(url: str, outdir: str, session: requests.Session | None = None,
                 dry_run: bool = False, overwrite: bool = False,
                 delay: float = DEFAULT_DELAY,
-                wayback: bool = False) -> dict:
+                wayback: bool = False,
+                download_images: bool = False,
+                assets_dir: str | None = None) -> dict:
     """One ape, one banana. Grab, peel, save. Returns the loot report."""
-    result = {"url": url, "success": False, "filename": "", "error": "", "template": ""}
+    result = {"url": url, "success": False, "filename": "", "error": "",
+              "template": "", "images_downloaded": 0, "images_failed": 0}
 
     template = detect_template(url)
     result["template"] = template
@@ -659,6 +776,29 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         _safe_print(f"    💀 {e}")
         return result
 
+    # Content quality check: if thin and wayback enabled, try Wayback version
+    if wayback and _content_is_thin(content) and "wayback" not in result:
+        _safe_print(f"    🐒 Content looks thin — asking the old monkeys...")
+        wb_url = wayback_lookup(url)
+        if wb_url:
+            _safe_print(f"    🐒 Fossilized banana found! Comparing...")
+            wb_resp, wb_err = fetch_page(wb_url, session)
+            if not wb_err:
+                wb_soup = BeautifulSoup(wb_resp.text, "html.parser")
+                try:
+                    if template == "wikipedia":
+                        _, wb_content = clip_wikipedia(url, wb_soup)
+                    elif template == "goodreads":
+                        _, wb_content = clip_goodreads(url, wb_soup)
+                    else:
+                        _, wb_content = clip_default(url, wb_soup)
+                    if len(wb_content) > len(content):
+                        content = wb_content
+                        result["wayback"] = wb_url
+                        _safe_print(f"    🐒 Wayback version is meatier — using it!")
+                except Exception:
+                    pass
+
     if not filename:
         result["error"] = "Could not determine title"
         _safe_print(f"    💀 No title")
@@ -676,6 +816,18 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
         result["success"] = True
         _safe_print(f"    🙈 Already got: {filename}.md")
         return result
+
+    # Download images if requested (skip for goodreads — just a cover URL)
+    if download_images and template != "goodreads":
+        slug = sanitize_filename(filename).lower().replace(" ", "-")[:60]
+        adir = assets_dir or os.path.join(os.path.dirname(outdir), "Assets", "Pocket")
+        content, dl, fl = download_and_relink_images(
+            content, url, slug, adir, filepath, session, delay)
+        result["images_downloaded"] = dl
+        result["images_failed"] = fl
+        if dl > 0 or fl > 0:
+            _safe_print(f"    📸 Images: {dl} downloaded"
+                        + (f", {fl} failed" if fl else ""))
 
     os.makedirs(outdir, exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
@@ -736,7 +888,11 @@ Examples:
     beh.add_argument("--summary-table", metavar="FILE",
                      help="Write a markdown summary table of results to FILE")
     beh.add_argument("--wayback", action="store_true",
-                     help="Try Wayback Machine if direct grab fails")
+                     help="Try Wayback Machine if direct grab fails or content is thin")
+    beh.add_argument("--download-images", action="store_true",
+                     help="Download referenced images to local assets folder and rewrite links")
+    beh.add_argument("--assets-dir", metavar="DIR",
+                     help="Directory for downloaded images (default: <output>/../Assets/Pocket)")
 
     return p
 
@@ -791,6 +947,9 @@ def main(argv=None):
         print(f"Limit:   {args.limit}")
     if args.wayback:
         print(f"Wayback: 🐒 Elder apes on standby")
+    if args.download_images:
+        adir = args.assets_dir or os.path.join(os.path.dirname(outdir), "Assets", "Pocket")
+        print(f"Images:  📸 Downloading to {adir}")
     print()
 
     os.makedirs(outdir, exist_ok=True)
@@ -811,10 +970,13 @@ def main(argv=None):
         else:
             to_process.append(url)
 
+    img_kw = {"download_images": args.download_images,
+              "assets_dir": args.assets_dir}
+
     def _do(url):
         return process_url(url, outdir, session=None,
                            dry_run=args.dry_run, overwrite=args.overwrite,
-                           delay=args.delay, wayback=args.wayback)
+                           delay=args.delay, wayback=args.wayback, **img_kw)
 
     if workers == 1:
         # Sequential mode (legacy behaviour)
@@ -823,7 +985,7 @@ def main(argv=None):
         for url in to_process:
             r = process_url(url, outdir, session,
                             dry_run=args.dry_run, overwrite=args.overwrite,
-                            delay=args.delay, wayback=args.wayback)
+                            delay=args.delay, wayback=args.wayback, **img_kw)
             results.append(r)
             counts["processed"] += 1
             counts["ok" if r["success"] else "fail"] += 1
@@ -840,12 +1002,16 @@ def main(argv=None):
                 counts["ok" if r["success"] else "fail"] += 1
 
     # Summary
+    img_dl = sum(r.get("images_downloaded", 0) for r in results)
+    img_fl = sum(r.get("images_failed", 0) for r in results)
     print()
     print(f"── Ape Report ──────────────────")
     print(f"  Grabbed  : {counts['processed']}")
     print(f"  Peeled   : {counts['ok']}  🍌")
     print(f"  Dropped  : {counts['fail']}  💀")
     print(f"  Ignored  : {counts['skip']}  🙈")
+    if img_dl or img_fl:
+        print(f"  Images   : {img_dl} saved 📸" + (f", {img_fl} failed" if img_fl else ""))
 
     # Annotate source file
     if args.annotate_source and args.input and not args.dry_run:
