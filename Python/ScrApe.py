@@ -107,6 +107,27 @@ CONTENT_TYPE_MAP = {
     "image/webp": ".webp", "image/svg+xml": ".svg", "image/bmp": ".bmp",
 }
 
+# Magic bytes for image format validation (banana sniff)
+IMAGE_MAGIC = {
+    ".jpg":  [b"\xff\xd8\xff"],
+    ".jpeg": [b"\xff\xd8\xff"],
+    ".png":  [b"\x89PNG"],
+    ".gif":  [b"GIF87a", b"GIF89a"],
+    ".webp": [b"RIFF"],          # full check: bytes 8-12 == b"WEBP"
+    ".bmp":  [b"BM"],
+}
+
+# Suspicious patterns in markdown files (banana sniff)
+SNIFF_HTML_PATTERNS = [
+    (re.compile(r"<script[\s>]", re.I), "embedded <script> tag"),
+    (re.compile(r"<iframe[\s>]", re.I), "embedded <iframe> tag"),
+    (re.compile(r"javascript\s*:", re.I), "javascript: URI"),
+    (re.compile(r"\bon\w+\s*=\s*[\"']", re.I), "inline event handler (onclick, onerror…)"),
+    (re.compile(r"\beval\s*\(", re.I), "eval() call"),
+    (re.compile(r"data:text/html", re.I), "data:text/html URI"),
+    (re.compile(r"data:application/", re.I), "data:application/ URI"),
+]
+
 # ── Thread safety ──────────────────────────────────────────────────────────
 _print_lock = threading.Lock()
 _domain_locks: dict[str, threading.Lock] = {}   # per-domain locks
@@ -839,6 +860,136 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Banana Sniff — post-download content security check
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _sniff_markdown(path: str) -> list[str]:
+    """Smell-check a markdown file for suspicious content."""
+    findings = []
+    try:
+        text = open(path, "r", encoding="utf-8", errors="replace").read()
+    except Exception as e:
+        return [f"Could not read file: {e}"]
+
+    for pattern, description in SNIFF_HTML_PATTERNS:
+        matches = pattern.findall(text)
+        if matches:
+            findings.append(f"{description} (×{len(matches)})")
+
+    return findings
+
+
+def _sniff_image(path: str) -> list[str]:
+    """Check that an image file's magic bytes match its extension."""
+    findings = []
+    ext = os.path.splitext(path)[1].lower()
+    expected = IMAGE_MAGIC.get(ext)
+
+    if expected is None:
+        # Unknown image extension — can't validate, but note it
+        if ext not in (".ico", ".svg"):
+            findings.append(f"unknown image extension '{ext}'")
+        return findings
+
+    try:
+        with open(path, "rb") as f:
+            header = f.read(16)
+    except Exception as e:
+        return [f"Could not read file: {e}"]
+
+    if len(header) == 0:
+        return ["empty file (0 bytes)"]
+
+    # SVG files are text-based — check first bytes for XML/SVG marker
+    if ext == ".svg":
+        text_start = header.decode("utf-8", errors="replace").lstrip()
+        if not (text_start.startswith("<?xml") or text_start.startswith("<svg")):
+            findings.append("file does not start with <?xml or <svg")
+        return findings
+
+    # Binary image: check magic bytes
+    if not any(header.startswith(magic) for magic in expected):
+        # Detect if it's actually HTML masquerading as an image
+        try:
+            snippet = header[:64].decode("utf-8", errors="replace").lower().strip()
+        except Exception:
+            snippet = ""
+        if snippet.startswith("<!doctype") or snippet.startswith("<html"):
+            findings.append("HTML content disguised as image file")
+        else:
+            actual_hex = header[:8].hex(" ")
+            findings.append(f"magic bytes mismatch (got {actual_hex})")
+
+    # Extra check for .webp: bytes 8-12 should be "WEBP"
+    if ext == ".webp" and header[:4] == b"RIFF" and header[8:12] != b"WEBP":
+        findings.append(f"RIFF container but not WEBP (got {header[8:12]!r})")
+
+    return findings
+
+
+def banana_sniff(clippings_dir: str, assets_dir: str | None = None) -> int:
+    """
+    🐒 The Banana Sniff — inspect downloaded clippings and images for
+    suspicious content. Returns the number of total findings.
+    """
+    print()
+    print("── 🐒 Banana Sniff ─────────────────")
+    print(f"  Clippings: {clippings_dir}")
+    if assets_dir:
+        print(f"  Assets:    {assets_dir}")
+    print()
+
+    total_findings = 0
+    md_checked = 0
+    img_checked = 0
+
+    # ── Sniff markdown files ──
+    if os.path.isdir(clippings_dir):
+        for root, _dirs, files in os.walk(clippings_dir):
+            for fname in sorted(files):
+                if not fname.endswith(".md"):
+                    continue
+                fpath = os.path.join(root, fname)
+                findings = _sniff_markdown(fpath)
+                md_checked += 1
+                if findings:
+                    total_findings += len(findings)
+                    rel = os.path.relpath(fpath, clippings_dir)
+                    print(f"  🍌🐛 {rel}")
+                    for f in findings:
+                        print(f"         └─ {f}")
+
+    # ── Sniff image files ──
+    img_dir = assets_dir or clippings_dir
+    if os.path.isdir(img_dir):
+        for root, _dirs, files in os.walk(img_dir):
+            for fname in sorted(files):
+                ext = os.path.splitext(fname)[1].lower()
+                if ext not in IMAGE_EXTENSIONS:
+                    continue
+                fpath = os.path.join(root, fname)
+                findings = _sniff_image(fpath)
+                img_checked += 1
+                if findings:
+                    total_findings += len(findings)
+                    rel = os.path.relpath(fpath, img_dir)
+                    print(f"  🍌🐛 {rel}")
+                    for f in findings:
+                        print(f"         └─ {f}")
+
+    # ── Summary ──
+    print()
+    if total_findings == 0:
+        print(f"  ✅ All bananas clean! ({md_checked} markdown, {img_checked} images)")
+    else:
+        print(f"  ⚠️  {total_findings} suspicious finding{'s' if total_findings != 1 else ''}"
+              f" ({md_checked} markdown, {img_checked} images checked)")
+    print()
+
+    return total_findings
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -893,6 +1044,10 @@ Examples:
                      help="Download referenced images to local assets folder and rewrite links")
     beh.add_argument("--assets-dir", metavar="DIR",
                      help="Directory for downloaded images (default: <output>/../Assets/Pocket)")
+    beh.add_argument("--sniff", action="store_true", default=True, dest="sniff",
+                     help="Run the 🐒 Banana Sniff content check (default: on)")
+    beh.add_argument("--no-sniff", action="store_false", dest="sniff",
+                     help="Skip the 🐒 Banana Sniff post-download content check")
 
     return p
 
@@ -914,6 +1069,12 @@ def main(argv=None):
                 urls.append(line)
 
     if not urls:
+        if args.sniff:
+            # Standalone sniff mode — no scraping, just inspect existing files
+            outdir = os.path.abspath(args.output)
+            adir = args.assets_dir or os.path.join(os.path.dirname(outdir), "Assets", "Pocket")
+            findings = banana_sniff(outdir, adir)
+            return 0 if findings == 0 else 1
         parser.error("No URLs provided. Use -i, --urls, or --stdin.")
 
     # Deduplicate while preserving order
@@ -1037,6 +1198,11 @@ def main(argv=None):
         for r in failures:
             print(f"  {r['url']}")
             print(f"    💀 {r['error']}")
+
+    # Banana Sniff — post-scrape content check
+    if args.sniff and not args.dry_run:
+        adir = args.assets_dir or os.path.join(os.path.dirname(outdir), "Assets", "Pocket")
+        banana_sniff(outdir, adir)
 
     return 0 if counts["fail"] == 0 else 1
 
