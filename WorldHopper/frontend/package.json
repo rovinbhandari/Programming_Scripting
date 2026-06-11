@@ -1,19 +1,21 @@
 {
   "name": "worldhopper",
   "version": "1.0.0",
-  "description": "",
+  "description": "Hop around a 3D globe — Three.js + Vite frontend.",
   "type": "module",
-  "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "license": "ISC",
   "dependencies": {
-    "three": "^0.156.1"
+    "three": "^0.184.0"
   },
   "devDependencies": {
-    "vite": "^4.4.9"
+    "vite": "^8.0.16"
   }
 }

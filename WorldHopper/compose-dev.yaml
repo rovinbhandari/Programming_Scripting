@@ -1,26 +1,19 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: backend
       dockerfile: ./backend.Dockerfile
-    image: hop-app
+    image: worldhopper-backend
     ports:
-      - "5000:5000"
-      - "5206:5206"
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
   frontend:
-    # TODO: need to specify backend app port as env variable or via config
     build:
       context: frontend
       dockerfile: ./frontend.Dockerfile
-    image: webgl-app
+    image: worldhopper-frontend
     ports:
-      #- "8080:80"
       - "5173:5173"
-    command: npx vite --host
     depends_on:
       - backend
