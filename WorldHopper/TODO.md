@@ -19,8 +19,8 @@ Ordered by priority; check items off as they land.
 - [ ] Document the HTTP API (endpoints, params, responses) — extend `hop.http` with real calls.
 
 ## 3. Remove dead code & tech debt
-- [ ] Delete learning scaffolding: `frontend/triangle.js`, `frontend/cube_coloured.js`.
-- [ ] Remove the template `WeatherController` and the unused `sphericalToCartesian()` in `earth.js`.
+- [x] Deleted learning scaffolding: `frontend/triangle.js`, `frontend/cube_coloured.js`.
+- [x] Removed the template `WeatherController` and the unused `sphericalToCartesian()` in `earth.js`.
 - [x] Fixed `frontend.Dockerfile`: now uses `npm ci` and runs the Vite dev server (was `npm install --production` + `CMD node earth.js`).
 - [x] Dropped the obsolete `version` key from `compose-dev.yaml` and tidied its ports/command.
 - [x] Added `node_modules/` and `dist/` to `.gitignore` (+ a `frontend/.dockerignore`).

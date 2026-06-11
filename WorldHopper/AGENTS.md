@@ -3,7 +3,7 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 
 ## Layout
 - `frontend/` — Vite app; entry `earth.js`, served via `index.html`; assets in `static/`.
-- `backend/hop/` — ASP.NET Core Web API (controllers: Camera, Cities, Weather).
+- `backend/hop/` — ASP.NET Core Web API (controllers: Camera, Cities).
 - `compose-dev.yaml` — builds and runs both services for local dev.
 - Git root is the parent `Programming_Scripting` monorepo; only touch `WorldHopper/` here.
 

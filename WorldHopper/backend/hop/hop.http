@@ -1,6 +1,6 @@
 @hop_HostAddress = http://localhost:5206
 
-GET {{hop_HostAddress}}/weatherforecast/
+GET {{hop_HostAddress}}/cameraangles
 Accept: application/json
 
 ###

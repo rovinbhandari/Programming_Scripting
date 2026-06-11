@@ -89,11 +89,4 @@ function latLongToVector3(lat, lon, radius) {
     return new THREE.Vector3(x, y, z);
 }
 
-function sphericalToCartesian(radius, polar, azimuthal) {
-    const x = radius * Math.sin(polar) * Math.cos(azimuthal);
-    const y = radius * Math.sin(polar) * Math.sin(azimuthal);
-    const z = radius * Math.cos(polar);
-    return new THREE.Vector3(x, y, z);
-}
-
 // TODO: next thing to figure out is how to get a point on the earth's surface using coordinates.
