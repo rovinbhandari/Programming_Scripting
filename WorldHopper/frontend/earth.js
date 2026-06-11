@@ -1,92 +1,137 @@
 import * as THREE from 'three';
 
 const backendPort = 8080; // TODO: obtain from env variable or config
-
 const earthRadius = 6;
+const flyerExtensions = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
+const flyerLevitation = 0.6; // lift sprites just clear of the surface so they aren't clipped
+const flyerTextureSize = 256; // rasterize flyers to this square size for reliable WebGL upload
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
-
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.SphereGeometry(earthRadius, 32, 32);
-const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/static/earth/earth-satellite.jpg') });
-const earth = new THREE.Mesh(geometry, material);
-
-const lat = 60;
-const lon = 10.75;
-const pointLevitation = -0.05; // center of the point relative to the earth's surface
-
-const cartesianCoords = latLongToVector3(
-    lat,
-    lon,
-    earthRadius
+const earth = new THREE.Mesh(
+    new THREE.SphereGeometry(earthRadius, 64, 64),
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/static/earth/earth-satellite.jpg') }),
 );
-
-const smallSphereGeometry = new THREE.SphereGeometry(earthRadius/50.0, 32, 32);
-const smallSphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const smallSphere = new THREE.Mesh(smallSphereGeometry, smallSphereMaterial);
-
-// Position the small sphere on top of the big sphere
-smallSphere.position.set(cartesianCoords.x, cartesianCoords.y, cartesianCoords.z); // Adjust the position as needed
-
-earth.add(smallSphere);
+// Start with Greenwich (0° longitude) facing the camera.
+earth.rotation.y = -Math.PI / 2;
 scene.add(earth);
 
 camera.position.z = 15;
 
-var cameraAngleDeltas = {x: 0.005, y: 0.005, z: 0.005};
-const refreshButton = document.getElementById('refreshButton');
-refreshButton.addEventListener('click', async function() { await RefreshAngles() });
+let spinSpeed = 0;
+const travellers = [];
 
+const refreshButton = document.getElementById('refreshButton');
+refreshButton?.addEventListener('click', refreshSpin);
+window.addEventListener('resize', onResize);
+
+loadTravellers();
 animate();
 
 function animate() {
     requestAnimationFrame(animate);
-
-    // Add any animations or updates here
-	earth.rotation.x += cameraAngleDeltas.x;
-	earth.rotation.y += cameraAngleDeltas.y;
-    earth.rotation.z += cameraAngleDeltas.z;
-
+    earth.rotation.y += spinSpeed;
     renderer.render(scene, camera);
 }
 
-async function RefreshAngles() {
-    // TODO:
-    // To avoid CORS issues, instead of modifying the backend,
-    // this could be tried as well:
-    // https://javascript.info/fetch-crossorigin#using-scripts
-    const response = await fetch(
-        `http://localhost:${backendPort}/cameraangles`,
-        {
-            method: 'GET',
-            headers:
-            { 
-                'Content-Type': 'application/json'
+// Fetch each character and drop its flyer onto the globe at its first hop.
+async function loadTravellers() {
+    let characters;
+    try {
+        const response = await fetch(`http://localhost:${backendPort}/characters`);
+        characters = await response.json();
+    } catch (error) {
+        console.error('Could not load characters from the backend.', error);
+        return;
+    }
+
+    for (const character of characters) {
+        const hops = character.hops ?? [];
+        if (hops.length === 0) {
+            continue;
+        }
+        try {
+            const sprite = await makeFlyer(character.name);
+            const start = hops[0];
+            placeOnGlobe(sprite, start.lat, start.lon);
+            earth.add(sprite);
+            travellers.push({ name: character.name, hops, sprite });
+        } catch (error) {
+            console.warn(`Skipping '${character.name}': ${error.message}`);
+        }
+    }
+}
+
+async function makeFlyer(name) {
+    const texture = await loadFlyerTexture(name);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+    sprite.scale.setScalar(earthRadius * 0.18);
+    return sprite;
+}
+
+// Try the supported extensions in order; resolve with the first flyer that loads.
+function loadFlyerTexture(name) {
+    return new Promise((resolve, reject) => {
+        let index = 0;
+        const tryNext = () => {
+            if (index >= flyerExtensions.length) {
+                reject(new Error(`no flyer image at /static/flyers/${name}.*`));
+                return;
             }
-        });
-    const responseJson = await response.json(); //extract JSON from the http response
-    cameraAngleDeltas.x = responseJson[0].x;
-    cameraAngleDeltas.y = responseJson[0].y;
-    cameraAngleDeltas.z = responseJson[0].z;
-    console.log(cameraAngleDeltas);
+            const image = new Image();
+            image.onload = () => resolve(rasterizeToTexture(image));
+            image.onerror = tryNext;
+            image.src = `/static/flyers/${name}.${flyerExtensions[index++]}`;
+        };
+        tryNext();
+    });
 }
 
+// Rasterize onto a fixed-size canvas so SVG flyers (which can report zero
+// intrinsic size and fail a direct WebGL upload) render reliably.
+function rasterizeToTexture(image) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = flyerTextureSize;
+    canvas.getContext('2d').drawImage(image, 0, 0, flyerTextureSize, flyerTextureSize);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+}
+
+function placeOnGlobe(object, lat, lon) {
+    object.position.copy(latLongToVector3(lat, lon, earthRadius + flyerLevitation));
+}
+
+// Matches Three.js SphereGeometry's default UVs for a standard equirectangular
+// texture: 0° longitude at +X, east toward -Z, north pole at +Y. The leading
+// minus on x is what the previous version was missing (it mirrored east/west).
 function latLongToVector3(lat, lon, radius) {
-    // Convert latitude and longitude from degrees to radians
-    const phi = ((90 - lat)/180.0) * Math.PI;
-    const theta = ((lon + 180)/180.0) * Math.PI;
-
-    // Calculate the Cartesian coordinates
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.cos(phi);
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-
-    console.log(`latLongToVector3(${lat}, ${lon}, ${radius}) = x: ${x}, y: ${y}, z: ${z}`);
-    return new THREE.Vector3(x, y, z);
+    const polar = ((90 - lat) / 180) * Math.PI;
+    const azimuth = ((lon + 180) / 180) * Math.PI;
+    return new THREE.Vector3(
+        -radius * Math.sin(polar) * Math.cos(azimuth),
+        radius * Math.cos(polar),
+        radius * Math.sin(polar) * Math.sin(azimuth),
+    );
 }
 
-// TODO: next thing to figure out is how to get a point on the earth's surface using coordinates.
+// The /cameraangles endpoint hands back a small random spin speed (kept from the original demo).
+async function refreshSpin() {
+    try {
+        const response = await fetch(`http://localhost:${backendPort}/cameraangles`);
+        const angles = await response.json();
+        spinSpeed = angles[0].y;
+    } catch (error) {
+        console.error('Could not refresh the spin speed.', error);
+    }
+}
+
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
