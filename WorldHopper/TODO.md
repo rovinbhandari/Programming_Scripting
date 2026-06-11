@@ -15,7 +15,7 @@ Ordered by priority; check items off as they land.
 ## 2. Basic docs
 - [x] Add `AGENTS.md` (agent/contributor quick rules).
 - [x] Add this `TODO.md` roadmap.
-- [ ] Write a project `README.md`: what WorldHopper is, an architecture sketch, and how to run it.
+- [x] Write a project `README.md`: the goal, the data pipeline, and how to run it.
 - [ ] Document the HTTP API (endpoints, params, responses) — extend `hop.http` with real calls.
 
 ## 3. Remove dead code & tech debt
@@ -30,11 +30,16 @@ Ordered by priority; check items off as they land.
 - [ ] Remove manual `Access-Control-Allow-*` header juggling in `CameraController`; rely on the CORS policy in `Program.cs`.
 - [ ] Tighten the `whop frontend` CORS policy to only the origins actually used.
 
-## 5. Core features
-- [ ] Fix the marker bug: the point is misplaced because the Earth texture isn't centered at 0° longitude — add the longitude offset.
-- [ ] Implement `CitiesController` `/cities/next`: a real data source, lat/long mapping, and the "next city" state.
-- [ ] Frontend: consume `/cities/next` and animate a "hop" that flies/rotates between cities.
-- [ ] Use the `static/flyers` assets (bear, rain) meaningfully, or remove them.
+## 5. Core features — the hop simulation
+- [ ] Data pipeline: turn the human-friendly raw file (place names + dates) into one `coordinates + dates` CSV per character via a geocoding step.
+- [ ] Discover characters from the CSVs present (n > 0): pair each CSV with the like-named flyer in `static/flyers` (e.g. `bear.csv` ↔ `bear.svg`).
+- [ ] Load journey data from a configurable, git-ignored location — never bundled or committed.
+- [ ] Simulated clock that advances time and triggers a hop when it reaches a dated coordinate.
+- [ ] Long-stay hop (red arrow): relocate a character to a new place and keep it there.
+- [ ] Short-stay hop (blue arrow): send a character on a temporary trip, then return it.
+- [ ] Enforce a minimum visible duration for blue hops so brief trips stay legible.
+- [ ] Render each character's flyer on the globe at its current place.
+- [ ] Fix the marker bug: point misplaced because the Earth texture isn't centered at 0° longitude — add the offset.
 
 ## 6. Polish & safety nets
 - [ ] Add frontend linting/formatting (ESLint + Prettier).

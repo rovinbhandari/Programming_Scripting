@@ -19,10 +19,13 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 - Prefer stable releases — never depend on preview/nightly/RC versions.
 - Centralize ports/origins in config or env vars; do not hardcode them in code.
 - Reference assets with absolute `/static/...` paths.
+- Docs/Markdown: one logical line per paragraph or bullet — no manual line wrapping.
 
 ## Quality bar
+- When requirements are unclear, ask a clarifying question instead of assuming.
 - Favor less code: delete dead/scaffolding code instead of working around it.
 - Make small, focused commits with clear messages (match the existing terse style).
 - Verify the affected service builds and runs end to end before calling work done.
 - Update `README`/`TODO.md` when setup or behavior changes.
 - Never commit secrets, `node_modules/`, `dist/`, or `bin/`/`obj/`.
+- Never commit real place names, dates, or coordinates (raw input or generated CSVs); load journey data only from a configurable, git-ignored location.

@@ -1,0 +1,38 @@
+# WorldHopper
+
+> Watch a cast of characters — a **bear**, a **rain cloud**, or any you add — hop around a 3D globe, retracing real journeys driven by date-stamped coordinates.
+
+WorldHopper replays the travels of one or more characters over a textured 3D Earth. A simulated clock advances through time, and whenever it reaches a dated location in a character's itinerary, that character *hops* to the new place.
+
+## The travellers
+- Any number of characters (**n > 0**) can hop — each is a **flyer** icon in `frontend/static/flyers/` (the shipped examples are a bear and a rain cloud).
+- A character is defined by a CSV of dated coordinates whose **file name matches its flyer** (e.g. `bear.csv` ↔ `bear.svg`). Add more CSVs to add more travellers.
+- Each CSV is that character's itinerary: a time-ordered list of places and dates.
+
+## Two kinds of hop
+- **Long-stay hop — red arrow.** A relocation: the character flies to a new place and *lives* there. Triggered when the simulated date reaches the next dated coordinate in that character's data.
+- **Short-stay hop — blue arrow.** A temporary trip: the character travels away from its current home and then returns. Same date-driven trigger.
+- Short stays can be tiny next to the long-stay timeline, so **blue hops are given a minimum on-screen duration** to stay visible — this prolonging is deliberate.
+
+## Data pipeline
+Journey data is prepared in three steps:
+1. **Raw input (human-friendly):** a hand-written file of place *names* and dates.
+2. **Geocode → CSVs:** a preprocessing step resolves names to coordinates and emits one CSV of `coordinates + dates` per character, each named after its flyer.
+3. **Visualise:** the app reads every character CSV it finds and animates the hops.
+
+> ⚠️ **Privacy — read before adding data.** Real place names, dates, and coordinates (raw input *and* generated CSVs) are **never** committed to git. They are read only from a **configurable location** outside the repository. See `AGENTS.md`.
+
+## Architecture
+- `frontend/` — Vite + Three.js globe; entry `earth.js`, served via `index.html`.
+- `backend/hop/` — ASP.NET Core (.NET 10) API (camera angles today; data/simulation endpoints planned).
+- `compose-dev.yaml` — builds and runs both services together for local dev.
+
+## Run it
+```sh
+docker compose -f compose-dev.yaml up --build
+```
+- Frontend: http://localhost:5173
+- Backend API docs (Scalar): http://localhost:8080/scalar/v1
+
+## Status
+Early work in progress. **Today:** a rotating textured globe and a camera-angles endpoint. **Next:** the data pipeline and the hop simulation described above — see `TODO.md` for the prioritized roadmap.
