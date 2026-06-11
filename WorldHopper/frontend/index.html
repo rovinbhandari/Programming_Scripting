@@ -4,11 +4,42 @@
 		<meta charset="utf-8">
 		<title>Hopping o'er the world with 3js</title>
 		<style>
-			body { margin: 0; }
+			body { margin: 0; font-family: system-ui, sans-serif; }
+			#controls {
+				position: fixed;
+				top: 12px;
+				left: 12px;
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				padding: 8px 10px;
+				background: rgba(0, 0, 0, 0.55);
+				border-radius: 8px;
+				color: #fff;
+			}
+			#controls button {
+				background: #1f2933;
+				color: #fff;
+				border: 1px solid #3b4754;
+				border-radius: 5px;
+				padding: 5px 9px;
+				cursor: pointer;
+			}
+			#controls button:hover { background: #2c3a47; }
+			#controls .readout { min-width: 4.5em; text-align: center; font-variant-numeric: tabular-nums; }
 		</style>
 	</head>
 	<body>
-		<button id="refreshButton">Refresh Angles</button>
+		<div id="controls">
+			<button id="playButton">Pause</button>
+			<button id="prevHopButton" title="Previous hop">Prev</button>
+			<button id="nextHopButton" title="Next hop">Next</button>
+			<button id="slowerButton" title="Slow down time">Slower</button>
+			<span id="speedReadout" class="readout">1×</span>
+			<button id="fasterButton" title="Speed up time">Faster</button>
+			<span id="dateReadout" class="readout">—</span>
+			<button id="refreshButton" title="Random spin (demo)">Spin</button>
+		</div>
 		<script type="module" src="/earth.js"></script>
 	</body>
 </html>

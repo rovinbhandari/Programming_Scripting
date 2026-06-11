@@ -35,11 +35,11 @@ Ordered by priority; check items off as they land.
 - [x] Discover characters from the CSVs present (n > 0): pair each CSV with the like-named flyer in `static/flyers` (e.g. `bear.csv` ↔ `bear.svg`), probing supported extensions.
 - [x] Backend: discover characters from CSV files and serve them with hops at `GET /characters` (schema `date,lat,lon,kind`).
 - [x] Load journey data from a configurable, git-ignored location — never bundled or committed (`WorldHopper:DataPath` / env `WorldHopper__DataPath`; Docker volume → `/data`).
-- [ ] Simulated clock that advances time and triggers a hop when it reaches a dated coordinate.
+- [x] Simulated clock (the whole timeline plays in a configurable ~200s) with play/pause, speed, and prev/next-hop controls; relocates a flyer when time reaches a dated coordinate.
 - [ ] Long-stay hop (red arrow): relocate a character to a new place and keep it there.
 - [ ] Short-stay hop (blue arrow): send a character on a temporary trip, then return it.
 - [ ] Enforce a minimum visible duration for blue hops so brief trips stay legible.
-- [x] Render each character's flyer on the globe at its place (currently the first hop; clock-driven movement to follow).
+- [x] Render each character's flyer on the globe at its current place (clock-driven long-hop relocation; instant for now, animated red arrow lands in 3b).
 - [x] Fixed the marker placement: `latLongToVector3` was mirroring east/west (missing the negative `x`); the texture is standard 0°-centered, so no offset is needed.
 
 ## 6. Polish & safety nets
