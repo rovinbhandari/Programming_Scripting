@@ -33,7 +33,8 @@ Ordered by priority; check items off as they land.
 ## 5. Core features — the hop simulation
 - [ ] Data pipeline: turn the human-friendly raw file (place names + dates) into one `coordinates + dates` CSV per character via a geocoding step.
 - [ ] Discover characters from the CSVs present (n > 0): pair each CSV with the like-named flyer in `static/flyers` (e.g. `bear.csv` ↔ `bear.svg`).
-- [ ] Load journey data from a configurable, git-ignored location — never bundled or committed.
+- [x] Backend: discover characters from CSV files and serve them with hops at `GET /characters` (schema `date,lat,lon,kind`).
+- [x] Load journey data from a configurable, git-ignored location — never bundled or committed (`WorldHopper:DataPath` / env `WorldHopper__DataPath`; Docker volume → `/data`).
 - [ ] Simulated clock that advances time and triggers a hop when it reaches a dated coordinate.
 - [ ] Long-stay hop (red arrow): relocate a character to a new place and keep it there.
 - [ ] Short-stay hop (blue arrow): send a character on a temporary trip, then return it.

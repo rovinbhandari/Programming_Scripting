@@ -4,3 +4,8 @@ GET {{hop_HostAddress}}/cameraangles
 Accept: application/json
 
 ###
+
+GET {{hop_HostAddress}}/characters
+Accept: application/json
+
+###

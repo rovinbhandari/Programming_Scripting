@@ -24,7 +24,7 @@ Journey data is prepared in three steps:
 
 ## Architecture
 - `frontend/` — Vite + Three.js globe; entry `earth.js`, served via `index.html`.
-- `backend/hop/` — ASP.NET Core (.NET 10) API (camera angles today; data/simulation endpoints planned).
+- `backend/hop/` — ASP.NET Core (.NET 10) API; serves character itineraries from CSVs at `/characters`.
 - `compose-dev.yaml` — builds and runs both services together for local dev.
 
 ## Run it
@@ -33,6 +33,7 @@ docker compose -f compose-dev.yaml up --build
 ```
 - Frontend: http://localhost:5173
 - Backend API docs (Scalar): http://localhost:8080/scalar/v1
+- Point `WORLDHOPPER_DATA_PATH` at your git-ignored CSV folder (defaults to `./.worldhopper-data`).
 
 ## Status
-Early work in progress. **Today:** a rotating textured globe and a camera-angles endpoint. **Next:** the data pipeline and the hop simulation described above — see `TODO.md` for the prioritized roadmap.
+Early work in progress. **Today:** a rotating globe, a camera-angles endpoint, and a `/characters` API that serves itineraries from CSVs. **Next:** rendering the hops (flyers, red/blue arrows, the clock) — see `TODO.md` for the prioritized roadmap.
