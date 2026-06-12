@@ -26,9 +26,9 @@ Ordered by priority; check items off as they land.
 - [x] Added `node_modules/` and `dist/` to `.gitignore` (+ a `frontend/.dockerignore`).
 
 ## 4. Configuration & CORS
-- [ ] Centralize ports/origins via env vars or config; remove hardcoded 8080/5173/5206/21248.
-- [ ] Remove manual `Access-Control-Allow-*` header juggling in `CameraController`; rely on the CORS policy in `Program.cs`.
-- [ ] Tighten the `whop frontend` CORS policy to only the origins actually used.
+- [x] Centralized ports/origins in config/env (backend `WorldHopper:AllowedOrigins`, frontend `VITE_BACKEND_URL`); no hardcoded 8080/5173/5206/21248 left in code.
+- [x] Removed manual `Access-Control-Allow-*` header juggling in `CameraController`; rely on the CORS policy in `Program.cs`.
+- [x] Tightened the `whop frontend` CORS policy to only the origin actually used (the Vite frontend).
 
 ## 5. Core features — the hop simulation
 - [x] Data pipeline: a .NET console tool (`backend/geocode/`) turns one human-friendly raw file per character (`<name>.places`: nested `live`/`travel` entries with `start .. end` date ranges) into one `date,lat,lon,kind` CSV, geocoding place names via OpenStreetMap Nominatim (no API key) with a git-ignored local cache. End dates are validation-only for now (Option A below).

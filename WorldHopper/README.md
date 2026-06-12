@@ -36,6 +36,7 @@ docker compose -f compose-dev.yaml up --build
 - Frontend: http://localhost:5173
 - Backend API docs (Scalar): http://localhost:8080/scalar/v1
 - Point `WORLDHOPPER_DATA_PATH` at your git-ignored CSV folder (defaults to `./.worldhopper-data`).
+- Changing ports? Set `VITE_BACKEND_URL` (browser → API base URL) and `WorldHopper__AllowedOrigins` (comma-separated CORS origins); the defaults work as-is.
 - Generate CSVs from raw `.places` files: `docker compose -f compose-dev.yaml run --rm geocode`.
 - Run the tests: `docker compose -f compose-dev.yaml run --rm tests`.
 

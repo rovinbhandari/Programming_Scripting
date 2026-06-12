@@ -56,3 +56,7 @@ WorldHopper/.worldhopper-data/*
 *.user
 *.nupkg
 packages
+
+# Local env overrides (Vite) — never commit
+WorldHopper/frontend/.env.local
+WorldHopper/frontend/.env.*.local

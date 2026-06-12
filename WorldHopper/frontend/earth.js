@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const backendPort = 8080; // TODO: obtain from env variable or config
+const backendUrl = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8080'; // override via VITE_BACKEND_URL
 const earthRadius = 6;
 const flyerExtensions = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
 const flyerLevitation = 0.6; // lift sprites just clear of the surface so they aren't clipped
@@ -105,7 +105,7 @@ function animate(now) {
 async function loadTravellers() {
     let characters;
     try {
-        const response = await fetch(`http://localhost:${backendPort}/characters`);
+        const response = await fetch(`${backendUrl}/characters`);
         characters = await response.json();
     } catch (error) {
         console.error('Could not load characters from the backend.', error);
@@ -476,7 +476,7 @@ function latLongToVector3(lat, lon, radius) {
 // The /cameraangles endpoint hands back a small random spin speed (kept from the original demo).
 async function refreshSpin() {
     try {
-        const response = await fetch(`http://localhost:${backendPort}/cameraangles`);
+        const response = await fetch(`${backendUrl}/cameraangles`);
         const angles = await response.json();
         spinSpeed = angles[0].y;
     } catch (error) {

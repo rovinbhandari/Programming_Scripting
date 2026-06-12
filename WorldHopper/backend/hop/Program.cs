@@ -9,8 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// TODO: get ports through env variables or config
-builder.Services.AddCors(builder => builder.AddPolicy("whop frontend", builder => { builder.WithOrigins("http://localhost:5173", "http://localhost:8080", "http://localhost:21248").AllowAnyHeader().WithMethods("GET", "OPTIONS", "HEAD"); })); // TODO: policy can be tightened.
+// Browser origins allowed to call the API (the Vite frontend).
+// Configure via WorldHopper:AllowedOrigins (comma-separated) or env WorldHopper__AllowedOrigins.
+var allowedOrigins = (builder.Configuration["WorldHopper:AllowedOrigins"] ?? "http://localhost:5173")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+builder.Services.AddCors(options => options.AddPolicy("whop frontend", policy =>
+    policy.WithOrigins(allowedOrigins).AllowAnyHeader().WithMethods("GET")));
 builder.Services.AddSingleton<CharacterDataService>();
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));

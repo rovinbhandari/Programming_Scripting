@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace hop;
 
 [Route("characters")]
 [ApiController]
-[EnableCors("whop frontend")]
 public class CharactersController : ControllerBase
 {
     private readonly CharacterDataService _characters;

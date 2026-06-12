@@ -15,7 +15,7 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 - Backend: no local .NET SDK detected — build/run via Docker, or install the SDK first.
 - Generate CSVs from raw `.places`: `docker compose -f compose-dev.yaml run --rm geocode`.
 - Run tests: `docker compose -f compose-dev.yaml run --rm tests`.
-- Ports today: frontend 5173, backend 8080 (docker) / 5206 (local) — see TODO to de-hardcode.
+- Endpoints are configurable: `VITE_BACKEND_URL` (frontend → API) and `WorldHopper__AllowedOrigins` (backend CORS, comma-separated); defaults 5173/8080.
 
 ## Conventions
 - Frontend: ES modules, 4-space indent, `camelCase`; keep Three.js setup declarative and small.
