@@ -50,5 +50,9 @@ Ordered by priority; check items off as they land.
 - [ ] Make `vite build` production-ready: runtime-referenced `/static/*` textures aren't bundled — move `static/` under a Vite `publicDir` (dev spin-up already works).
 - [ ] Add backend formatting/analyzers (`dotnet format`) plus basic endpoint tests and lat/long math tests.
 - [x] Unit-test the geocode preprocessor (parser + validator) with xUnit (`tests/geocode.Tests`); run via Docker.
-- [ ] Design pass: lighting, `OrbitControls`, loading states, and a nicer UI for the refresh action.
 - [ ] (Optional) Add CI to build both services and run checks on push.
+
+## 7. Design pass
+- [ ] Lighting and material polish for the globe (atmosphere/specular, nicer day texture).
+- [ ] Add `OrbitControls` for user-driven rotate/zoom, coexisting with auto-centring.
+- [ ] Loading states for the globe, flyers, and data; a friendlier control for the refresh/spin action.
