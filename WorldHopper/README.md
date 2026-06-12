@@ -26,6 +26,7 @@ Journey data is prepared in three steps:
 - `frontend/` — Vite + Three.js globe; entry `earth.js`, served via `index.html`.
 - `backend/hop/` — ASP.NET Core (.NET 10) API; serves character itineraries from CSVs at `/characters`.
 - `backend/geocode/` — .NET console tool that turns raw `.places` files into the character CSVs (the geocoding step).
+- `tests/` — xUnit tests (`tests/geocode.Tests` covers the geocode parser + validator).
 - `compose-dev.yaml` — builds and runs both services together for local dev.
 
 ## Run it
@@ -36,6 +37,7 @@ docker compose -f compose-dev.yaml up --build
 - Backend API docs (Scalar): http://localhost:8080/scalar/v1
 - Point `WORLDHOPPER_DATA_PATH` at your git-ignored CSV folder (defaults to `./.worldhopper-data`).
 - Generate CSVs from raw `.places` files: `docker compose -f compose-dev.yaml run --rm geocode`.
+- Run the tests: `docker compose -f compose-dev.yaml run --rm tests`.
 
 ## Status
-Work in progress. **Done:** a rotating globe; the `/characters` API; flyers rendered on the globe; a simulated clock with play/pause, speed, and prev/next-hop controls; red long-stay arcs and blue short-stay round trips; clock slowdown that keeps brief trips visible; auto-centring on the active hop; and the geocoding data pipeline. **Next:** polish — linting, a production build, a design pass, and the remaining items in `TODO.md`.
+Work in progress. **Done:** a rotating globe; the `/characters` API; flyers rendered on the globe; a simulated clock with play/pause, speed, and prev/next-hop controls; red long-stay arcs and blue short-stay round trips; clock slowdown that keeps brief trips visible; auto-centring on the active hop; and the geocoding data pipeline with tests. **Next:** polish — linting, a production build, a design pass, and the remaining items in `TODO.md`.

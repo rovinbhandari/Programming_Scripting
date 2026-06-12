@@ -32,3 +32,11 @@ services:
       WorldHopper__DataPath: /data
     volumes:
       - ${WORLDHOPPER_DATA_PATH:-./.worldhopper-data}:/data
+  # Run the .NET test suite: `docker compose -f compose-dev.yaml run --rm tests`.
+  tests:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    profiles: ["tools"]
+    working_dir: /src/tests/geocode.Tests
+    volumes:
+      - ./:/src
+    command: dotnet test

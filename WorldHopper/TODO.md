@@ -49,5 +49,6 @@ Ordered by priority; check items off as they land.
 - [ ] Add frontend linting/formatting (ESLint + Prettier).
 - [ ] Make `vite build` production-ready: runtime-referenced `/static/*` textures aren't bundled — move `static/` under a Vite `publicDir` (dev spin-up already works).
 - [ ] Add backend formatting/analyzers (`dotnet format`) plus basic endpoint tests and lat/long math tests.
+- [x] Unit-test the geocode preprocessor (parser + validator) with xUnit (`tests/geocode.Tests`); run via Docker.
 - [ ] Design pass: lighting, `OrbitControls`, loading states, and a nicer UI for the refresh action.
 - [ ] (Optional) Add CI to build both services and run checks on push.
