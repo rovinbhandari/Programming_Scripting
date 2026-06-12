@@ -7,6 +7,13 @@ const flyerLevitation = 0.6; // lift sprites just clear of the surface so they a
 const flyerTextureSize = 256; // rasterize flyers to this square size for reliable WebGL upload
 const targetDurationSeconds = 200; // wall-clock seconds to replay the whole timeline at 1× (Phase 4 externalizes this)
 const msPerDay = 86_400_000;
+const hopDuration = 1.5;       // seconds a flyer takes to travel one hop arc
+const arcLift = 0.25;          // arc bulge above the surface, as a fraction of the radius
+const arcClearance = earthRadius * 0.075; // draw the arc this far below the flyer so it reads as a trail beneath, not through, it
+const arcFadeSeconds = 0.5;    // fade the arc out over this long after arrival
+const arcSegments = 48;
+const longHopColor = 0xff3b30; // red
+const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -36,6 +43,8 @@ let hopDays = [];      // sorted unique hop dates (epoch-days) for prev/next ste
 let simDay = 0;        // current simulated time (epoch-days)
 let speed = 1;         // playback multiplier
 let playing = true;
+let forceSnap = false; // when set, the next update snaps flyers home instead of animating (jumps/loop)
+let endHold = 0;       // seconds held on the final hop before the timeline loops
 let lastFrame = performance.now();
 
 const ui = {
@@ -65,11 +74,19 @@ function animate(now) {
     lastFrame = now;
     if (playing && daysPerSecond > 0) {
         simDay += dt * daysPerSecond * speed;
-        if (simDay > timelineEnd) {
-            simDay = timelineStart; // loop the timeline
+        if (simDay >= timelineEnd) {
+            simDay = timelineEnd; // hold on the final hop so its arc can play out
+            endHold += dt;
+            if (endHold >= loopHoldSeconds) {
+                simDay = timelineStart; // loop the timeline
+                endHold = 0;
+                forceSnap = true;       // don't animate the wrap-around
+            }
+        } else {
+            endHold = 0;
         }
     }
-    updateTravellers();
+    updateTravellers(dt);
     updateReadouts();
     earth.rotation.y += spinSpeed;
     renderer.render(scene, camera);
@@ -102,8 +119,10 @@ async function loadTravellers() {
                 start,
                 longHops: hops.filter((hop) => hop.kind === 'long'),
                 sprite,
-                lat: start.lat,
-                lon: start.lon,
+                homeLat: start.lat,
+                homeLon: start.lon,
+                posVec: latLongToVector3(start.lat, start.lon, 1),
+                transition: null,
             });
             hops.forEach((hop) => allDays.push(hop.day));
         } catch (error) {
@@ -126,17 +145,36 @@ function initClock(allDays) {
     simDay = timelineStart;
 }
 
-// Move each flyer to its home for the current time: the last LONG hop reached so
-// far, or its starting place before any long hop. (Short hops arrive in Step 4.)
-function updateTravellers() {
+// Advance each flyer toward its home for the current time: the last LONG hop
+// reached so far, or its starting place before any long hop. A natural change
+// animates along a red arc; jumps and the loop wrap snap instantly.
+function updateTravellers(dt) {
+    const snap = forceSnap;
+    forceSnap = false;
     for (const traveller of travellers) {
         const home = resolveHome(traveller, simDay);
-        if (home.lat !== traveller.lat || home.lon !== traveller.lon) {
-            placeOnGlobe(traveller.sprite, home.lat, home.lon);
-            traveller.lat = home.lat;
-            traveller.lon = home.lon;
+        const moved = home.lat !== traveller.homeLat || home.lon !== traveller.homeLon;
+        if (moved) {
+            traveller.homeLat = home.lat;
+            traveller.homeLon = home.lon;
+            if (snap) {
+                settle(traveller, home.lat, home.lon);
+            } else {
+                startTransition(traveller, home, longHopColor);
+            }
+        } else if (snap) {
+            settle(traveller, traveller.homeLat, traveller.homeLon);
+        }
+        if (playing && traveller.transition) {
+            advanceTransition(traveller, dt);
         }
     }
+}
+
+function settle(traveller, lat, lon) {
+    endTransition(traveller);
+    traveller.posVec = latLongToVector3(lat, lon, 1);
+    placeOnGlobe(traveller.sprite, lat, lon);
 }
 
 function resolveHome(traveller, day) {
@@ -148,6 +186,111 @@ function resolveHome(traveller, day) {
         home = hop;
     }
     return home;
+}
+
+// Start a flyer travelling along a fresh arc toward its destination.
+function startTransition(traveller, destination, color) {
+    endTransition(traveller);
+    const fromVec = traveller.posVec.clone();
+    const toVec = latLongToVector3(destination.lat, destination.lon, 1);
+    const lift = arcLiftFor(fromVec, toVec);
+    traveller.transition = {
+        fromVec,
+        toVec,
+        lift,
+        elapsed: 0,
+        fadeElapsed: 0,
+        group: buildArcGroup(fromVec, toVec, lift, color),
+    };
+}
+
+// Lift scales with how far apart the two places are: short hops arc gently,
+// long hops rise high. Normalized so a quarter-globe hop reaches the full arcLift,
+// with a floor so tiny hops still read as an arc and a cap for half-globe+ hops.
+function arcLiftFor(fromVec, toVec) {
+    const theta = Math.acos(THREE.MathUtils.clamp(fromVec.dot(toVec), -1, 1));
+    return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), 0.18, 1);
+}
+
+// Move the flyer along its arc, then fade the arc out once it has arrived.
+function advanceTransition(traveller, dt) {
+    const transition = traveller.transition;
+    if (transition.elapsed < hopDuration) {
+        transition.elapsed += dt;
+        const progress = easeInOut(Math.min(transition.elapsed / hopDuration, 1));
+        traveller.posVec = slerpVec(transition.fromVec, transition.toVec, progress);
+        const radius = earthRadius + flyerLevitation + earthRadius * transition.lift * Math.sin(Math.PI * progress);
+        traveller.sprite.position.copy(traveller.posVec.clone().multiplyScalar(radius));
+    } else {
+        transition.fadeElapsed += dt;
+        setGroupOpacity(transition.group, Math.max(0, 1 - transition.fadeElapsed / arcFadeSeconds));
+        if (transition.fadeElapsed >= arcFadeSeconds) {
+            traveller.posVec = transition.toVec.clone();
+            endTransition(traveller);
+        }
+    }
+}
+
+function endTransition(traveller) {
+    const transition = traveller.transition;
+    if (!transition) {
+        return;
+    }
+    earth.remove(transition.group);
+    transition.group.traverse((object) => {
+        object.geometry?.dispose();
+        object.material?.dispose();
+    });
+    traveller.transition = null;
+}
+
+// A raised great-circle arc from one place to another, with an arrowhead at the destination.
+function buildArcGroup(fromVec, toVec, lift, color) {
+    const points = [];
+    for (let i = 0; i <= arcSegments; i++) {
+        points.push(arcPoint(fromVec, toVec, i / arcSegments, lift));
+    }
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true });
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), arcSegments, earthRadius * 0.012, 8, false),
+        material,
+    ));
+    const head = new THREE.Mesh(new THREE.ConeGeometry(earthRadius * 0.04, earthRadius * 0.1, 12), material);
+    const tip = points[points.length - 1];
+    head.position.copy(tip);
+    head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tip.clone().sub(points[points.length - 2]).normalize());
+    group.add(head);
+    earth.add(group);
+    return group;
+}
+
+function arcPoint(fromVec, toVec, t, lift) {
+    const radius = earthRadius + flyerLevitation - arcClearance + earthRadius * lift * Math.sin(Math.PI * t);
+    return slerpVec(fromVec, toVec, t).multiplyScalar(radius);
+}
+
+// Spherical-linear interpolation between two unit vectors.
+function slerpVec(a, b, t) {
+    const theta = Math.acos(THREE.MathUtils.clamp(a.dot(b), -1, 1));
+    if (theta < 1e-6) {
+        return a.clone();
+    }
+    const sinTheta = Math.sin(theta);
+    return a.clone().multiplyScalar(Math.sin((1 - t) * theta) / sinTheta)
+        .add(b.clone().multiplyScalar(Math.sin(t * theta) / sinTheta));
+}
+
+function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
+}
+
+function setGroupOpacity(group, opacity) {
+    group.traverse((object) => {
+        if (object.material) {
+            object.material.opacity = opacity;
+        }
+    });
 }
 
 function updateReadouts() {
@@ -182,6 +325,7 @@ function stepHop(direction) {
         const earlier = hopDays.filter((day) => day < simDay - epsilon);
         simDay = earlier.length ? earlier[earlier.length - 1] : hopDays[hopDays.length - 1];
     }
+    forceSnap = true; // a manual jump should land instantly, not animate
 }
 
 function toDay(dateString) {
