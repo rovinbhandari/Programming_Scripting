@@ -39,6 +39,8 @@ Ordered by priority; check items off as they land.
 - [x] Long-stay hop (red arrow): relocate a character to a new place and keep it there (animated red great-circle arc; lift scales with distance; flyer rides above the arc, which fades after arrival).
 - [x] Short-stay hop (blue arrow): send a character on a temporary trip, then return it (blue great-circle arc; flies out, pauses, flies home; arc fades after return; legs a touch quicker than a long hop).
 - [x] Enforce a minimum visible duration for blue hops so brief trips stay legible — the clock slows to a configurable fraction (`blueTimeSlowdown`, default 80% slower) while a short hop is in flight.
+- [x] Auto-rotate the globe to centre the active hop, prioritising long (red) arrows; with several of one kind, aim at the geometric mean of their endpoints. Slews smoothly and stays upright (no roll).
+- [ ] Centre near-antipodal simultaneous arrows that can't both be shown at once (currently skipped when their endpoints cancel out).
 - [x] Render each character's flyer on the globe at its current place (clock-driven long-hop relocation, animated along a red arc).
 - [x] Fixed the marker placement: `latLongToVector3` was mirroring east/west (missing the negative `x`); the texture is standard 0°-centered, so no offset is needed.
 

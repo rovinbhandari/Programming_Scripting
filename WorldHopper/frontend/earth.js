@@ -18,6 +18,9 @@ const shortHopDuration = 1.0;  // seconds per leg of a short hop — a touch qui
 const shortHopStay = 0.6;      // seconds paused at the visited place before heading home
 const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
+const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
+const yAxis = new THREE.Vector3(0, 1, 0);
+const xAxis = new THREE.Vector3(1, 0, 0);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -94,7 +97,7 @@ function animate(now) {
     }
     updateTravellers(dt, prevSimDay);
     updateReadouts();
-    earth.rotation.y += spinSpeed;
+    updateEarthOrientation(dt);
     renderer.render(scene, camera);
 }
 
@@ -191,6 +194,44 @@ function crossedShortHop(traveller, prevSimDay) {
 // True while any flyer is out on a short hop, so the clock slows until it's home again.
 function blueActive() {
     return travellers.some((t) => t.transition?.roundTrip && t.transition.phase !== 'fade');
+}
+
+// Rotate the globe to keep the active hop centred; otherwise apply the idle spin.
+function updateEarthOrientation(dt) {
+    const focus = focusDirection();
+    if (focus) {
+        earth.quaternion.slerp(orientationFacingCamera(focus), 1 - Math.exp(-centerSlewRate * dt));
+    } else {
+        earth.rotation.y += spinSpeed;
+    }
+}
+
+// Local-space direction the globe should face: the geometric mean of the active
+// arcs' endpoints, preferring long (red) hops over short (blue) ones. Null when
+// nothing is hopping, or when the arcs roughly cancel out (near-antipodal — a
+// rare case left for later).
+function focusDirection() {
+    const active = travellers.filter((t) => t.transition && t.transition.phase !== 'fade');
+    if (active.length === 0) {
+        return null;
+    }
+    const reds = active.filter((t) => !t.transition.roundTrip);
+    const chosen = reds.length ? reds : active;
+    const sum = new THREE.Vector3();
+    for (const t of chosen) {
+        sum.add(t.transition.fromVec).add(t.transition.toVec);
+    }
+    return sum.lengthSq() < 1e-6 ? null : sum.normalize(); // TODO: handle near-antipodal arcs
+}
+
+// Orientation that brings a local direction to face the camera (world +Z), as a
+// yaw about Y then a pitch about X, so the globe stays upright (no roll).
+function orientationFacingCamera(d) {
+    const yaw = Math.atan2(-d.x, d.z);
+    const pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+    const yawQ = new THREE.Quaternion().setFromAxisAngle(yAxis, yaw);
+    const pitchQ = new THREE.Quaternion().setFromAxisAngle(xAxis, pitch);
+    return pitchQ.multiply(yawQ);
 }
 
 function settle(traveller, lat, lon) {
