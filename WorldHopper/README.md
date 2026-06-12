@@ -16,8 +16,8 @@ WorldHopper replays the travels of one or more characters over a textured 3D Ear
 
 ## Data pipeline
 Journey data is prepared in three steps:
-1. **Raw input (human-friendly):** a hand-written file of place *names* and dates.
-2. **Geocode → CSVs:** a preprocessing step resolves names to coordinates and emits one CSV of `coordinates + dates` per character, each named after its flyer.
+1. **Raw input (human-friendly):** one `<name>.places` file per character — nested `live` / `travel` entries with `start .. end` date ranges (format documented in `backend/geocode/`).
+2. **Geocode → CSVs:** the `geocode` tool resolves place names to coordinates via OpenStreetMap Nominatim (no API key; results cached locally) and emits one `date,lat,lon,kind` CSV per character, each named after its flyer. Run: `docker compose -f compose-dev.yaml run --rm geocode`.
 3. **Visualise:** the app reads every character CSV it finds and animates the hops.
 
 > ⚠️ **Privacy — read before adding data.** Real place names, dates, and coordinates (raw input *and* generated CSVs) are **never** committed to git. They are read only from a **configurable location** outside the repository. See `AGENTS.md`.
@@ -25,6 +25,7 @@ Journey data is prepared in three steps:
 ## Architecture
 - `frontend/` — Vite + Three.js globe; entry `earth.js`, served via `index.html`.
 - `backend/hop/` — ASP.NET Core (.NET 10) API; serves character itineraries from CSVs at `/characters`.
+- `backend/geocode/` — .NET console tool that turns raw `.places` files into the character CSVs (the geocoding step).
 - `compose-dev.yaml` — builds and runs both services together for local dev.
 
 ## Run it
@@ -34,6 +35,7 @@ docker compose -f compose-dev.yaml up --build
 - Frontend: http://localhost:5173
 - Backend API docs (Scalar): http://localhost:8080/scalar/v1
 - Point `WORLDHOPPER_DATA_PATH` at your git-ignored CSV folder (defaults to `./.worldhopper-data`).
+- Generate CSVs from raw `.places` files: `docker compose -f compose-dev.yaml run --rm geocode`.
 
 ## Status
-Early work in progress. **Today:** a rotating globe, a camera-angles endpoint, and a `/characters` API that serves itineraries from CSVs. **Next:** rendering the hops (flyers, red/blue arrows, the clock) — see `TODO.md` for the prioritized roadmap.
+Work in progress. **Done:** a rotating globe; the `/characters` API; flyers rendered on the globe; a simulated clock with play/pause, speed, and prev/next-hop controls; red long-stay arcs and blue short-stay round trips; clock slowdown that keeps brief trips visible; auto-centring on the active hop; and the geocoding data pipeline. **Next:** polish — linting, a production build, a design pass, and the remaining items in `TODO.md`.

@@ -20,3 +20,15 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+  # One-shot data pipeline: `docker compose -f compose-dev.yaml run --rm geocode`.
+  # Mounts the data dir read-write so it can write the generated CSVs and the geocoding cache.
+  geocode:
+    build:
+      context: backend
+      dockerfile: ./geocode.Dockerfile
+    image: worldhopper-geocode
+    profiles: ["tools"]
+    environment:
+      WorldHopper__DataPath: /data
+    volumes:
+      - ${WORLDHOPPER_DATA_PATH:-./.worldhopper-data}:/data

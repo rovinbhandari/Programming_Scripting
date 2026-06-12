@@ -31,7 +31,8 @@ Ordered by priority; check items off as they land.
 - [ ] Tighten the `whop frontend` CORS policy to only the origins actually used.
 
 ## 5. Core features — the hop simulation
-- [ ] Data pipeline: turn the human-friendly raw file (place names + dates) into one `coordinates + dates` CSV per character via a geocoding step.
+- [x] Data pipeline: a .NET console tool (`backend/geocode/`) turns one human-friendly raw file per character (`<name>.places`: nested `live`/`travel` entries with `start .. end` date ranges) into one `date,lat,lon,kind` CSV, geocoding place names via OpenStreetMap Nominatim (no API key) with a git-ignored local cache. End dates are validation-only for now (Option A below).
+- [ ] Carry real durations through the pipeline (Option B): use the raw `start .. end` ranges to drive timing — short trips last their actual span and the final `live` extends the timeline — instead of the frontend synthesizing trip duration. Likely extends the CSV schema and the frontend model.
 - [x] Discover characters from the CSVs present (n > 0): pair each CSV with the like-named flyer in `static/flyers` (e.g. `bear.csv` ↔ `bear.svg`), probing supported extensions.
 - [x] Backend: discover characters from CSV files and serve them with hops at `GET /characters` (schema `date,lat,lon,kind`).
 - [x] Load journey data from a configurable, git-ignored location — never bundled or committed (`WorldHopper:DataPath` / env `WorldHopper__DataPath`; Docker volume → `/data`).

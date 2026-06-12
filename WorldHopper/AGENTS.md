@@ -4,6 +4,7 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 ## Layout
 - `frontend/` — Vite app; entry `earth.js`, served via `index.html`; assets in `static/`.
 - `backend/hop/` — ASP.NET Core Web API (controllers: Camera, Characters).
+- `backend/geocode/` — .NET console tool: raw `.places` files → character CSVs (geocoding step).
 - `compose-dev.yaml` — builds and runs both services for local dev.
 - Git root is the parent `Programming_Scripting` monorepo; only touch `WorldHopper/` here.
 
@@ -11,6 +12,7 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 - Run everything: `docker compose -f compose-dev.yaml up --build`.
 - Frontend dev: `cd frontend && npm install && npx vite --host` (http://localhost:5173).
 - Backend: no local .NET SDK detected — build/run via Docker, or install the SDK first.
+- Generate CSVs from raw `.places`: `docker compose -f compose-dev.yaml run --rm geocode`.
 - Ports today: frontend 5173, backend 8080 (docker) / 5206 (local) — see TODO to de-hardcode.
 
 ## Conventions
