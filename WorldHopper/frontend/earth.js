@@ -13,6 +13,10 @@ const arcClearance = earthRadius * 0.075; // draw the arc this far below the fly
 const arcFadeSeconds = 0.5;    // fade the arc out over this long after arrival
 const arcSegments = 48;
 const longHopColor = 0xff3b30; // red
+const shortHopColor = 0x0a84ff; // blue
+const shortHopDuration = 1.0;  // seconds per leg of a short hop — a touch quicker than a long hop
+const shortHopStay = 0.6;      // seconds paused at the visited place before heading home
+const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 
 const scene = new THREE.Scene();
@@ -72,8 +76,10 @@ function animate(now) {
     requestAnimationFrame(animate);
     const dt = Math.min((now - lastFrame) / 1000, 0.1); // clamp to ignore long stalls (tab switch, etc.)
     lastFrame = now;
+    const prevSimDay = simDay;
     if (playing && daysPerSecond > 0) {
-        simDay += dt * daysPerSecond * speed;
+        const timeScale = blueActive() ? 1 - blueTimeSlowdown : 1; // brief short hops slow the clock so they stay legible
+        simDay += dt * daysPerSecond * speed * timeScale;
         if (simDay >= timelineEnd) {
             simDay = timelineEnd; // hold on the final hop so its arc can play out
             endHold += dt;
@@ -86,7 +92,7 @@ function animate(now) {
             endHold = 0;
         }
     }
-    updateTravellers(dt);
+    updateTravellers(dt, prevSimDay);
     updateReadouts();
     earth.rotation.y += spinSpeed;
     renderer.render(scene, camera);
@@ -118,6 +124,7 @@ async function loadTravellers() {
                 name: character.name,
                 start,
                 longHops: hops.filter((hop) => hop.kind === 'long'),
+                shortHops: hops.filter((hop) => hop.kind === 'short').sort((a, b) => a.day - b.day),
                 sprite,
                 homeLat: start.lat,
                 homeLon: start.lon,
@@ -148,7 +155,7 @@ function initClock(allDays) {
 // Advance each flyer toward its home for the current time: the last LONG hop
 // reached so far, or its starting place before any long hop. A natural change
 // animates along a red arc; jumps and the loop wrap snap instantly.
-function updateTravellers(dt) {
+function updateTravellers(dt, prevSimDay) {
     const snap = forceSnap;
     forceSnap = false;
     for (const traveller of travellers) {
@@ -160,15 +167,30 @@ function updateTravellers(dt) {
             if (snap) {
                 settle(traveller, home.lat, home.lon);
             } else {
-                startTransition(traveller, home, longHopColor);
+                startTransition(traveller, home.lat, home.lon, longHopColor, false);
             }
         } else if (snap) {
             settle(traveller, traveller.homeLat, traveller.homeLon);
+        } else if (!traveller.transition) {
+            const trip = crossedShortHop(traveller, prevSimDay); // a brief excursion away from home and back
+            if (trip) {
+                startTransition(traveller, trip.lat, trip.lon, shortHopColor, true);
+            }
         }
         if (playing && traveller.transition) {
             advanceTransition(traveller, dt);
         }
     }
+}
+
+// The short hop, if any, whose date the clock crossed since the previous frame.
+function crossedShortHop(traveller, prevSimDay) {
+    return traveller.shortHops.find((hop) => hop.day > prevSimDay && hop.day <= simDay);
+}
+
+// True while any flyer is out on a short hop, so the clock slows until it's home again.
+function blueActive() {
+    return travellers.some((t) => t.transition?.roundTrip && t.transition.phase !== 'fade');
 }
 
 function settle(traveller, lat, lon) {
@@ -188,16 +210,19 @@ function resolveHome(traveller, day) {
     return home;
 }
 
-// Start a flyer travelling along a fresh arc toward its destination.
-function startTransition(traveller, destination, color) {
+// Start a flyer travelling along a fresh arc. A long hop is a one-way trip to a
+// new home; a short hop (roundTrip) flies out, pauses, then returns home.
+function startTransition(traveller, lat, lon, color, roundTrip) {
     endTransition(traveller);
     const fromVec = traveller.posVec.clone();
-    const toVec = latLongToVector3(destination.lat, destination.lon, 1);
+    const toVec = latLongToVector3(lat, lon, 1);
     const lift = arcLiftFor(fromVec, toVec);
     traveller.transition = {
         fromVec,
         toVec,
         lift,
+        roundTrip,
+        phase: 'out',      // out → (stay → back) → fade
         elapsed: 0,
         fadeElapsed: 0,
         group: buildArcGroup(fromVec, toVec, lift, color),
@@ -212,20 +237,34 @@ function arcLiftFor(fromVec, toVec) {
     return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), 0.18, 1);
 }
 
-// Move the flyer along its arc, then fade the arc out once it has arrived.
+// Fly the flyer along its arc; a short hop pauses at the far end then flies back.
+// Once arrived (long hop) or home again (short hop) the arc fades out and is disposed.
 function advanceTransition(traveller, dt) {
-    const transition = traveller.transition;
-    if (transition.elapsed < hopDuration) {
-        transition.elapsed += dt;
-        const progress = easeInOut(Math.min(transition.elapsed / hopDuration, 1));
-        traveller.posVec = slerpVec(transition.fromVec, transition.toVec, progress);
-        const radius = earthRadius + flyerLevitation + earthRadius * transition.lift * Math.sin(Math.PI * progress);
+    const t = traveller.transition;
+    if (t.phase === 'out' || t.phase === 'back') {
+        const legDuration = t.roundTrip ? shortHopDuration : hopDuration;
+        t.elapsed += dt;
+        const raw = Math.min(t.elapsed / legDuration, 1);
+        const progress = easeInOut(raw);
+        const [from, to] = t.phase === 'out' ? [t.fromVec, t.toVec] : [t.toVec, t.fromVec];
+        traveller.posVec = slerpVec(from, to, progress);
+        const radius = earthRadius + flyerLevitation + earthRadius * t.lift * Math.sin(Math.PI * progress);
         traveller.sprite.position.copy(traveller.posVec.clone().multiplyScalar(radius));
+        if (raw >= 1) {
+            t.elapsed = 0;
+            t.phase = t.phase === 'out' && t.roundTrip ? 'stay' : 'fade';
+        }
+    } else if (t.phase === 'stay') {
+        t.elapsed += dt;
+        if (t.elapsed >= shortHopStay) {
+            t.elapsed = 0;
+            t.phase = 'back';
+        }
     } else {
-        transition.fadeElapsed += dt;
-        setGroupOpacity(transition.group, Math.max(0, 1 - transition.fadeElapsed / arcFadeSeconds));
-        if (transition.fadeElapsed >= arcFadeSeconds) {
-            traveller.posVec = transition.toVec.clone();
+        t.fadeElapsed += dt;
+        setGroupOpacity(t.group, Math.max(0, 1 - t.fadeElapsed / arcFadeSeconds));
+        if (t.fadeElapsed >= arcFadeSeconds) {
+            traveller.posVec = (t.roundTrip ? t.fromVec : t.toVec).clone();
             endTransition(traveller);
         }
     }
