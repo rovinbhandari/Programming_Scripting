@@ -13,6 +13,9 @@ const arcLift = 0.25;          // arc bulge above the surface, as a fraction of 
 const arcClearance = earthRadius * 0.075; // draw the arc this far below the flyer so it reads as a trail beneath, not through, it
 const arcFadeSeconds = 0.5;    // fade the arc out over this long after arrival
 const arcSegments = 48;
+const arcShaftHalfWidth = earthRadius * 0.02;  // half-width of the flat arrow ribbon (wider + flatter than a tube)
+const arcHeadHalfWidth = earthRadius * 0.06;   // half-width of the broad, flat arrowhead base
+const arcHeadLength = earthRadius * 0.14;      // how far back from the tip the arrowhead reaches
 const longHopColor = 0xff3b30; // red
 const shortHopColor = 0x0a84ff; // blue
 const shortHopDuration = 1.0;  // seconds per leg of a short hop — a touch quicker than a long hop
@@ -340,25 +343,100 @@ function endTransition(traveller) {
     traveller.transition = null;
 }
 
-// A raised great-circle arc from one place to another, with an arrowhead at the destination.
+// A raised great-circle arc from one place to another, drawn as a flat, wide
+// ribbon lying roughly tangent to the globe, capped by a broad flat arrowhead at
+// the destination — so it reads as a clear arrow head-on rather than a round tube.
 function buildArcGroup(fromVec, toVec, lift, color) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, side: THREE.DoubleSide });
+    const group = new THREE.Group();
+    const { shaft, head } = arcArrowGeometry(fromVec, toVec, lift);
+    group.add(new THREE.Mesh(shaft, material));
+    group.add(new THREE.Mesh(head, material));
+    earth.add(group);
+    return group;
+}
+
+// Build the flat shaft ribbon and flat arrowhead triangle for one arc. The
+// arrowhead sits a fixed distance back from the tip (clamped on very short hops),
+// and the shaft stops exactly where the head begins so the two never overlap.
+function arcArrowGeometry(fromVec, toVec, lift) {
     const points = [];
     for (let i = 0; i <= arcSegments; i++) {
         points.push(arcPoint(fromVec, toVec, i / arcSegments, lift));
     }
-    const material = new THREE.MeshBasicMaterial({ color, transparent: true });
-    const group = new THREE.Group();
-    group.add(new THREE.Mesh(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), arcSegments, earthRadius * 0.012, 8, false),
-        material,
-    ));
-    const head = new THREE.Mesh(new THREE.ConeGeometry(earthRadius * 0.04, earthRadius * 0.1, 12), material);
+    const cumulative = [0];
+    for (let i = 1; i < points.length; i++) {
+        cumulative.push(cumulative[i - 1] + points[i].distanceTo(points[i - 1]));
+    }
+    const total = cumulative[cumulative.length - 1];
+    const headLength = Math.min(arcHeadLength, total * 0.6);
+    const baseLength = total - headLength;
+
+    const shaftPoints = points.filter((_, i) => cumulative[i] < baseLength);
+    const baseCenter = pointAtLength(points, cumulative, baseLength);
+    shaftPoints.push(baseCenter);
+    const shaft = ribbonGeometry(shaftPoints, arcShaftHalfWidth);
+
     const tip = points[points.length - 1];
-    head.position.copy(tip);
-    head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tip.clone().sub(points[points.length - 2]).normalize());
-    group.add(head);
-    earth.add(group);
-    return group;
+    const side = tangentSide(tip.clone().sub(baseCenter), baseCenter).multiplyScalar(arcHeadHalfWidth);
+    const baseLeft = baseCenter.clone().add(side);
+    const baseRight = baseCenter.clone().sub(side);
+    const head = new THREE.BufferGeometry();
+    head.setAttribute('position', new THREE.Float32BufferAttribute([
+        tip.x, tip.y, tip.z,
+        baseLeft.x, baseLeft.y, baseLeft.z,
+        baseRight.x, baseRight.y, baseRight.z,
+    ], 3));
+    head.setIndex([0, 1, 2]);
+    return { shaft, head };
+}
+
+// A flat ribbon centred on the given points: at each point we step sideways along
+// the in-surface perpendicular, so the strip lies tangent to the globe (facing
+// outward) rather than bulging like a tube.
+function ribbonGeometry(centre, halfWidth) {
+    const positions = [];
+    for (let i = 0; i < centre.length; i++) {
+        const prev = centre[Math.max(0, i - 1)];
+        const next = centre[Math.min(centre.length - 1, i + 1)];
+        const side = tangentSide(next.clone().sub(prev), centre[i]).multiplyScalar(halfWidth);
+        const left = centre[i].clone().add(side);
+        const right = centre[i].clone().sub(side);
+        positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+    }
+    const index = [];
+    for (let i = 0; i < centre.length - 1; i++) {
+        const a = i * 2;
+        index.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); // two triangles per ribbon quad
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(index);
+    return geometry;
+}
+
+// Unit vector perpendicular to the travel direction and lying in the globe's
+// tangent plane at `at` — the direction to fan the ribbon's width along.
+function tangentSide(tangent, at) {
+    return new THREE.Vector3().crossVectors(tangent.normalize(), at.clone().normalize()).normalize();
+}
+
+// Point a given arc-length along a sampled polyline (clamped to its ends).
+function pointAtLength(points, cumulative, target) {
+    const total = cumulative[cumulative.length - 1];
+    if (target <= 0) {
+        return points[0].clone();
+    }
+    if (target >= total) {
+        return points[points.length - 1].clone();
+    }
+    let i = 1;
+    while (i < cumulative.length && cumulative[i] < target) {
+        i++;
+    }
+    const span = cumulative[i] - cumulative[i - 1];
+    const fraction = span > 0 ? (target - cumulative[i - 1]) / span : 0;
+    return points[i - 1].clone().lerp(points[i], fraction);
 }
 
 // --- Shared hop arcs ---------------------------------------------------------
