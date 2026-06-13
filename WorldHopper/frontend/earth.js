@@ -5,6 +5,7 @@ const earthRadius = 6;
 const flyerExtensions = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
 const flyerLevitation = 0.6; // lift sprites just clear of the surface so they aren't clipped
 const flyerTextureSize = 256; // rasterize flyers to this square size for reliable WebGL upload
+const flyerClusterRadius = earthRadius * 0.08; // when flyers share a spot, fan them on a ring this far from the shared anchor
 const targetDurationSeconds = 200; // wall-clock seconds to replay the whole timeline at 1× (Phase 4 externalizes this)
 const msPerDay = 86_400_000;
 const hopDuration = 1.5;       // seconds a flyer takes to travel one hop arc
@@ -40,6 +41,7 @@ camera.position.z = 15;
 
 let spinSpeed = 0;
 const travellers = [];
+const arcs = new Map(); // shared hop arcs keyed by endpoints+kind, so identical simultaneous hops draw one arrow; refcounted by the flyers riding them
 
 // Simulated clock: the whole itinerary (earliest..latest hop across all
 // characters) plays in targetDurationSeconds at 1×, i.e. 1 second = N days.
@@ -132,6 +134,7 @@ async function loadTravellers() {
                 homeLat: start.lat,
                 homeLon: start.lon,
                 posVec: latLongToVector3(start.lat, start.lon, 1),
+                renderRadius: earthRadius + flyerLevitation,
                 transition: null,
             });
             hops.forEach((hop) => allDays.push(hop.day));
@@ -170,20 +173,25 @@ function updateTravellers(dt, prevSimDay) {
             if (snap) {
                 settle(traveller, home.lat, home.lon);
             } else {
-                startTransition(traveller, home.lat, home.lon, longHopColor, false);
+                startTransition(traveller, home.lat, home.lon, 'long');
             }
         } else if (snap) {
             settle(traveller, traveller.homeLat, traveller.homeLon);
         } else if (!traveller.transition) {
             const trip = crossedShortHop(traveller, prevSimDay); // a brief excursion away from home and back
             if (trip) {
-                startTransition(traveller, trip.lat, trip.lon, shortHopColor, true);
+                startTransition(traveller, trip.lat, trip.lon, 'short');
             }
         }
         if (playing && traveller.transition) {
             advanceTransition(traveller, dt);
         }
     }
+    if (snap) {
+        clearAllArcs(); // a jump or loop wraps the timeline; no arc should linger across the cut
+    }
+    layoutFlyers();
+    updateArcs(dt);
 }
 
 // The short hop, if any, whose date the clock crossed since the previous frame.
@@ -193,7 +201,12 @@ function crossedShortHop(traveller, prevSimDay) {
 
 // True while any flyer is out on a short hop, so the clock slows until it's home again.
 function blueActive() {
-    return travellers.some((t) => t.transition?.roundTrip && t.transition.phase !== 'fade');
+    for (const arc of arcs.values()) {
+        if (!arc.fading && !arc.isLong) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Rotate the globe to keep the active hop centred; otherwise apply the idle spin.
@@ -207,19 +220,19 @@ function updateEarthOrientation(dt) {
 }
 
 // Local-space direction the globe should face: the geometric mean of the active
-// arcs' endpoints, preferring long (red) hops over short (blue) ones. Null when
-// nothing is hopping, or when the arcs roughly cancel out (near-antipodal — a
-// rare case left for later).
+// arcs' endpoints, preferring long (red) hops over short (blue) ones. Each shared
+// arc votes once, however many flyers ride it. Null when nothing is hopping, or
+// when the arcs roughly cancel out (near-antipodal — a rare case left for later).
 function focusDirection() {
-    const active = travellers.filter((t) => t.transition && t.transition.phase !== 'fade');
+    const active = [...arcs.values()].filter((arc) => !arc.fading);
     if (active.length === 0) {
         return null;
     }
-    const reds = active.filter((t) => !t.transition.roundTrip);
+    const reds = active.filter((arc) => arc.isLong);
     const chosen = reds.length ? reds : active;
     const sum = new THREE.Vector3();
-    for (const t of chosen) {
-        sum.add(t.transition.fromVec).add(t.transition.toVec);
+    for (const arc of chosen) {
+        sum.add(arc.fromVec).add(arc.toVec);
     }
     return sum.lengthSq() < 1e-6 ? null : sum.normalize(); // TODO: handle near-antipodal arcs
 }
@@ -237,7 +250,7 @@ function orientationFacingCamera(d) {
 function settle(traveller, lat, lon) {
     endTransition(traveller);
     traveller.posVec = latLongToVector3(lat, lon, 1);
-    placeOnGlobe(traveller.sprite, lat, lon);
+    traveller.renderRadius = earthRadius + flyerLevitation;
 }
 
 function resolveHome(traveller, day) {
@@ -252,8 +265,9 @@ function resolveHome(traveller, day) {
 }
 
 // Start a flyer travelling along a fresh arc. A long hop is a one-way trip to a
-// new home; a short hop (roundTrip) flies out, pauses, then returns home.
-function startTransition(traveller, lat, lon, color, roundTrip) {
+// new home; a short hop flies out, pauses, then returns home. Identical hops
+// taken at the same time share one arc, which the flyers then ride side by side.
+function startTransition(traveller, lat, lon, kind) {
     endTransition(traveller);
     const fromVec = traveller.posVec.clone();
     const toVec = latLongToVector3(lat, lon, 1);
@@ -262,11 +276,10 @@ function startTransition(traveller, lat, lon, color, roundTrip) {
         fromVec,
         toVec,
         lift,
-        roundTrip,
-        phase: 'out',      // out → (stay → back) → fade
+        roundTrip: kind === 'short',
+        arcKey: acquireArc(fromVec, toVec, lift, kind),
+        phase: 'out',  // out → (stay → back) → done
         elapsed: 0,
-        fadeElapsed: 0,
-        group: buildArcGroup(fromVec, toVec, lift, color),
     };
 }
 
@@ -279,7 +292,8 @@ function arcLiftFor(fromVec, toVec) {
 }
 
 // Fly the flyer along its arc; a short hop pauses at the far end then flies back.
-// Once arrived (long hop) or home again (short hop) the arc fades out and is disposed.
+// Once arrived (long hop) or home again (short hop) the flyer settles and lets go
+// of the shared arc, which fades once no flyer is riding it any more.
 function advanceTransition(traveller, dt) {
     const t = traveller.transition;
     if (t.phase === 'out' || t.phase === 'back') {
@@ -289,11 +303,14 @@ function advanceTransition(traveller, dt) {
         const progress = easeInOut(raw);
         const [from, to] = t.phase === 'out' ? [t.fromVec, t.toVec] : [t.toVec, t.fromVec];
         traveller.posVec = slerpVec(from, to, progress);
-        const radius = earthRadius + flyerLevitation + earthRadius * t.lift * Math.sin(Math.PI * progress);
-        traveller.sprite.position.copy(traveller.posVec.clone().multiplyScalar(radius));
+        traveller.renderRadius = earthRadius + flyerLevitation + earthRadius * t.lift * Math.sin(Math.PI * progress);
         if (raw >= 1) {
             t.elapsed = 0;
-            t.phase = t.phase === 'out' && t.roundTrip ? 'stay' : 'fade';
+            if (t.phase === 'out' && t.roundTrip) {
+                t.phase = 'stay';
+            } else {
+                finishTransition(traveller);
+            }
         }
     } else if (t.phase === 'stay') {
         t.elapsed += dt;
@@ -301,26 +318,25 @@ function advanceTransition(traveller, dt) {
             t.elapsed = 0;
             t.phase = 'back';
         }
-    } else {
-        t.fadeElapsed += dt;
-        setGroupOpacity(t.group, Math.max(0, 1 - t.fadeElapsed / arcFadeSeconds));
-        if (t.fadeElapsed >= arcFadeSeconds) {
-            traveller.posVec = (t.roundTrip ? t.fromVec : t.toVec).clone();
-            endTransition(traveller);
-        }
     }
 }
 
+// The flyer has arrived: settle it at its final spot and release the shared arc.
+function finishTransition(traveller) {
+    const t = traveller.transition;
+    traveller.posVec = (t.roundTrip ? t.fromVec : t.toVec).clone();
+    traveller.renderRadius = earthRadius + flyerLevitation;
+    releaseArc(t.arcKey);
+    traveller.transition = null;
+}
+
+// Drop a flyer's in-progress transition (interrupted by a new hop or a snap),
+// releasing its hold on the shared arc.
 function endTransition(traveller) {
-    const transition = traveller.transition;
-    if (!transition) {
+    if (!traveller.transition) {
         return;
     }
-    earth.remove(transition.group);
-    transition.group.traverse((object) => {
-        object.geometry?.dispose();
-        object.material?.dispose();
-    });
+    releaseArc(traveller.transition.arcKey);
     traveller.transition = null;
 }
 
@@ -343,6 +359,129 @@ function buildArcGroup(fromVec, toVec, lift, color) {
     group.add(head);
     earth.add(group);
     return group;
+}
+
+// --- Shared hop arcs ---------------------------------------------------------
+// Identical hops taken at the same time share one arc, so two flyers never stack
+// arrows that z-fight. Each arc is refcounted by the flyers riding it and fades
+// once the last one lets go.
+
+function acquireArc(fromVec, toVec, lift, kind) {
+    const key = arcKeyFor(fromVec, toVec, kind);
+    let arc = arcs.get(key);
+    if (!arc) {
+        const color = kind === 'long' ? longHopColor : shortHopColor;
+        arc = {
+            group: buildArcGroup(fromVec, toVec, lift, color),
+            fromVec: fromVec.clone(),
+            toVec: toVec.clone(),
+            isLong: kind === 'long',
+            refs: 0,
+            fading: false,
+            fadeElapsed: 0,
+        };
+        arcs.set(key, arc);
+    }
+    arc.refs++;
+    arc.fading = false; // a fresh rider revives an arc that had begun to fade
+    arc.fadeElapsed = 0;
+    setGroupOpacity(arc.group, 1);
+    return key;
+}
+
+function releaseArc(key) {
+    const arc = arcs.get(key);
+    if (!arc) {
+        return;
+    }
+    arc.refs = Math.max(0, arc.refs - 1);
+    if (arc.refs === 0) {
+        arc.fading = true; // the last rider left; start fading out
+    }
+}
+
+// Fade and dispose any arc no flyer is riding any more.
+function updateArcs(dt) {
+    for (const [key, arc] of arcs) {
+        if (!arc.fading) {
+            continue;
+        }
+        arc.fadeElapsed += dt;
+        setGroupOpacity(arc.group, Math.max(0, 1 - arc.fadeElapsed / arcFadeSeconds));
+        if (arc.fadeElapsed >= arcFadeSeconds) {
+            disposeArc(arc);
+            arcs.delete(key);
+        }
+    }
+}
+
+function clearAllArcs() {
+    for (const arc of arcs.values()) {
+        disposeArc(arc);
+    }
+    arcs.clear();
+}
+
+function disposeArc(arc) {
+    earth.remove(arc.group);
+    arc.group.traverse((object) => {
+        object.geometry?.dispose();
+        object.material?.dispose();
+    });
+}
+
+function arcKeyFor(fromVec, toVec, kind) {
+    return `${vecKey(fromVec)}>${vecKey(toVec)}:${kind}`;
+}
+
+function vecKey(v) {
+    return `${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`;
+}
+
+// --- Flyer layout ------------------------------------------------------------
+// Position every flyer for the frame. Flyers sharing a spot (resting in the same
+// place, or riding the same arc) are fanned on a small ring so each stays visible
+// while the cluster as a whole sits exactly where a lone flyer would.
+
+function layoutFlyers() {
+    const clusters = new Map();
+    for (const traveller of travellers) {
+        const key = posKey(traveller.posVec, traveller.renderRadius);
+        const cluster = clusters.get(key);
+        if (cluster) {
+            cluster.push(traveller);
+        } else {
+            clusters.set(key, [traveller]);
+        }
+    }
+    for (const members of clusters.values()) {
+        const center = members[0].posVec.clone().multiplyScalar(members[0].renderRadius);
+        if (members.length === 1) {
+            members[0].sprite.position.copy(center);
+            continue;
+        }
+        members.sort((a, b) => (a.name < b.name ? -1 : 1)); // stable seats so flyers don't swap places each frame
+        const [u, v] = tangentBasis(members[0].posVec);
+        for (let i = 0; i < members.length; i++) {
+            const angle = (2 * Math.PI * i) / members.length;
+            const offset = u.clone().multiplyScalar(Math.cos(angle) * flyerClusterRadius)
+                .add(v.clone().multiplyScalar(Math.sin(angle) * flyerClusterRadius));
+            members[i].sprite.position.copy(center.clone().add(offset));
+        }
+    }
+}
+
+// Two orthonormal vectors spanning the tangent plane at a point on the sphere.
+function tangentBasis(dir) {
+    const reference = Math.abs(dir.y) < 0.99 ? yAxis : xAxis;
+    const u = new THREE.Vector3().crossVectors(reference, dir).normalize();
+    const v = new THREE.Vector3().crossVectors(dir, u).normalize();
+    return [u, v];
+}
+
+// Quantized world position, so flyers at (nearly) the same point share a cluster.
+function posKey(dir, radius) {
+    return `${(dir.x * radius).toFixed(2)},${(dir.y * radius).toFixed(2)},${(dir.z * radius).toFixed(2)}`;
 }
 
 function arcPoint(fromVec, toVec, t, lift) {
