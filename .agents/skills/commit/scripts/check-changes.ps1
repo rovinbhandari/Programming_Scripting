@@ -41,6 +41,14 @@ foreach ($f in $names) {
   if ($LASTEXITCODE -eq 0) { $block.Add("Ignored file is committed/staged (force-added?): $f") }
 }
 
+# Raw journey input (.places) is human-authored real places/dates — never commit it;
+# generated CSV rows are caught line-by-line below (WorldHopper/AGENTS.md).
+foreach ($f in $names) {
+  if ((Split-Path $f -Leaf) -match '(?i)\.places$') {
+    $block.Add("Raw journey data (.places) committed; keep it in a git-ignored path (AGENTS.md): $f")
+  }
+}
+
 # Staged .env files (a committed default may be fine; confirm no real secrets).
 foreach ($f in $names) {
   $leaf = Split-Path $f -Leaf
@@ -107,6 +115,25 @@ foreach ($a in $added) {
     if (-not $isPh -and -not $isType) { $warn.Add("Possible secret assignment in ${f}: $($matches[0].Trim())") }
   }
   if ($t -match '(?i)\bbearer\s+[A-Za-z0-9._\-]{20,}') { $warn.Add("Bearer token in $f") }
+
+  # --- Geo-data leakage (WorldHopper/AGENTS.md: never commit real places/dates/coords) ---
+  # An exact generated row "YYYY-MM-DD,lat,lon,kind" is unmistakable journey data, in any file.
+  if ($t -match '^\s*\d{4}-\d{2}-\d{2}\s*,\s*[-+]?\d{1,2}(?:\.\d+)?\s*,\s*[-+]?\d{1,3}(?:\.\d+)?\s*,\s*(?:long|short)\s*$') {
+    $block.Add("Journey data row (date,lat,lon,kind) in ${f}: $($t.Trim())")
+  }
+  # A human itinerary line ("live,"/"travel,") carrying a real date, outside a code
+  # string literal (test fixtures use quotes; README uses <start>..<end> placeholders).
+  elseif ($t -match '(?i)^\s*[-*]?\s*(?:live|travel)\s*,' -and $t -match '\d{4}-\d{2}-\d{2}' -and $t -notmatch '"') {
+    $warn.Add("Possible itinerary entry in ${f}: $($t.Trim()) -- confirm it isn't real journey data (AGENTS.md)")
+  }
+  # A lat,lon pair at geocoder precision (4+ decimals, within range) is likely real coords.
+  elseif ($t -match '(?<![\d.])([-+]?\d{1,2}\.\d{4,})\s*,\s*([-+]?\d{1,3}\.\d{4,})(?![\d.])') {
+    $glat = [double]::Parse($matches[1], [Globalization.CultureInfo]::InvariantCulture)
+    $glon = [double]::Parse($matches[2], [Globalization.CultureInfo]::InvariantCulture)
+    if ([math]::Abs($glat) -le 90 -and [math]::Abs($glon) -le 180) {
+      $warn.Add("Possible coordinates (lat,lon) in ${f}: $($matches[1]),$($matches[2]) -- confirm it isn't real journey data (AGENTS.md)")
+    }
+  }
 }
 
 function Write-Section($title, $items, $mark) {
@@ -123,6 +150,6 @@ Write-Section 'Warnings (confirm each is intentional):' $warn '!'
 
 if ($block.Count -eq 0 -and $warn.Count -eq 0) { Write-Host 'No issues found.' }
 Write-Host ''
-Write-Host "Also (not auto-checked): read AGENTS.md at the repo root and in touched folders and honor any commit rules; review the diff for personal data and insecure code."
+Write-Host "Also (not auto-checked): real place NAMES can't be reliably auto-detected -- eyeball the diff for them alongside any real dates/coordinates (WorldHopper/AGENTS.md). Read AGENTS.md at the repo root and in touched folders, and review for personal data and insecure code."
 
 exit ([int]($block.Count -gt 0))

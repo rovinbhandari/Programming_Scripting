@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Create a clean, policy-compliant git commit, and audit existing commits. Use whenever you are about to commit in this repository, when the user asks to "commit", or when asked to check a commit. It enforces the message format (subject <= 80 characters, then up to 5 bullets of <= 120 characters each, plus the Co-authored-by trailer) and runs safety checks for secrets, local filesystem paths (Windows and Linux), personal data, .gitignore violations, and the commit-related rules in any applicable AGENTS.md. By default it splits unrelated changes into separate commits per logical change, or makes a single commit when the user says "all", "as one", or "together". The bundled scripts can be run directly, against staged changes or against any existing commit.
+description: Create a clean, policy-compliant git commit, and audit existing commits. Use whenever you are about to commit in this repository, when the user asks to "commit", or when asked to check a commit. It enforces the message format (subject <= 80 characters, then up to 5 bullets of <= 120 characters each, plus the Co-authored-by trailer) and runs safety checks for secrets, local filesystem paths (Windows and Linux), personal data, leaked journey data (place coordinates, dated itineraries, .places/CSV data files), .gitignore violations, and the commit-related rules in any applicable AGENTS.md. By default it splits unrelated changes into separate commits per logical change, or makes a single commit when the user says "all", "as one", or "together". The bundled scripts can be run directly, against staged changes or against any existing commit.
 compatibility: Requires git and PowerShell 7.4+ (pwsh). The scripts are optional accelerators; if pwsh is unavailable, perform the equivalent checks by hand.
 metadata:
   scope: repository-wide
@@ -22,7 +22,9 @@ All live in `scripts/` and need nothing beyond `git` + `pwsh`. Each exits `0` wh
   - `pwsh .agents/skills/commit/scripts/check-message.ps1 <message-file>`
   - `pwsh .agents/skills/commit/scripts/check-message.ps1 -Commit HEAD`
 - `check-changes.ps1` — scan changes for secrets, local filesystem paths (Windows and Linux),
-  and force-added `.gitignored` files.
+  leaked journey data (`.places` files, `date,lat,lon,kind` rows, geocoder-precision coordinate
+  pairs, plaintext `live`/`travel` itinerary lines), and force-added `.gitignored` files. Real
+  place *names* can't be auto-detected — eyeball the diff for them (WorldHopper/AGENTS.md).
   - `pwsh .agents/skills/commit/scripts/check-changes.ps1`               # staged (default)
   - `pwsh .agents/skills/commit/scripts/check-changes.ps1 -Commit <sha>`
 - `check-commit.ps1` — audit an existing commit in one shot (message + changes).
