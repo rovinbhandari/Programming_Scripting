@@ -24,10 +24,9 @@ const shortHopStay = 0.6;      // seconds paused at the visited place before hea
 const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
-const cameraRestDistance = earthRadius * 2.5; // wide view when nothing is hopping
 const cameraMinDistance = earthRadius * 1.55; // closest dolly, for nearby hops
-const cameraMaxDistance = earthRadius * 2.6;  // furthest dolly, for globe-spanning hops
-const cameraFitFill = 0.8;     // fraction of the view the framed hop fills (lower leaves more margin)
+const cameraRestFill = 0.82;   // fraction of the limiting half-FOV the whole globe fills at rest (leaves a buffer)
+const cameraFitFill = 0.8;     // fraction of the view a framed hop fills (lower leaves more margin)
 const cameraZoomRate = 3.5;    // how briskly the camera dollies toward its target distance
 const yAxis = new THREE.Vector3(0, 1, 0);
 const xAxis = new THREE.Vector3(1, 0, 0);
@@ -46,10 +45,10 @@ const earth = new THREE.Mesh(
 earth.rotation.y = -Math.PI / 2;
 scene.add(earth);
 
-camera.position.z = cameraRestDistance;
+camera.position.z = restCameraDistance();
 
 let spinSpeed = 0;
-let cameraDistance = cameraRestDistance; // dollied toward the framed hop each frame
+let cameraDistance = camera.position.z; // dollied toward the framed hop each frame
 const travellers = [];
 const arcs = new Map(); // shared hop arcs keyed by endpoints+kind, so identical simultaneous hops draw one arrow; refcounted by the flyers riding them
 
@@ -231,27 +230,41 @@ function updateEarthOrientation(dt) {
 }
 
 // Dolly the camera so the framed hop fills the view: closer for nearby hops, back
-// out for globe-spanning ones. Eases toward a wide rest view when nothing hops.
-// Flyers are scaled with the distance so they keep a steady on-screen size.
+// out toward the full-globe rest view for globe-spanning ones (never wider than
+// rest). Flyers are scaled with the distance so they keep a steady on-screen size.
 function updateCamera(dt) {
+    const rest = restCameraDistance();
     const focus = focusDirection();
-    const target = focus ? fitCameraDistance(focusSpread(focus)) : cameraRestDistance;
+    const target = focus ? Math.min(fitCameraDistance(focusSpread(focus)), rest) : rest;
     cameraDistance += (target - cameraDistance) * (1 - Math.exp(-cameraZoomRate * dt));
     camera.position.z = cameraDistance;
-    const spriteScale = flyerScale * (cameraDistance / cameraRestDistance);
+    const spriteScale = flyerScale * (cameraDistance / rest);
     for (const traveller of travellers) {
         traveller.sprite.scale.setScalar(spriteScale);
     }
 }
 
+// Distance at which the whole globe fills cameraRestFill of the limiting screen
+// axis, leaving a buffer on all sides — the default view when nothing is hopping.
+// Recomputed each frame so it adapts to the window's shape.
+function restCameraDistance() {
+    return earthRadius / Math.sin(limitingHalfFov() * cameraRestFill);
+}
+
 // Camera distance at which a cap of the given angular radius fills cameraFitFill of
 // the view, accounting for the levitated arc bulge and the narrower screen axis.
 function fitCameraDistance(spread) {
-    const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
-    const limiting = Math.min(halfFov, Math.atan(Math.tan(halfFov) * camera.aspect)) * cameraFitFill;
+    const limiting = limitingHalfFov() * cameraFitFill;
     const outerRadius = earthRadius + flyerLevitation + earthRadius * arcLift;
     const distance = earthRadius * Math.cos(spread) + (outerRadius * Math.sin(spread)) / Math.tan(limiting);
-    return THREE.MathUtils.clamp(distance, cameraMinDistance, cameraMaxDistance);
+    return Math.max(distance, cameraMinDistance);
+}
+
+// Half-angle of the narrower screen axis (vertical, or horizontal on a portrait
+// window), which is what limits how much of a round globe we can frame.
+function limitingHalfFov() {
+    const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
+    return Math.min(halfFov, Math.atan(Math.tan(halfFov) * camera.aspect));
 }
 
 // The active arcs that drive framing: prefer long (red) hops, else all active arcs.
