@@ -5,6 +5,7 @@ const earthRadius = 6;
 const flyerExtensions = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
 const flyerLevitation = 0.6; // lift sprites just clear of the surface so they aren't clipped
 const flyerTextureSize = 256; // rasterize flyers to this square size for reliable WebGL upload
+const flyerScale = earthRadius * 0.18; // sprite size at the rest distance; scaled with distance for a steady on-screen size
 const flyerClusterRadius = earthRadius * 0.08; // when flyers share a spot, fan them on a ring this far from the shared anchor
 const targetDurationSeconds = 200; // wall-clock seconds to replay the whole timeline at 1× (Phase 4 externalizes this)
 const msPerDay = 86_400_000;
@@ -23,6 +24,11 @@ const shortHopStay = 0.6;      // seconds paused at the visited place before hea
 const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
+const cameraRestDistance = earthRadius * 2.5; // wide view when nothing is hopping
+const cameraMinDistance = earthRadius * 1.55; // closest dolly, for nearby hops
+const cameraMaxDistance = earthRadius * 2.6;  // furthest dolly, for globe-spanning hops
+const cameraFitFill = 0.8;     // fraction of the view the framed hop fills (lower leaves more margin)
+const cameraZoomRate = 3.5;    // how briskly the camera dollies toward its target distance
 const yAxis = new THREE.Vector3(0, 1, 0);
 const xAxis = new THREE.Vector3(1, 0, 0);
 
@@ -40,9 +46,10 @@ const earth = new THREE.Mesh(
 earth.rotation.y = -Math.PI / 2;
 scene.add(earth);
 
-camera.position.z = 15;
+camera.position.z = cameraRestDistance;
 
 let spinSpeed = 0;
+let cameraDistance = cameraRestDistance; // dollied toward the framed hop each frame
 const travellers = [];
 const arcs = new Map(); // shared hop arcs keyed by endpoints+kind, so identical simultaneous hops draw one arrow; refcounted by the flyers riding them
 
@@ -103,6 +110,7 @@ function animate(now) {
     updateTravellers(dt, prevSimDay);
     updateReadouts();
     updateEarthOrientation(dt);
+    updateCamera(dt);
     renderer.render(scene, camera);
 }
 
@@ -222,22 +230,63 @@ function updateEarthOrientation(dt) {
     }
 }
 
-// Local-space direction the globe should face: the geometric mean of the active
-// arcs' endpoints, preferring long (red) hops over short (blue) ones. Each shared
-// arc votes once, however many flyers ride it. Null when nothing is hopping, or
-// when the arcs roughly cancel out (near-antipodal — a rare case left for later).
-function focusDirection() {
+// Dolly the camera so the framed hop fills the view: closer for nearby hops, back
+// out for globe-spanning ones. Eases toward a wide rest view when nothing hops.
+// Flyers are scaled with the distance so they keep a steady on-screen size.
+function updateCamera(dt) {
+    const focus = focusDirection();
+    const target = focus ? fitCameraDistance(focusSpread(focus)) : cameraRestDistance;
+    cameraDistance += (target - cameraDistance) * (1 - Math.exp(-cameraZoomRate * dt));
+    camera.position.z = cameraDistance;
+    const spriteScale = flyerScale * (cameraDistance / cameraRestDistance);
+    for (const traveller of travellers) {
+        traveller.sprite.scale.setScalar(spriteScale);
+    }
+}
+
+// Camera distance at which a cap of the given angular radius fills cameraFitFill of
+// the view, accounting for the levitated arc bulge and the narrower screen axis.
+function fitCameraDistance(spread) {
+    const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
+    const limiting = Math.min(halfFov, Math.atan(Math.tan(halfFov) * camera.aspect)) * cameraFitFill;
+    const outerRadius = earthRadius + flyerLevitation + earthRadius * arcLift;
+    const distance = earthRadius * Math.cos(spread) + (outerRadius * Math.sin(spread)) / Math.tan(limiting);
+    return THREE.MathUtils.clamp(distance, cameraMinDistance, cameraMaxDistance);
+}
+
+// The active arcs that drive framing: prefer long (red) hops, else all active arcs.
+// Each shared arc counts once however many flyers ride it.
+function framingArcs() {
     const active = [...arcs.values()].filter((arc) => !arc.fading);
-    if (active.length === 0) {
+    const reds = active.filter((arc) => arc.isLong);
+    return reds.length ? reds : active;
+}
+
+// Local-space direction the globe should face: the geometric mean of the framed
+// arcs' endpoints. Null when nothing is hopping, or when the arcs roughly cancel
+// out (near-antipodal — a rare case left for later).
+function focusDirection() {
+    const chosen = framingArcs();
+    if (chosen.length === 0) {
         return null;
     }
-    const reds = active.filter((arc) => arc.isLong);
-    const chosen = reds.length ? reds : active;
     const sum = new THREE.Vector3();
     for (const arc of chosen) {
         sum.add(arc.fromVec).add(arc.toVec);
     }
     return sum.lengthSq() < 1e-6 ? null : sum.normalize(); // TODO: handle near-antipodal arcs
+}
+
+// Angular radius of the framed hop: the widest angle from the focus centre to any
+// framed endpoint, so a single short hop frames tight and divergent arcs frame wide.
+function focusSpread(focus) {
+    let maxAngle = 0;
+    for (const arc of framingArcs()) {
+        for (const endpoint of [arc.fromVec, arc.toVec]) {
+            maxAngle = Math.max(maxAngle, Math.acos(THREE.MathUtils.clamp(focus.dot(endpoint), -1, 1)));
+        }
+    }
+    return maxAngle;
 }
 
 // Orientation that brings a local direction to face the camera (world +Z), as a
@@ -640,7 +689,7 @@ function formatSpeed(value) {
 async function makeFlyer(name) {
     const texture = await loadFlyerTexture(name);
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
-    sprite.scale.setScalar(earthRadius * 0.18);
+    sprite.scale.setScalar(flyerScale);
     return sprite;
 }
 
