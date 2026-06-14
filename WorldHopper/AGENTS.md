@@ -12,9 +12,9 @@ Prioritize high-quality, minimal & maintainable code and appealing design over s
 ## Commands
 - Run everything: `docker compose -f compose-dev.yaml up --build`.
 - Frontend dev: `cd frontend && npm install && npx vite --host` (http://localhost:5173).
-- Backend: no local .NET SDK detected — build/run via Docker, or install the SDK first.
+- Backend: local .NET 10 SDK available — `dotnet build`/`dotnet run` directly, or build/run via Docker.
 - Generate CSVs from raw `.places`: `docker compose -f compose-dev.yaml run --rm geocode`.
-- Run tests: `docker compose -f compose-dev.yaml run --rm tests`.
+- Run tests: `dotnet test tests/geocode.Tests` (local, fast), or `docker compose -f compose-dev.yaml run --rm tests`.
 - Endpoints are configurable: `VITE_BACKEND_URL` (frontend → API) and `WorldHopper__AllowedOrigins` (backend CORS, comma-separated); defaults 5173/8080.
 
 ## Conventions

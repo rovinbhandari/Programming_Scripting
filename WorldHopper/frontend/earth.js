@@ -183,14 +183,14 @@ function updateTravellers(dt, prevSimDay) {
             if (snap) {
                 settle(traveller, home.lat, home.lon);
             } else {
-                startTransition(traveller, home.lat, home.lon, 'long');
+                startTransition(traveller, [{ lat: home.lat, lon: home.lon }], 'long');
             }
         } else if (snap) {
             settle(traveller, traveller.homeLat, traveller.homeLon);
         } else if (!traveller.transition) {
-            const trip = crossedShortHop(traveller, prevSimDay); // a brief excursion away from home and back
+            const trip = crossedShortHop(traveller, prevSimDay); // a brief tour away from home and back
             if (trip) {
-                startTransition(traveller, trip.lat, trip.lon, 'short');
+                startTransition(traveller, [{ lat: trip.lat, lon: trip.lon }, ...(trip.via ?? [])], 'short');
             }
         }
         if (playing && traveller.transition) {
@@ -329,23 +329,40 @@ function resolveHome(traveller, day) {
     return home;
 }
 
-// Start a flyer travelling along a fresh arc. A long hop is a one-way trip to a
-// new home; a short hop flies out, pauses, then returns home. Identical hops
-// taken at the same time share one arc, which the flyers then ride side by side.
-function startTransition(traveller, lat, lon, kind) {
+// Start a flyer travelling a tour. A long hop is a one-way trip to a new home. A short hop is a
+// blue tour: it leaves home, visits each stop in order (pausing at each), and returns home — so a
+// lone trip is just home → place → home, while connected/nested travels string several stops into
+// one outing. Each leg becomes a fresh arc, acquired as the flyer reaches it and held until the
+// tour ends; identical hops at the same time (in either direction) share one arc.
+function startTransition(traveller, stops, kind) {
     endTransition(traveller);
     const fromVec = traveller.posVec.clone();
-    const toVec = latLongToVector3(lat, lon, 1);
-    const lift = arcLiftFor(fromVec, toVec);
+    const points = [fromVec, ...stops.map((s) => latLongToVector3(s.lat, s.lon, 1))];
+    if (kind === 'short') {
+        points.push(fromVec.clone()); // a tour ends back home
+    }
+    const lifts = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        lifts.push(arcLiftFor(points[i], points[i + 1]));
+    }
     traveller.transition = {
-        fromVec,
-        toVec,
-        lift,
-        roundTrip: kind === 'short',
-        arcKey: acquireArc(fromVec, toVec, lift, kind),
-        phase: 'out',  // out → (stay → back) → done
+        points,
+        lifts,
+        kind,
+        legIndex: 0,
+        phase: 'fly',  // fly → (pause → fly)* → done
         elapsed: 0,
+        arcKeys: [],
     };
+    enterLeg(traveller);
+}
+
+// Draw (or rejoin) the arc for the leg the flyer is about to fly, holding it until the tour ends.
+function enterLeg(traveller) {
+    const t = traveller.transition;
+    const from = t.points[t.legIndex];
+    const to = t.points[t.legIndex + 1];
+    t.arcKeys.push(acquireArc(from, to, t.lifts[t.legIndex], t.kind));
 }
 
 // Lift scales with how far apart the two places are: short hops arc gently,
@@ -356,52 +373,55 @@ function arcLiftFor(fromVec, toVec) {
     return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), 0.18, 1);
 }
 
-// Fly the flyer along its arc; a short hop pauses at the far end then flies back.
-// Once arrived (long hop) or home again (short hop) the flyer settles and lets go
-// of the shared arc, which fades once no flyer is riding it any more.
+// Fly the flyer along the current leg; on arrival it either pauses (more stops to
+// come) or, at the final point, settles. Long hops have a single leg and no pause.
 function advanceTransition(traveller, dt) {
     const t = traveller.transition;
-    if (t.phase === 'out' || t.phase === 'back') {
-        const legDuration = t.roundTrip ? shortHopDuration : hopDuration;
+    if (t.phase === 'fly') {
+        const legDuration = t.kind === 'long' ? hopDuration : shortHopDuration;
         t.elapsed += dt;
         const raw = Math.min(t.elapsed / legDuration, 1);
         const progress = easeInOut(raw);
-        const [from, to] = t.phase === 'out' ? [t.fromVec, t.toVec] : [t.toVec, t.fromVec];
+        const from = t.points[t.legIndex];
+        const to = t.points[t.legIndex + 1];
         traveller.posVec = slerpVec(from, to, progress);
-        traveller.renderRadius = earthRadius + flyerLevitation + earthRadius * t.lift * Math.sin(Math.PI * progress);
+        traveller.renderRadius = earthRadius + flyerLevitation + earthRadius * t.lifts[t.legIndex] * Math.sin(Math.PI * progress);
         if (raw >= 1) {
             t.elapsed = 0;
-            if (t.phase === 'out' && t.roundTrip) {
-                t.phase = 'stay';
-            } else {
+            t.legIndex++;
+            if (t.legIndex >= t.points.length - 1) {
                 finishTransition(traveller);
+            } else {
+                t.phase = 'pause';
             }
         }
-    } else if (t.phase === 'stay') {
+    } else if (t.phase === 'pause') {
         t.elapsed += dt;
         if (t.elapsed >= shortHopStay) {
             t.elapsed = 0;
-            t.phase = 'back';
+            t.phase = 'fly';
+            enterLeg(traveller);
         }
     }
 }
 
-// The flyer has arrived: settle it at its final spot and release the shared arc.
+// The flyer has finished its tour: settle it at the final point (a long hop's new
+// home, or back home for a short tour) and release every arc it was riding.
 function finishTransition(traveller) {
     const t = traveller.transition;
-    traveller.posVec = (t.roundTrip ? t.fromVec : t.toVec).clone();
+    traveller.posVec = t.points[t.points.length - 1].clone();
     traveller.renderRadius = earthRadius + flyerLevitation;
-    releaseArc(t.arcKey);
+    t.arcKeys.forEach(releaseArc);
     traveller.transition = null;
 }
 
 // Drop a flyer's in-progress transition (interrupted by a new hop or a snap),
-// releasing its hold on the shared arc.
+// releasing its hold on every arc it was riding.
 function endTransition(traveller) {
     if (!traveller.transition) {
         return;
     }
-    releaseArc(traveller.transition.arcKey);
+    traveller.transition.arcKeys.forEach(releaseArc);
     traveller.transition = null;
 }
 
@@ -508,7 +528,11 @@ function pointAtLength(points, cumulative, target) {
 
 function acquireArc(fromVec, toVec, lift, kind) {
     const key = arcKeyFor(fromVec, toVec, kind);
-    let arc = arcs.get(key);
+    // A leg flown in reverse (a tour's return home, or a sub-trip back to its base) rejoins the
+    // arc already drawn the other way instead of stacking an opposing arrowhead over it.
+    const reverseKey = arcKeyFor(toVec, fromVec, kind);
+    const usedKey = arcs.has(key) ? key : arcs.has(reverseKey) ? reverseKey : key;
+    let arc = arcs.get(usedKey);
     if (!arc) {
         const color = kind === 'long' ? longHopColor : shortHopColor;
         arc = {
@@ -520,13 +544,13 @@ function acquireArc(fromVec, toVec, lift, kind) {
             fading: false,
             fadeElapsed: 0,
         };
-        arcs.set(key, arc);
+        arcs.set(usedKey, arc);
     }
     arc.refs++;
     arc.fading = false; // a fresh rider revives an arc that had begun to fade
     arc.fadeElapsed = 0;
     setGroupOpacity(arc.group, 1);
-    return key;
+    return usedKey;
 }
 
 function releaseArc(key) {

@@ -63,12 +63,12 @@ foreach (var file in rawFiles)
         continue;
     }
 
-    // A live is the long hop on its start date; each nested travel is a short hop on its start date.
+    // A live is the long hop on its start date; each connected travel run is one short blue tour.
     var rows = itinerary.ToHopRows();
 
     var resolved = new Dictionary<string, Coordinate>(StringComparer.OrdinalIgnoreCase);
     var unresolved = false;
-    foreach (var place in rows.Select(r => r.Place).Distinct(StringComparer.OrdinalIgnoreCase))
+    foreach (var place in rows.SelectMany(r => r.AllPlaces).Distinct(StringComparer.OrdinalIgnoreCase))
     {
         var coordinate = await geocoder.ResolveAsync(place);
         if (coordinate is null)
@@ -119,17 +119,30 @@ static string? ResolveDataPath(string[] args, out HashSet<string> only)
     return string.IsNullOrWhiteSpace(dataPath) ? null : dataPath;
 }
 
+// CSV columns: date,lat,lon,kind,via. lat/lon are the hop's first place; `via` is an optional
+// tour tail — the remaining places as `lat lon;lat lon;...` (space-separated pair, semicolon
+// between pairs). Single-place hops leave `via` empty, so older single-leg CSVs stay valid.
 static void WriteCsv(string path, IReadOnlyList<HopRow> rows, Dictionary<string, Coordinate> resolved)
 {
-    var builder = new StringBuilder("date,lat,lon,kind\n");
+    var builder = new StringBuilder("date,lat,lon,kind,via\n");
     foreach (var row in rows)
     {
         var c = resolved[row.Place];
         builder.Append(row.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)).Append(',')
-            .Append(Math.Round(c.Lat, 4).ToString(CultureInfo.InvariantCulture)).Append(',')
-            .Append(Math.Round(c.Lon, 4).ToString(CultureInfo.InvariantCulture)).Append(',')
-            .Append(row.Kind).Append('\n');
+            .Append(Format(c.Lat)).Append(',')
+            .Append(Format(c.Lon)).Append(',')
+            .Append(row.Kind).Append(',');
+
+        if (row.Extra is not null)
+        {
+            var via = row.Extra.Select(p => $"{Format(resolved[p].Lat)} {Format(resolved[p].Lon)}");
+            builder.Append(string.Join(';', via));
+        }
+
+        builder.Append('\n');
     }
 
     File.WriteAllText(path, builder.ToString());
 }
+
+static string Format(double value) => Math.Round(value, 4).ToString(CultureInfo.InvariantCulture);

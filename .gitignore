@@ -38,10 +38,6 @@ build
 node_modules/
 dist/
 
-# WorldHopper journey data — never commit real places/dates/coordinates
-WorldHopper/.worldhopper-data/*
-!WorldHopper/.worldhopper-data/.gitkeep
-
 # dat
 *.rar
 *.lzma
@@ -57,6 +53,10 @@ WorldHopper/.worldhopper-data/*
 *.nupkg
 packages
 
-# Local env overrides (Vite) — never commit
+# project specific
+# WorldHopper journey data — never commit real places/dates/coordinates
+WorldHopper/.worldhopper-data/*
+!WorldHopper/.worldhopper-data/.gitkeep
+# WorldHopper local env overrides (Vite) — never commit
 WorldHopper/frontend/.env.local
 WorldHopper/frontend/.env.*.local
