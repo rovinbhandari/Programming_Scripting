@@ -18,6 +18,7 @@ Legend: ⬛ todo · 🔄 in progress · ✅ done
 ## Milestones
 - ⬛ Decide the **graduate-to-Cargo** moment (target: Level 5 guessing game / `rand`).
 - ⬛ Once on Cargo: wire up `rustfmt` + `clippy`; add a few `#[test]`s.
+- ⬛ At Cargo graduation: revert the Cargo-less rust-analyzer workarounds in `.vscode/settings.json` — flip `rust-analyzer.checkOnSave` back to `true` and drop the `linkedProjects` list (RA then auto-discovers the workspace).
 
 ## Backlog (sequence later in Sequence.md "Beyond")
 - ⬛ Modules & crate organization.

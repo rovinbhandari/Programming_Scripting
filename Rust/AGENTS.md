@@ -5,7 +5,7 @@ This folder is the user's space to **learn Rust** through small, self-contained 
 
 ## How to explain (always)
 - Comment code generously — explain the *why*, not just the *what*.
-- Add short `.md` notes for concepts; use **mermaid** or **svg** diagrams when a picture helps (ownership, lifetimes, memory layout, control flow).
+- Add short `.md` notes for concepts, named after the exercise and kept beside it (`01_hello.rs` → `01_hello_notes.md`); use **mermaid** or **svg** diagrams when a picture helps (ownership, lifetimes, memory layout, control flow). Give each note a consistent shape — **TL;DR → diagram (if it helps) → why → tiered analogy table (C# · C/Python) → "See also" links** — and **link it from the "Concept notes" index in `Notebook.md`** so it stays discoverable.
 - Relate every new idea to known ground, in this order:
   - **Tier 1 — C#** (primary analogy)
   - **Tier 2 — C / Python** (secondary)
@@ -28,9 +28,10 @@ Rules: keep it short (a handful of comment lines); **never spoil the core soluti
 - Three meta files at `Rust/` root:
   - `Sequence.md` — the full level-by-level exercise ladder, with checklists.
   - `TODO.md` — future-looking learning tasks (keep **<= 100 lines**).
-  - `Notebook.md` — **living** log of key Q&A, concept links, gotchas, and major corrections.
+  - `Notebook.md` — **living** log of key Q&A, concept links, gotchas, major corrections, **and the index of per-exercise concept notes**.
+- **Cross-linking (so a note is never lost):** a concept note is reachable from *both* ends — listed in the `Notebook.md` "Concept notes" index **and** pointed to by a one-line `Companion note:` line near the exercise header's *Compile & run* footer (the filename is deterministic: `NN_name.rs` → `NN_name_notes.md`). Keep a **single** source-of-truth index (the Notebook) — don't fork a second list. Rule of thumb: `Sequence.md` owns *order*, `Notebook.md` owns *knowledge*, `AGENTS.md` owns *rules* — cross-link between them, never duplicate.
 - Difficulty ladder: **L1** isolate one concept each → **L2** ownership/borrowing (Rust's signature) → **L3** mix (structs/enums/match/Option/Result) → **L4** more mixing (collections/generics/traits/lifetimes/errors) → **L5** small CLI apps → then graduate to Cargo.
-- The loop: agent writes exercise **specs** (skeletons, *not* solutions) → the user writes the solution with understanding-in-comments + questions → agent reviews the **code and the comments**, corrects misconceptions, ticks `Sequence.md`, logs anything worth keeping to `Notebook.md`, then designs/unlocks the next exercise.
+- The loop: agent writes exercise **specs** (skeletons, *not* solutions) → the user writes the solution with understanding-in-comments + questions → agent reviews the **code and the comments**, corrects misconceptions, ticks `Sequence.md`, logs anything worth keeping to `Notebook.md` (and links any new concept note from both the Notebook index and the exercise header), then designs/unlocks the next exercise.
 
 ## Toolchain
 - Rust is **installed**: `rustc` + `cargo` 1.96.0 via `rustup` (stable). Confirm with `rustc --version`.

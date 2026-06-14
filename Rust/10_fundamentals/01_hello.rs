@@ -44,9 +44,41 @@
 //               quietly does in damp air (and why this language is so named).
 //
 // Compile & run (Windows):  rustc 01_hello.rs && .\01_hello.exe
+// Companion note:  01_hello_notes.md  (why println! is a macro — compile-time formatting)
 // -------------------------------------------------------------
 
+#[derive(Debug)]
+struct Point 
+{
+    x : i32,
+    y : i32,
+}
+
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    println!("Hello, Rust!");   // println! might be a macro instead of a function because it seems that
+                                // in Rust, functions can't take unspecified number of parameters (like param[] or ... )
+                                // and that macros can be frontloaded to pre-compile stage (Rust philosophy?)
+    
+    let name = "Ferris";
+    let greeting = "Hello";
+    println!("{greeting}, {name}!");
+    println!("{1}, {0}!", greeting, name);
+    
+    let num1 = 3;
+    let num2: i64 = 4;
+    let sum = num1 + num2;
+    println!("{num1} + {num2} = {sum}");
+
+    println!("{:?}", greeting); // Debug println might show us more info than just Display println
+                                // especially for custom objects where Display might not be overridden (Q: is it?)
+    let point = Point { x : 5, y : 3 };
+    // println!("{point}"); // can't work yet because Display is not implemented.
+    println!("{point:?}"); // Q: why does this give a warning for dead code?
+
+    print!("What musical instrument does a crab play?\n...\nA shello!\n");
+
+    let claw = "(\\/)";
+    println!("{claw}!_!{claw}");
+
+    // Q: Does Rust support adding arbitrary comma separated values in println!() ?
 }

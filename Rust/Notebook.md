@@ -18,6 +18,15 @@ A **living** log for the learning journey — the place we don't want to lose th
 A: <the answer we agreed on, 1–4 lines>. See: <link or file>.
 -->
 
+### Q: Why is `println!` a macro, not a function?   ·   (ex: 10_fundamentals/01_hello.rs · 2026-06-14)
+A: Macros expand at **compile time** on the token/syntax tree (not C-preprocessor text substitution), so `println!` can take a variable number of args *and* check the format string against them while compiling — a plain fn can't (Rust has no variadics outside `extern "C"`). Wrong placeholders are a compile error, not a runtime crash. See: https://doc.rust-lang.org/book/ch19-06-macros.html · Deep-dive: [01_hello_notes.md](10_fundamentals/01_hello_notes.md)
+
+### Q: Is `Display` (`{}`) auto-implemented for my own types?   ·   (ex: 10_fundamentals/01_hello.rs · 2026-06-14)
+A: No — `Display` is never derived; you hand-write `impl std::fmt::Display`. Only `Debug` (`{:?}`) can be auto-derived with `#[derive(Debug)]`. That's exactly why `{point}` won't compile but `{point:?}` will. See: https://doc.rust-lang.org/std/fmt/
+
+### Q: Can `println!` take an arbitrary number of comma-separated values?   ·   (ex: 10_fundamentals/01_hello.rs · 2026-06-14)
+A: Yes for a **fixed** list — `println!("{} {} {}", a, b, c)` — each arg matched to a placeholder; too few or too many is a compile error. But the count is fixed by the format string at compile time (no runtime-variable arity); to print a dynamic collection, print the collection itself with `{:?}` or loop. See: https://doc.rust-lang.org/std/macro.println.html
+
 ## Concept links
 Canonical, stable references (good default sources):
 - The Rust Book — https://doc.rust-lang.org/book/
@@ -29,11 +38,15 @@ Canonical, stable references (good default sources):
 Per-topic (added as we go):
 - Level 1 fundamentals → Book ch. 3 "Common Programming Concepts": https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html
 
+## Concept notes
+In-repo deep-dives that pair with an exercise (newest first). Each lives next to its `.rs` and is listed here so it stays findable:
+- [`println!` is a macro — compile-time formatting](10_fundamentals/01_hello_notes.md) — why the `!`, how the format string is checked while compiling, and a C#/C/Python "when is it checked?" table. (ex: 10_fundamentals/01_hello.rs · 2026-06-14)
+
 ## Gotchas
 <!-- Template:
 - **<short title>** — <what surprises people> (ex: <file> · <date>).
 -->
-- **`rustc` drops the binary in your current folder** — on Windows you get `name.exe` (and a `name.pdb`); run it with `.\name.exe`. Both are git-ignored, so they won't be committed. (setup · 2026-06-13)
+- **Derived `Debug` doesn't count as "using" a field** — printing a struct with `{:?}` still fires the `dead_code` warning ("fields are never read"); the compiler intentionally ignores derived impls during dead-code analysis (otherwise the lint could never flag a genuinely unused field). Silence it by reading a field in real code, or with `#[allow(dead_code)]`. (ex: 10_fundamentals/01_hello.rs · 2026-06-14)
 
 ## Corrections
 <!-- Template:

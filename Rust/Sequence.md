@@ -34,7 +34,7 @@ flowchart LR
 ## Level 1 — Fundamentals *(isolate one concept each)*
 Familiar-from-other-languages syntax; low friction, build confidence.
 
-- [ ] `10_fundamentals/01_hello.rs` — printing & format args (`println!`, placeholders)
+- [x] `10_fundamentals/01_hello.rs` — printing & format args (`println!`, placeholders)
 - [ ] `10_fundamentals/02_variables.rs` — `let`, `mut`, shadowing, `const`
 - [ ] `10_fundamentals/03_scalar_types.rs` — integers/floats/`bool`/`char`, casting with `as`
 - [ ] `10_fundamentals/04_functions.rs` — params, return types, **expression vs statement**
