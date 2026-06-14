@@ -28,7 +28,10 @@ const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) be
 const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
 const idleSpinRate = 0.15;     // radians/second of natural eastward spin when nothing is hopping
 const reverseAngleCap = Math.PI / 3; // re-centring may turn west by at most this much; wider gaps take the eastward long way (note #1)
-const tiltEaseRate = 1.5;      // how briskly the polar-axis tilt eases back to upright once a hop ends
+const tiltEaseRate = 1.5;      // how briskly the polar-axis tilt eases toward its target (flyer latitude band, or upright)
+const maxAxisTilt = THREE.MathUtils.degToRad(45); // cap the axial lean so framing favours flyers without flipping toward a pole (note #3)
+const lookaheadSeconds = 2.5;  // wall-clock seconds before a hop to begin pre-rotating toward it, so it's framed on arrival (note #2)
+const lookaheadSlewRate = 1.5; // gentle slew while pre-positioning for an upcoming hop, vs the snappier centerSlewRate mid-hop
 const cameraMinDistance = earthRadius * 1.3;  // closest dolly, for nearby short hops — a moderate zoom-in that keeps surrounding context
 const cameraRestFill = 0.82;   // fraction of the limiting half-FOV the whole globe fills at rest (leaves a buffer)
 const cameraFitFill = 0.8;     // fraction of the view a framed hop fills (lower leaves more margin)
@@ -224,18 +227,24 @@ function blueActive() {
     return false;
 }
 
-// Rotate the globe to keep the active hop centred, but decoupled into an eastward-biased
-// spin about the polar axis (longitude) and a tilt of that axis (latitude) — so the globe
-// always turns the natural way and never rolls. Idle: a steady eastward drift, easing upright.
+// Orient the globe with longitude (an eastward-biased spin about the polar axis) and
+// latitude (a capped, no-roll tilt of that axis) kept independent, so it always turns
+// the natural way. Active hop: centre it. At rest: pre-rotate toward the next hop (note
+// #2) and lean toward the flyers' latitude band so they keep screen time (note #3).
 function updateEarthOrientation(dt) {
     const focus = focusDirection();
     if (focus) {
         const ease = 1 - Math.exp(-centerSlewRate * dt);
         spinAngle += (eastwardTarget(spinAngle, focusYaw(focus)) - spinAngle) * ease;
-        axisTilt += (focusPitch(focus) - axisTilt) * ease;
+        axisTilt += (clampTilt(focusPitch(focus)) - axisTilt) * ease;
     } else {
-        spinAngle += idleSpinRate * dt;                                  // natural eastward spin
-        axisTilt += (0 - axisTilt) * (1 - Math.exp(-tiltEaseRate * dt)); // ease the lean back to upright
+        const soon = upcomingFocus();
+        if (soon) {
+            spinAngle += (eastwardTarget(spinAngle, focusYaw(soon)) - spinAngle) * (1 - Math.exp(-lookaheadSlewRate * dt));
+        } else {
+            spinAngle += idleSpinRate * dt; // no hop imminent: a free, natural eastward drift
+        }
+        axisTilt += (favorPitch() - axisTilt) * (1 - Math.exp(-tiltEaseRate * dt));
     }
     applyEarthOrientation();
 }
@@ -272,6 +281,54 @@ function eastwardTarget(current, targetYaw) {
 function mod2pi(angle) {
     const twoPi = 2 * Math.PI;
     return ((angle % twoPi) + twoPi) % twoPi;
+}
+
+// The framing direction of the soonest upcoming hop, but only once it falls within
+// lookaheadSeconds — so the globe pre-rotates to meet the flyer at its destination
+// instead of lurching when the hop fires. Null when nothing is due that soon (note #2).
+function upcomingFocus() {
+    if (daysPerSecond <= 0) {
+        return null;
+    }
+    const window = lookaheadSeconds * daysPerSecond * speed; // sim-days covered in the lookahead's wall-clock lead
+    let best = null;
+    for (const traveller of travellers) {
+        const next = soonestHop(traveller);
+        if (next && (!best || next.day < best.day)) {
+            best = { day: next.day, posVec: traveller.posVec, hop: next };
+        }
+    }
+    if (!best || best.day - simDay > window) {
+        return null;
+    }
+    const dest = latLongToVector3(best.hop.lat, best.hop.lon, 1);
+    const sum = best.posVec.clone().add(dest); // frame the midpoint of the imminent arc, as the active hop will
+    return sum.lengthSq() < 1e-6 ? dest : sum.normalize();
+}
+
+// A flyer's earliest still-future hop, long or short (scanned, not assuming sort order).
+function soonestHop(traveller) {
+    let best = null;
+    for (const hop of [...traveller.longHops, ...traveller.shortHops]) {
+        if (hop.day > simDay && (!best || hop.day < best.day)) {
+            best = hop;
+        }
+    }
+    return best;
+}
+
+// Pitch that leans the polar axis toward the flyers' mean latitude, capped — so at rest
+// the globe still favours where the flyers are rather than snapping bolt upright (note #3).
+function favorPitch() {
+    const sum = new THREE.Vector3();
+    for (const traveller of travellers) {
+        sum.add(traveller.posVec);
+    }
+    return sum.lengthSq() < 1e-6 ? 0 : clampTilt(focusPitch(sum.normalize()));
+}
+
+function clampTilt(pitch) {
+    return THREE.MathUtils.clamp(pitch, -maxAxisTilt, maxAxisTilt);
 }
 
 // Dolly the camera so the framed hop fills the view: closer for nearby hops, back
