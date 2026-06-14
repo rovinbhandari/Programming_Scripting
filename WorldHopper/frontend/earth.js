@@ -11,12 +11,14 @@ const targetDurationSeconds = 200; // wall-clock seconds to replay the whole tim
 const msPerDay = 86_400_000;
 const hopDuration = 1.5;       // seconds a flyer takes to travel one hop arc
 const arcLift = 0.25;          // arc bulge above the surface, as a fraction of the radius
+const shortHopLiftFloor = 0.24; // tiny hops still bulge to at least this fraction of arcLift, so they read as an arc
 const arcClearance = earthRadius * 0.075; // draw the arc this far below the flyer so it reads as a trail beneath, not through, it
 const arcFadeSeconds = 0.5;    // fade the arc out over this long after arrival
 const arcSegments = 48;
 const arcShaftHalfWidth = earthRadius * 0.02;  // half-width of the flat arrow ribbon (wider + flatter than a tube)
 const arcHeadHalfWidth = earthRadius * 0.06;   // half-width of the broad, flat arrowhead base
 const arcHeadLength = earthRadius * 0.14;      // how far back from the tip the arrowhead reaches
+const arcShortHopWidthScale = 2.2;             // short hops widen their arrow up to this factor so the tiny arc stays legible
 const longHopColor = 0xff3b30; // red
 const shortHopColor = 0x0a84ff; // blue
 const shortHopDuration = 1.0;  // seconds per leg of a short hop — a touch quicker than a long hop
@@ -24,7 +26,7 @@ const shortHopStay = 0.6;      // seconds paused at the visited place before hea
 const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
-const cameraMinDistance = earthRadius * 1.55; // closest dolly, for nearby hops
+const cameraMinDistance = earthRadius * 1.3;  // closest dolly, for nearby short hops — a moderate zoom-in that keeps surrounding context
 const cameraRestFill = 0.82;   // fraction of the limiting half-FOV the whole globe fills at rest (leaves a buffer)
 const cameraFitFill = 0.8;     // fraction of the view a framed hop fills (lower leaves more margin)
 const cameraZoomRate = 3.5;    // how briskly the camera dollies toward its target distance
@@ -235,7 +237,7 @@ function updateEarthOrientation(dt) {
 function updateCamera(dt) {
     const rest = restCameraDistance();
     const focus = focusDirection();
-    const target = focus ? Math.min(fitCameraDistance(focusSpread(focus)), rest) : rest;
+    const target = focus ? Math.min(fitCameraDistance(focusSpread(focus), framedOuterRadius()), rest) : rest;
     cameraDistance += (target - cameraDistance) * (1 - Math.exp(-cameraZoomRate * dt));
     camera.position.z = cameraDistance;
     const spriteScale = flyerScale * (cameraDistance / rest);
@@ -253,11 +255,20 @@ function restCameraDistance() {
 
 // Camera distance at which a cap of the given angular radius fills cameraFitFill of
 // the view, accounting for the levitated arc bulge and the narrower screen axis.
-function fitCameraDistance(spread) {
+function fitCameraDistance(spread, outerRadius) {
     const limiting = limitingHalfFov() * cameraFitFill;
-    const outerRadius = earthRadius + flyerLevitation + earthRadius * arcLift;
     const distance = earthRadius * Math.cos(spread) + (outerRadius * Math.sin(spread)) / Math.tan(limiting);
     return Math.max(distance, cameraMinDistance);
+}
+
+// Outer radius of the framed hop's bulge, derived from each arc's real lift — a gently
+// arcing short hop lets the camera dolly closer than a tall long-hop arc would.
+function framedOuterRadius() {
+    let maxLift = 0;
+    for (const arc of framingArcs()) {
+        maxLift = Math.max(maxLift, arcLiftFor(arc.fromVec, arc.toVec));
+    }
+    return earthRadius + flyerLevitation + earthRadius * maxLift;
 }
 
 // Half-angle of the narrower screen axis (vertical, or horizontal on a portrait
@@ -370,7 +381,15 @@ function enterLeg(traveller) {
 // with a floor so tiny hops still read as an arc and a cap for half-globe+ hops.
 function arcLiftFor(fromVec, toVec) {
     const theta = Math.acos(THREE.MathUtils.clamp(fromVec.dot(toVec), -1, 1));
-    return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), 0.18, 1);
+    return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), shortHopLiftFloor, 1);
+}
+
+// Short hops widen their arrow so the tiny arc still reads; the boost tapers to 1 by a
+// quarter-globe, matching the lift normalization, so long hops keep their slim arrow.
+function arrowScaleFor(fromVec, toVec) {
+    const theta = Math.acos(THREE.MathUtils.clamp(fromVec.dot(toVec), -1, 1));
+    const n = THREE.MathUtils.clamp(theta / (Math.PI / 2), 0, 1);
+    return THREE.MathUtils.lerp(arcShortHopWidthScale, 1, n);
 }
 
 // Fly the flyer along the current leg; on arrival it either pauses (more stops to
@@ -442,6 +461,7 @@ function buildArcGroup(fromVec, toVec, lift, color) {
 // arrowhead sits a fixed distance back from the tip (clamped on very short hops),
 // and the shaft stops exactly where the head begins so the two never overlap.
 function arcArrowGeometry(fromVec, toVec, lift) {
+    const widthScale = arrowScaleFor(fromVec, toVec);
     const points = [];
     for (let i = 0; i <= arcSegments; i++) {
         points.push(arcPoint(fromVec, toVec, i / arcSegments, lift));
@@ -451,16 +471,16 @@ function arcArrowGeometry(fromVec, toVec, lift) {
         cumulative.push(cumulative[i - 1] + points[i].distanceTo(points[i - 1]));
     }
     const total = cumulative[cumulative.length - 1];
-    const headLength = Math.min(arcHeadLength, total * 0.6);
+    const headLength = Math.min(arcHeadLength * widthScale, total * 0.6);
     const baseLength = total - headLength;
 
     const shaftPoints = points.filter((_, i) => cumulative[i] < baseLength);
     const baseCenter = pointAtLength(points, cumulative, baseLength);
     shaftPoints.push(baseCenter);
-    const shaft = ribbonGeometry(shaftPoints, arcShaftHalfWidth);
+    const shaft = ribbonGeometry(shaftPoints, arcShaftHalfWidth * widthScale);
 
     const tip = points[points.length - 1];
-    const side = tangentSide(tip.clone().sub(baseCenter), baseCenter).multiplyScalar(arcHeadHalfWidth);
+    const side = tangentSide(tip.clone().sub(baseCenter), baseCenter).multiplyScalar(arcHeadHalfWidth * widthScale);
     const baseLeft = baseCenter.clone().add(side);
     const baseRight = baseCenter.clone().sub(side);
     const head = new THREE.BufferGeometry();
