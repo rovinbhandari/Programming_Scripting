@@ -30,6 +30,19 @@
 //   - Why does `println!` end in `!` — what makes it a *macro* and not a function?
 //   - What's the difference between `{}` (Display) and `{:?}` (Debug)?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        Crabs don't say "Hello" — they say "Shello, World!"
+//               So let's `print!` something and shell-ebrate. 🦀
+//   Side quest: Print all three required lines using a SINGLE `println!`
+//               (hint: `\n` is one newline inside the string). Then, from the
+//               pair ("Hello", "Ferris"), print  Ferris, Hello!  using ONLY
+//               positional args `{1}` and `{0}` — same data, brand-new order.
+//   Easter egg: Try printing this tiny crab:   (\/)!_!(\/)
+//               Gotcha: to put a literal backslash in a string you write `\\`.
+//   Collectible: Secret ingredient 1 of 7 = 'O'. Every exercise in this level
+//               hands you one letter; collect all seven to spell what iron
+//               quietly does in damp air (and why this language is so named).
+//
 // Compile & run (Windows):  rustc 01_hello.rs && .\01_hello.exe
 // -------------------------------------------------------------
 

@@ -31,6 +31,19 @@
 //   - When would you choose a tuple over an array, and vice versa?
 //   - Why are both sizes fixed at COMPILE time (what does that buy you)?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        A tuple is a fixed party with mixed guests; an array is a
+//               uniform conga line. Tuple trouble, meet an array of sunshine.
+//   Side quest: FINALE DECODER. Unscramble a word by indexing an array in a
+//               given order. With:
+//                   let scrambled = ['I', 'O', 'E', 'X', 'S', 'D', 'I'];
+//                   let order     = [1, 3, 0, 5, 6, 4, 2];
+//               loop over `order` and print `scrambled[i]` for each `i`. The
+//               revealed word should match the seven secret ingredients you've
+//               been collecting all level. 🦀
+//   Collectible: Secret ingredient 7 of 7 = 'E' — it completes the word.
+//               Congratulations: you have officially oxidised into a Rustacean!
+//
 // Compile & run (Windows):  rustc 07_tuples_arrays.rs && .\07_tuples_arrays.exe
 // -------------------------------------------------------------
 

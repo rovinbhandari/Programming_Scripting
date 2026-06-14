@@ -29,6 +29,15 @@
 //   - Why is a Rust `char` 4 bytes, not 1 (think Unicode vs ASCII)?
 //   - What happens on integer overflow — does it differ between a debug and release build?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        Time to get down to `bool`-siness, build some `char`-isma,
+//               and go f64-and-furious with your casts.
+//   Easter egg: DECODER. Each number below is a Unicode code point. Cast each
+//               one `as char` and print them IN ORDER to reveal a hidden word —
+//               no peeking; let the compiler do the talking:
+//                   [82, 117, 115, 116, 97, 99, 101, 97, 110]
+//   Collectible: Secret ingredient 3 of 7 = 'I'.
+//
 // Compile & run (Windows):  rustc 03_scalar_types.rs && .\03_scalar_types.exe
 // -------------------------------------------------------------
 

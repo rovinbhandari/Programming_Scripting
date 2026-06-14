@@ -29,6 +29,17 @@
 //   - What's the practical difference between re-`let` shadowing and `mut` reassignment?
 //   - Why must a `const` have an explicit type, while a `let` often doesn't?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        Don't be so `const`-ipated about change — when you truly need
+//               it, just `mut` it up. (Shadowing? That's a value's glow-up.)
+//   Side quest: Using ONLY shadowing (same name `x`, three `let`s, no `mut`),
+//               start `let x = 5;`, grow to `x + 1`, then `x * 2`, and print 12.
+//               Then recall the main task: shadowing changed a value's TYPE
+//               (str -> its `.len()`). Could a single `mut` binding do that?
+//               Note why or why not in a comment.
+//   Collectible: Secret ingredient 2 of 7 = 'X'. Fitting — X marks the one
+//               spot a binding is actually *allowed* to mutate.
+//
 // Compile & run (Windows):  rustc 02_variables.rs && .\02_variables.exe
 // -------------------------------------------------------------
 

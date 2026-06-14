@@ -1,15 +1,11 @@
 # Level 1 — Fundamentals
 
-**Goal:** isolate *one* concept per exercise. These map closely to things you already
-know from C#/C/Python, so the friction is low — the point is to get Rust's *syntax* and a
-few of its early quirks into muscle memory before we hit ownership in Level 2.
+**Goal:** isolate *one* concept per exercise. These map closely to things you already know from C#/C/Python, so the friction is low — the point is to get Rust's *syntax* and a few of its early quirks into muscle memory before we hit ownership in Level 2.
 
 ## How to work through it
-1. Open an exercise (e.g. `01_hello.rs`). Read the header comment — it states the concept,
-   analogies, the task, and a few questions to ponder.
+1. Open an exercise (e.g. `01_hello.rs`). Read the header comment — it states the concept, analogies, the task, and a few questions to ponder.
 2. Write your solution inside `fn main()` (and any functions the task asks for).
-3. **Explain your reasoning in comments** as you go. Mark questions with `// Q:` so I can
-   find and answer them during review.
+3. **Explain your reasoning in comments** as you go. Mark questions with `// Q:` so I can find and answer them during review.
 4. Compile & run, then tell me you're ready for review.
 
 ```powershell
@@ -32,9 +28,7 @@ rustc 01_hello.rs        # produces 01_hello.exe
 | Array | `int[] a = {1,2,3};` | `let a: [i32; 3] = [1, 2, 3];` |
 
 ## The one big new idea this level: **expression vs statement**
-Almost everything in Rust is an *expression* (it produces a value). A trailing line with
-**no semicolon** is the value that "falls out" of a block. This is why `if` can be assigned
-to a variable and why functions return without `return`.
+Almost everything in Rust is an *expression* (it produces a value). A trailing line with **no semicolon** is the value that "falls out" of a block. This is why `if` can be assigned to a variable and why functions return without `return`.
 
 ```mermaid
 flowchart TD
@@ -44,9 +38,6 @@ flowchart TD
     A -. "a block's last expr<br/>(no ;) is its value" .-> B
 ```
 
-> Tier 2 mirror — **C/Python:** in C a function needs `return`; in Rust the tail expression
-> *is* the return. Python's `if/else` is a statement, but Rust's `if` is an expression like
-> Python's `a if cond else b`.
+> Tier 2 mirror — **C/Python:** in C a function needs `return`; in Rust the tail expression *is* the return. Python's `if/else` is a statement, but Rust's `if` is an expression like Python's `a if cond else b`.
 
-When you're done with all seven boxes in `Sequence.md`, we graduate to **Level 2: ownership
-& borrowing** — the part with no C# equivalent, where we slow down and draw pictures.
+When you're done with all seven boxes in `Sequence.md`, we graduate to **Level 2: ownership & borrowing** — the part with no C# equivalent, where we slow down and draw pictures.

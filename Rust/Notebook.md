@@ -1,7 +1,6 @@
 # Rust Notebook
 
-A **living** log for the learning journey — the place we don't want to lose things.
-Maintained across sessions (this convention is declared in `AGENTS.md`, so any agent picks it up automatically).
+A **living** log for the learning journey — the place we don't want to lose things. Maintained across sessions (this convention is declared in `AGENTS.md`, so any agent picks it up automatically).
 
 **What goes here**
 - **Q&A** — good questions you asked and the answers we landed on.
@@ -9,8 +8,7 @@ Maintained across sessions (this convention is declared in `AGENTS.md`, so any a
 - **Gotchas** — surprising Rust behaviours and the mistakes that bite beginners.
 - **Corrections** — major misconceptions caught during review (so we can revisit them).
 
-**How we keep it** — I add an entry during review whenever something is worth remembering.
-Keep entries short and link out to the relevant exercise file or doc. Newest first within each section. Date format: `YYYY-MM-DD`.
+**How we keep it** — I add an entry during review whenever something is worth remembering. Keep entries short and link out to the relevant exercise file or doc. Newest first within each section. Date format: `YYYY-MM-DD`.
 
 ---
 
@@ -29,8 +27,7 @@ Canonical, stable references (good default sources):
 - Rustlings (extra practice) — https://github.com/rust-lang/rustlings
 
 Per-topic (added as we go):
-- Level 1 fundamentals → Book ch. 3 "Common Programming Concepts":
-  https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html
+- Level 1 fundamentals → Book ch. 3 "Common Programming Concepts": https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html
 
 ## Gotchas
 <!-- Template:

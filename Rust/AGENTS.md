@@ -11,6 +11,13 @@ This folder is the user's space to **learn Rust** through small, self-contained 
   - **Tier 2 — C / Python** (secondary)
   - Then the plain, language-agnostic programming concept.
 
+## Make it fun (every exercise)
+Delight aids retention, so every exercise spec gets a light **🦀 Ferris's Fun Zone** block — placed near the end of the header comment (after *Questions to ponder*, before *Compile & run*) and clearly marked *optional bonus — for delight, not grading*. Include:
+- **A pun** — ideally Rust/crab-flavoured (Ferris 🦀, oxidation, `const`/`mut`/`loop`/`char` wordplay) or a wink at the concept being taught.
+- **An easter egg and/or a small puzzle** — a decoder, a hidden word, a tiny ASCII Ferris, or a bite-sized bonus challenge that *exercises the same concept* (e.g. cast `u8 as char` to decode a word while teaching scalar types).
+- **A running collectible** — hand out one "secret ingredient" letter per exercise so each level spells a themed word once finished. *Level 1 spells `OXIDISE`* (O,X,I,D,I,S,E across its 7 files).
+Rules: keep it short (a handful of comment lines); **never spoil the core solution** (puzzles are *posed, not solved*); keep bonuses genuinely optional; tie each puzzle to the concept at hand; and tease the next exercise whenever there's a natural payoff.
+
 ## Code workflow
 - **Now:** one standalone `.rs` file per problem, compiled with `rustc file.rs`. Keep it boilerplate-free; focus on the language.
 - **Later (graduate to):** a shared Cargo workspace — each problem a binary under `src/bin/`, run via `cargo run --bin <name>`, plus `cargo test/clippy/fmt`.

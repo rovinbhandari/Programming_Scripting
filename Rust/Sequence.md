@@ -1,7 +1,6 @@
 # Rust Exercise Sequence
 
-The ordered ladder of exercises for learning Rust. We climb it one rung at a time:
-**isolate a concept → mix a few → mix more → build small apps**.
+The ordered ladder of exercises for learning Rust. We climb it one rung at a time: **isolate a concept → mix a few → mix more → build small apps**.
 
 ## How to use this file
 - Each exercise is a single `.rs` file in a numbered level folder (e.g. `10_fundamentals/01_hello.rs`).
@@ -25,16 +24,10 @@ flowchart LR
 ```
 
 ### Naming & numbering (so we never have to renumber)
-- **Folder prefix = level (difficulty tier), decade-gapped:** Level N → `(N×10)_theme/`
-  → `10_fundamentals/`, `20_ownership/`, `30_types_match/`, `40_collections_generics/`,
-  `50_cli_apps/`. Reserved gaps (`15_`, `25_`, …) let us wedge a new tier between two
-  existing ones without touching either.
-- **Files within a level stay tight** (`01_`, `02_`, …) — renumbering a few files inside one
-  folder is cheap and local; a half-step name like `03b_` works in a pinch.
-- **Advanced revisits go to the tier where the difficulty belongs** (usually appended as a
-  higher level), *not* cloned into an early folder. Same folder = same tier + theme.
-- **This file is the source of truth for ORDER.** Filenames are stable IDs (like C# class
-  names); to reorder, edit the lists below — don't rename files.
+- **Folder prefix = level (difficulty tier), decade-gapped:** Level N → `(N×10)_theme/` → `10_fundamentals/`, `20_ownership/`, `30_types_match/`, `40_collections_generics/`, `50_cli_apps/`. Reserved gaps (`15_`, `25_`, …) let us wedge a new tier between two existing ones without touching either.
+- **Files within a level stay tight** (`01_`, `02_`, …) — renumbering a few files inside one folder is cheap and local; a half-step name like `03b_` works in a pinch.
+- **Advanced revisits go to the tier where the difficulty belongs** (usually appended as a higher level), *not* cloned into an early folder. Same folder = same tier + theme.
+- **This file is the source of truth for ORDER.** Filenames are stable IDs (like C# class names); to reorder, edit the lists below — don't rename files.
 
 ---
 
@@ -85,6 +78,4 @@ Tie everything together in tiny programs.
 - [ ] **Milestone:** graduate to **Cargo** for `05_guessing_game` (needs the `rand` crate)
 
 ## Beyond *(tracked in `TODO.md`, sequenced later)*
-Modules & crate layout · `#[test]` testing · smart pointers (`Box`/`Rc`/`RefCell`) ·
-error crates (`anyhow`/`thiserror`) · traits deep-dive · concurrency (threads, channels) ·
-`async`/`await`.
+Modules & crate layout · `#[test]` testing · smart pointers (`Box`/`Rc`/`RefCell`) · error crates (`anyhow`/`thiserror`) · traits deep-dive · concurrency (threads, channels) · `async`/`await`.

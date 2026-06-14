@@ -1,7 +1,6 @@
 # Rust Learning — TODO
 
-Future-looking tasks for the learning track. Keep this **<= 100 lines**.
-(Day-to-day exercise progress lives in `Sequence.md`; this is the "what's next / don't forget" board.)
+Future-looking tasks for the learning track. Keep this **<= 100 lines**. (Day-to-day exercise progress lives in `Sequence.md`; this is the "what's next / don't forget" board.)
 
 Legend: ⬛ todo · 🔄 in progress · ✅ done
 

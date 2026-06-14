@@ -33,6 +33,16 @@
 //   - In Rust, what exactly is the difference between a *statement* and an *expression*?
 //   - What does adding a `;` to a function's last line do to what the function returns?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        In Rust the `return` on investment is the tail expression —
+//               no `;` strings attached.
+//   Side quest: Write `fn parity(n: i32) -> char` that yields 'E' for even and
+//               'O' for odd as a SINGLE tail `if` expression — no `return`, and
+//               no `;` on the last line. Brain-twister: write a second fn that
+//               uses BOTH an early `return` and a tail expression — when is each one reached?
+//   Collectible: Secret ingredient 4 of 7 = 'D'. (D is for: *don't* add that
+//               sneaky trailing semicolon.)
+//
 // Compile & run (Windows):  rustc 04_functions.rs && .\04_functions.exe
 // -------------------------------------------------------------
 

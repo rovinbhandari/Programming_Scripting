@@ -31,6 +31,15 @@
 //   - How is `for i in 0..n` different (safety-wise) from C#'s `for (int i...)`?
 //   - When would you reach for `loop` instead of `while`?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        We're in this for the `loop` haul: `while` away the time,
+//               then `for`-ge ahead.
+//   Side quest: Payoff time — take your FizzBuzz from exercise 05 and LOOP it
+//               over `1..=15` with a `for`. Then use `loop { ... break value }`
+//               to find the first `n` whose `n * n > 50`, and print it.
+//   Collectible: Secret ingredient 6 of 7 = 'S'. (Spelling drifts by ocean —
+//               swap this 'S' for a 'Z' and you'd have the American version.)
+//
 // Compile & run (Windows):  rustc 06_loops.rs && .\06_loops.exe
 // -------------------------------------------------------------
 

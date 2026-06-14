@@ -31,6 +31,15 @@
 //   - Why doesn't Rust have a `?:` ternary operator at all?
 //   - Why must both arms of a value-producing `if` have the same type?
 //
+// 🦀 FERRIS'S FUN ZONE  (optional bonus — for delight, not grading)
+//   Pun:        If you `else` know it, branch out. (No `?:` ternary? No problem —
+//               Rust's `if` already moonlights as one.)
+//   Side quest: FizzBuzz — but just the DECISION, for ONE number (no loops yet;
+//               those are next exercise!). Given `let n = 15;`, print "Fizz" if
+//               it divides by 3, "Buzz" if by 5, "FizzBuzz" if both, else `n` —
+//               using `if / else if / else`. In exercise 06 you'll loop it 1..=15.
+//   Collectible: Secret ingredient 5 of 7 = 'I'.
+//
 // Compile & run (Windows):  rustc 05_control_flow.rs && .\05_control_flow.exe
 // -------------------------------------------------------------
 
