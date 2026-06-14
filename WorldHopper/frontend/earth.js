@@ -18,7 +18,6 @@ const arcSegments = 48;
 const arcShaftHalfWidth = earthRadius * 0.02;  // half-width of the flat arrow ribbon (wider + flatter than a tube)
 const arcHeadHalfWidth = earthRadius * 0.06;   // half-width of the broad, flat arrowhead base
 const arcHeadLength = earthRadius * 0.14;      // how far back from the tip the arrowhead reaches
-const arcShortHopWidthScale = 2.2;             // short hops widen their arrow up to this factor so the tiny arc stays legible
 const longHopColor = 0xff3b30; // red
 const shortHopColor = 0x0a84ff; // blue
 const shortHopDuration = 1.0;  // seconds per leg of a short hop — a touch quicker than a long hop
@@ -331,16 +330,25 @@ function clampTilt(pitch) {
     return THREE.MathUtils.clamp(pitch, -maxAxisTilt, maxAxisTilt);
 }
 
+// Flyer-sized world offsets — the sprite, its float height above the surface, the cluster
+// fan-out — must shrink as the camera dollies in for a hop, or they'd balloon on screen.
+// This is that shared shrink factor: camera-to-surface distance over the rest view's, 1 at rest.
+function flyerScreenScale() {
+    const surface = earthRadius + flyerLevitation;
+    return (cameraDistance - surface) / (restCameraDistance() - surface);
+}
+
 // Dolly the camera so the framed hop fills the view: closer for nearby hops, back
 // out toward the full-globe rest view for globe-spanning ones (never wider than
-// rest). Flyers are scaled with the distance so they keep a steady on-screen size.
+// rest). Flyers scale with the camera-to-surface distance, not the distance to the
+// globe's centre, so they hold a steady on-screen size even on a tight short-hop zoom.
 function updateCamera(dt) {
     const rest = restCameraDistance();
     const focus = focusDirection();
     const target = focus ? Math.min(fitCameraDistance(focusSpread(focus), framedOuterRadius()), rest) : rest;
     cameraDistance += (target - cameraDistance) * (1 - Math.exp(-cameraZoomRate * dt));
     camera.position.z = cameraDistance;
-    const spriteScale = flyerScale * (cameraDistance / rest);
+    const spriteScale = flyerScale * flyerScreenScale();
     for (const traveller of travellers) {
         traveller.sprite.scale.setScalar(spriteScale);
     }
@@ -474,12 +482,16 @@ function arcLiftFor(fromVec, toVec) {
     return arcLift * THREE.MathUtils.clamp(theta / (Math.PI / 2), shortHopLiftFloor, 1);
 }
 
-// Short hops widen their arrow so the tiny arc still reads; the boost tapers to 1 by a
-// quarter-globe, matching the lift normalization, so long hops keep their slim arrow.
+// Arrows are built in world units, so a zoomed-in short hop would otherwise show a fat
+// ribbon and an oversized head. Scale the whole arrow by how far the camera dollies in to
+// frame this hop (surface-relative, exactly as sprites are), so every arrow keeps a steady,
+// slim on-screen size however close we zoom — never humongous, never a hairline.
 function arrowScaleFor(fromVec, toVec) {
-    const theta = Math.acos(THREE.MathUtils.clamp(fromVec.dot(toVec), -1, 1));
-    const n = THREE.MathUtils.clamp(theta / (Math.PI / 2), 0, 1);
-    return THREE.MathUtils.lerp(arcShortHopWidthScale, 1, n);
+    const rest = restCameraDistance();
+    const surface = earthRadius + flyerLevitation;
+    const spread = Math.acos(THREE.MathUtils.clamp(fromVec.dot(toVec), -1, 1)) / 2;
+    const fit = Math.min(fitCameraDistance(spread, surface + earthRadius * arcLiftFor(fromVec, toVec)), rest);
+    return (fit - surface) / (rest - surface);
 }
 
 // Fly the flyer along the current leg; on arrival it either pauses (more stops to
@@ -718,6 +730,8 @@ function vecKey(v) {
 // while the cluster as a whole sits exactly where a lone flyer would.
 
 function layoutFlyers() {
+    const factor = flyerScreenScale();
+    const drop = flyerLevitation * (1 - factor); // shrink the float height in step with the sprite, so it keeps hugging its arc when zoomed in
     const clusters = new Map();
     for (const traveller of travellers) {
         const key = posKey(traveller.posVec, traveller.renderRadius);
@@ -729,17 +743,18 @@ function layoutFlyers() {
         }
     }
     for (const members of clusters.values()) {
-        const center = members[0].posVec.clone().multiplyScalar(members[0].renderRadius);
+        const center = members[0].posVec.clone().multiplyScalar(members[0].renderRadius - drop);
         if (members.length === 1) {
             members[0].sprite.position.copy(center);
             continue;
         }
         members.sort((a, b) => (a.name < b.name ? -1 : 1)); // stable seats so flyers don't swap places each frame
         const [u, v] = tangentBasis(members[0].posVec);
+        const ring = flyerClusterRadius * factor; // fan clustered flyers on a ring that shrinks with the zoom too
         for (let i = 0; i < members.length; i++) {
             const angle = (2 * Math.PI * i) / members.length;
-            const offset = u.clone().multiplyScalar(Math.cos(angle) * flyerClusterRadius)
-                .add(v.clone().multiplyScalar(Math.sin(angle) * flyerClusterRadius));
+            const offset = u.clone().multiplyScalar(Math.cos(angle) * ring)
+                .add(v.clone().multiplyScalar(Math.sin(angle) * ring));
             members[i].sprite.position.copy(center.clone().add(offset));
         }
     }
