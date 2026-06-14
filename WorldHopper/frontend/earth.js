@@ -26,6 +26,9 @@ const shortHopStay = 0.6;      // seconds paused at the visited place before hea
 const blueTimeSlowdown = 0.8;  // slow the clock to (1 - this) of normal while a short hop plays, so the brief trip stays legible
 const loopHoldSeconds = 3;     // hold on the final hop (so its arc can play) before looping
 const centerSlewRate = 5;      // how briskly the globe slews to centre the active hop (higher = snappier)
+const idleSpinRate = 0.15;     // radians/second of natural eastward spin when nothing is hopping
+const reverseAngleCap = Math.PI / 3; // re-centring may turn west by at most this much; wider gaps take the eastward long way (note #1)
+const tiltEaseRate = 1.5;      // how briskly the polar-axis tilt eases back to upright once a hop ends
 const cameraMinDistance = earthRadius * 1.3;  // closest dolly, for nearby short hops — a moderate zoom-in that keeps surrounding context
 const cameraRestFill = 0.82;   // fraction of the limiting half-FOV the whole globe fills at rest (leaves a buffer)
 const cameraFitFill = 0.8;     // fraction of the view a framed hop fills (lower leaves more margin)
@@ -43,13 +46,14 @@ const earth = new THREE.Mesh(
     new THREE.SphereGeometry(earthRadius, 64, 64),
     new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/static/earth/earth-satellite.jpg') }),
 );
-// Start with Greenwich (0° longitude) facing the camera.
-earth.rotation.y = -Math.PI / 2;
+// Start with Greenwich (0° longitude) facing the camera (see spinAngle below).
 scene.add(earth);
 
 camera.position.z = restCameraDistance();
 
-let spinSpeed = 0;
+let spinAngle = -Math.PI / 2; // accumulated eastward spin about the polar axis; starts with Greenwich (0° lon) facing the camera
+let axisTilt = 0;             // pitch of the polar axis toward/away from the camera, framing the focus latitude (no roll)
+applyEarthOrientation();      // set the starting orientation before the first frame renders
 let cameraDistance = camera.position.z; // dollied toward the framed hop each frame
 const travellers = [];
 const arcs = new Map(); // shared hop arcs keyed by endpoints+kind, so identical simultaneous hops draw one arrow; refcounted by the flyers riding them
@@ -82,7 +86,6 @@ ui.faster?.addEventListener('click', () => setSpeed(speed * 2));
 ui.prev?.addEventListener('click', () => stepHop(-1));
 ui.next?.addEventListener('click', () => stepHop(1));
 
-document.getElementById('refreshButton')?.addEventListener('click', refreshSpin);
 window.addEventListener('resize', onResize);
 
 loadTravellers();
@@ -221,14 +224,54 @@ function blueActive() {
     return false;
 }
 
-// Rotate the globe to keep the active hop centred; otherwise apply the idle spin.
+// Rotate the globe to keep the active hop centred, but decoupled into an eastward-biased
+// spin about the polar axis (longitude) and a tilt of that axis (latitude) — so the globe
+// always turns the natural way and never rolls. Idle: a steady eastward drift, easing upright.
 function updateEarthOrientation(dt) {
     const focus = focusDirection();
     if (focus) {
-        earth.quaternion.slerp(orientationFacingCamera(focus), 1 - Math.exp(-centerSlewRate * dt));
+        const ease = 1 - Math.exp(-centerSlewRate * dt);
+        spinAngle += (eastwardTarget(spinAngle, focusYaw(focus)) - spinAngle) * ease;
+        axisTilt += (focusPitch(focus) - axisTilt) * ease;
     } else {
-        earth.rotation.y += spinSpeed;
+        spinAngle += idleSpinRate * dt;                                  // natural eastward spin
+        axisTilt += (0 - axisTilt) * (1 - Math.exp(-tiltEaseRate * dt)); // ease the lean back to upright
     }
+    applyEarthOrientation();
+}
+
+// Compose the orientation: spin about the polar (Y) axis, then tilt that axis about X —
+// a planet with a steerable axial lean, so latitude is framed without ever rolling.
+function applyEarthOrientation() {
+    const spin = new THREE.Quaternion().setFromAxisAngle(yAxis, spinAngle);
+    const tilt = new THREE.Quaternion().setFromAxisAngle(xAxis, axisTilt);
+    earth.quaternion.copy(tilt.multiply(spin));
+}
+
+// The yaw that brings the focus longitude to face the camera, and the pitch that lifts
+// its latitude to centre — the two independent halves of the old combined slerp.
+function focusYaw(d) {
+    return Math.atan2(-d.x, d.z);
+}
+function focusPitch(d) {
+    return Math.atan2(d.y, Math.hypot(d.x, d.z));
+}
+
+// Choose the spin angle to ease toward, biased to Earth's natural eastward turn: go
+// eastward unless a reverse is both shorter and small (<= reverseAngleCap), so minor
+// re-centres nudge back while larger gaps still sweep the long way round (note #1).
+function eastwardTarget(current, targetYaw) {
+    const eastDist = mod2pi(targetYaw - current); // forward (eastward) sweep, in [0, 2π)
+    const westDist = 2 * Math.PI - eastDist;       // the reverse sweep, in (0, 2π]
+    if (eastDist <= westDist || westDist > reverseAngleCap) {
+        return current + eastDist;                 // natural eastward turn (the short way, or a forced long way)
+    }
+    return current - westDist;                      // a small reverse to re-centre
+}
+
+function mod2pi(angle) {
+    const twoPi = 2 * Math.PI;
+    return ((angle % twoPi) + twoPi) % twoPi;
 }
 
 // Dolly the camera so the framed hop fills the view: closer for nearby hops, back
@@ -311,16 +354,6 @@ function focusSpread(focus) {
         }
     }
     return maxAngle;
-}
-
-// Orientation that brings a local direction to face the camera (world +Z), as a
-// yaw about Y then a pitch about X, so the globe stays upright (no roll).
-function orientationFacingCamera(d) {
-    const yaw = Math.atan2(-d.x, d.z);
-    const pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
-    const yawQ = new THREE.Quaternion().setFromAxisAngle(yAxis, yaw);
-    const pitchQ = new THREE.Quaternion().setFromAxisAngle(xAxis, pitch);
-    return pitchQ.multiply(yawQ);
 }
 
 function settle(traveller, lat, lon) {
@@ -794,17 +827,6 @@ function latLongToVector3(lat, lon, radius) {
         radius * Math.cos(polar),
         radius * Math.sin(polar) * Math.sin(azimuth),
     );
-}
-
-// The /cameraangles endpoint hands back a small random spin speed (kept from the original demo).
-async function refreshSpin() {
-    try {
-        const response = await fetch(`${backendUrl}/cameraangles`);
-        const angles = await response.json();
-        spinSpeed = angles[0].y;
-    } catch (error) {
-        console.error('Could not refresh the spin speed.', error);
-    }
 }
 
 function onResize() {
