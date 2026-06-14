@@ -17,7 +17,7 @@ WorldHopper replays the travels of one or more characters over a textured 3D Ear
 ## Data pipeline
 Journey data is prepared in three steps:
 1. **Raw input (human-friendly):** one `<name>.places` file per character — nested `live` / `travel` entries with `start .. end` date ranges (format documented in `backend/geocode/`).
-2. **Geocode → CSVs:** the `geocode` tool resolves place names to coordinates via OpenStreetMap Nominatim (no API key; results cached locally) and emits one `date,lat,lon,kind,via` CSV per character, each named after its flyer. The optional `via` field carries a tour's extra stops as `lat lon;lat lon;…`; single-stop hops leave it empty. Run: `docker compose -f compose-dev.yaml run --rm geocode`.
+2. **Geocode → CSVs:** the `geocode` tool resolves place names to coordinates via OpenStreetMap Nominatim (no API key; results cached locally) and emits one `date,lat,lon,kind,via` CSV per character, each named after its flyer. The optional `via` field carries a tour's extra stops as `lat lon;lat lon;…`; single-stop hops leave it empty. Resolution prefers populated-place matches over broad region/water polygons so coastal names don't land offshore; cached coordinates are reused, so delete `.geocode-cache.json` (or a single entry) to re-resolve. Run: `docker compose -f compose-dev.yaml run --rm geocode`.
 3. **Visualise:** the app reads every character CSV it finds and animates the hops.
 
 > ⚠️ **Privacy — read before adding data.** Real place names, dates, and coordinates (raw input *and* generated CSVs) are **never** committed to git. They are read only from a **configurable location** outside the repository. See `AGENTS.md`.
@@ -26,7 +26,7 @@ Journey data is prepared in three steps:
 - `frontend/` — Vite + Three.js globe; entry `earth.js`, served via `index.html`.
 - `backend/hop/` — ASP.NET Core (.NET 10) API; serves character itineraries from CSVs at `/characters`.
 - `backend/geocode/` — .NET console tool that turns raw `.places` files into the character CSVs (the geocoding step).
-- `tests/` — xUnit tests (`tests/geocode.Tests` covers the geocode parser + validator).
+- `tests/` — xUnit tests (`tests/geocode.Tests` covers the geocode parser, validator, and Nominatim result selection).
 - `compose-dev.yaml` — builds and runs both services together for local dev.
 
 ## Run it
