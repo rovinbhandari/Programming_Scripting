@@ -66,7 +66,7 @@ fn main() {
     
     let num1 = 3;
     let num2: i64 = 4;
-    let sum = num1 + num2;
+    let sum = num1 + num2;  // it looks like Rust automatically typed num1 as i64 as well to allow for this addition.
     println!("{num1} + {num2} = {sum}");
 
     println!("{:?}", greeting); // Debug println might show us more info than just Display println

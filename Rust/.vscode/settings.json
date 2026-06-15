@@ -1,0 +1,39 @@
+{
+    // These exercises are standalone files compiled with `rustc` — there is no Cargo project
+    // yet (by design; see AGENTS.md — we graduate to Cargo at Level 5). With no Cargo.toml,
+    // rust-analyzer's auto-discovery fails with "FetchWorkspaceError: failed to find any
+    // projects". Setting `linkedProjects` turns auto-discovery OFF and instead points RA at
+    // each .rs file explicitly; a path ending in `.rs` is treated as a *standalone file*, so
+    // you still get std completion, hovers, types, and basic (syntax / name-resolution)
+    // diagnostics for that file — but NOT trait / type-mismatch errors (see the checkOnSave note).
+    //
+    // Paths are relative to this workspace root (the Rust/ folder).
+    // NOTE: when you add a new exercise, add its path here too. (Cargo at Level 5 removes the
+    // need for this list — RA will then discover everything automatically.)
+    "rust-analyzer.linkedProjects": [
+        "10_fundamentals/01_hello.rs",
+        "10_fundamentals/02_variables.rs",
+        "10_fundamentals/03_scalar_types.rs",
+        "10_fundamentals/04_functions.rs",
+        "10_fundamentals/05_control_flow.rs",
+        "10_fundamentals/06_loops.rs",
+        "10_fundamentals/07_tuples_arrays.rs",
+        // playground: ahead-of-curriculum experiments (not part of the Sequence)
+        "playground/borrowing.rs"
+    ],
+
+    // "Check on save" (flycheck) shells out to `cargo check` for full compiler diagnostics —
+    // but there is no Cargo project here, so on a standalone file RA falls back to an unstable
+    // single-file check that needs a *nightly* `-Z` flag and fails on stable ("the option Z is
+    // only accepted on the nightly compiler"). So we turn it off.
+    //
+    // What this costs us: in standalone/detached mode (a lone .rs, no Cargo.toml) RA's engine
+    // only does syntax + name-resolution + types/hovers/completions. It does NOT report
+    // trait / type-mismatch errors — e.g. `(i as f64) + (f as i32)` (no `f64: Add<i32>`) shows
+    // NO squiggle here, even though `rustc` rejects it (E0277). That whole class of diagnostic
+    // needs a real Cargo workspace — verified: `rust-analyzer diagnostics` flags it in a Cargo
+    // project but errors with "no projects" on a bare file. So this is NOT about checkOnSave;
+    // it's standalone mode. Until we graduate to Cargo at Level 5, `rustc 0X_name.rs` on the
+    // command line is our authoritative error check.
+    "rust-analyzer.checkOnSave": false
+}

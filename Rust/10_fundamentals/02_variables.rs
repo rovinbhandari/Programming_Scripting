@@ -41,9 +41,36 @@
 //               spot a binding is actually *allowed* to mutate.
 //
 // Compile & run (Windows):  rustc 02_variables.rs && .\02_variables.exe
+// Companion note:  02_variables_notes.md  (let / mut / shadowing / const — binding vs place)
 // -------------------------------------------------------------
 
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    let x = 5;  // the compiler warns of unused variable (expected)
+    // x = 6;   // can't work because "cannot assign twice to immutable variable"
+    // Q: why is x a 'variable' when it's 'immutable' by default?
+
+    let mut y = 5;
+    println!("y={y}");
+    y = 6;
+    println!("y={y}");
+    // y = "lkl"    // doesn't work because mut doesn't allow type-change apparently
+
+    let s = "42";
+    let s = s.len(); // s changed type from &str to usize
+    println!("s={s}");
+
+    const MAX_SCORE: u32 = 100; // type is mandatory here, probably because the compile stage will 
+                                // replace the label with the value. (Q: does it?)
+    println!("MAX_SCORE={MAX_SCORE}");
+    // Q: what is the difference between const and immutable (default) variables? Both semantically and technically.
+
+    // re-let vs mut:
+    // From above it looks like mut can't allow type change whereas re-let does.
+    // It seems that re-let will use a different memory location to allocate a variable
+    // mut will probably reuse existing memory location since type change is prohibited. (Q: does it?)
+
+    let x = 5;
+    let x = x + 1;
+    let x = x * 2;
+    println!("x={x}");
 }

@@ -39,9 +39,56 @@
 //   Collectible: Secret ingredient 3 of 7 = 'I'.
 //
 // Compile & run (Windows):  rustc 03_scalar_types.rs && .\03_scalar_types.exe
+// Companion note:  03_scalar_types_notes.md  (as-casts & integer overflow — debug vs release)
 // -------------------------------------------------------------
 
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    let i32: i32 = 84;
+    let u8: u8 = 5;
+    let f64: f64 = -1.0044999;
+    let bool: bool = true;
+    let char: char = 'J';
+    println!("i32: {}", i32);
+    println!("u8: {}", u8);
+    println!("f64: {}", f64);
+    println!("bool: {}", bool);
+    println!("char: {}", char);
+
+    let i64: i64 = 99;
+    // let sum = i32 + i64; // doesn't work because types are different and no auto casting.
+    let sum: i64 = (i32 as i64) + i64;
+    println!("sum: {sum}");
+
+    // let sum = i32 + f64  // when ints didn't have a chance, this'd have absolutely none.
+    let sum_as_i = i32 + (f64 as i32);
+    let sum_as_f = (i32 as f64) + f64;
+    // let sum_as_x = (i32 as f64) + (f64 as i32); // Q: doesn't compile as expected, yet why doesn't Rust Analyzer flag it?
+    println!("sum_as_i: {}", sum_as_i);
+    println!("sum_as_f: {}", sum_as_f);
+
+    let n: i32 = 7;
+    let div = n as f64 / 2.0;
+    println!("div: {}", div);
+    
+    let k = 3.9 as i32; // truncated!
+    println!("k: {}", k);
+    let k = -3.9 as i32; // truncated!
+    println!("k: {}", k);
+
+    // Rust uses the modern Unicode that's 32 bits => 4 bytes.
+    // if it didn't the following wouldn't have worked:
+    let emoji = '🦀';
+    println!("{emoji}");
+
+    let arr: [u8; 9] = [82, 117, 115, 116, 97, 99, 101, 97, 110];
+    let charr = arr.map(|c| c as char);
+    charr.iter().for_each(|c| print!("{c}"));
+    println!();
+
+    // testing integer overflows...
+    let i32_max = i32::MAX;
+    println!("i32_max: {}", i32_max);
+    let overflow = i32_max + 1; // my first panic!
+    println!("overflow: {}", overflow);
+
 }
