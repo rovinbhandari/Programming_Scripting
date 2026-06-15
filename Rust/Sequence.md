@@ -37,8 +37,8 @@ Familiar-from-other-languages syntax; low friction, build confidence.
 - [x] `10_fundamentals/01_hello.rs` — printing & format args (`println!`, placeholders)
 - [x] `10_fundamentals/02_variables.rs` — `let`, `mut`, shadowing, `const`
 - [x] `10_fundamentals/03_scalar_types.rs` — integers/floats/`bool`/`char`, casting with `as`
-- [ ] `10_fundamentals/04_functions.rs` — params, return types, **expression vs statement**
-- [ ] `10_fundamentals/05_control_flow.rs` — `if`/`else` as an **expression**
+- [x] `10_fundamentals/04_functions.rs` — params, return types, **expression vs statement**
+- [x] `10_fundamentals/05_control_flow.rs` — `if`/`else` as an **expression**
 - [ ] `10_fundamentals/06_loops.rs` — `loop` (break-with-value), `while`, `for` + ranges
 - [ ] `10_fundamentals/07_tuples_arrays.rs` — tuples (destructuring), arrays (index, `len`)
 

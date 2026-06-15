@@ -41,9 +41,40 @@
 //   Collectible: Secret ingredient 5 of 7 = 'I'.
 //
 // Compile & run (Windows):  rustc 05_control_flow.rs && .\05_control_flow.exe
+// Companion note:  05_control_flow_notes.md  (if-as-expression, bool-only conditions, FizzBuzz order)
 // -------------------------------------------------------------
 
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    let n = -4;
+    if n > 0 {
+        println!("positive");
+    } else if n < 0 {
+        println!("negative");
+    } else {
+        println!("zero");
+    }
+
+    let label = if n % 2 == 0 { "even" } else { "odd" };
+    println!("{}", label);
+
+    // let label2 = if n % 2 == 0 { "even" } else { 0 };
+    // Error:  expected `&str`, found i32
+    // Rust requires both arms to produce the same type so it can assign a single,
+    // known type to the variable at compile time. There is no implicit coercion.
+
+    // if 1 { println!("hi"); }
+    // Error:  expected `bool`, found i32
+    // Rust conditions must be exactly `bool`
+
+    // having the same type on both arms of if/else makes types predictable.
+
+    let n = 15;
+    if n % 15 == 0
+    { print!("FizzBuzz"); }
+    else if n % 3 == 0 
+    { print!("Fizz"); } 
+    else if n % 5 == 0 
+    { print!("Buzz"); } 
+    else 
+    { print!("{n}"); };
 }

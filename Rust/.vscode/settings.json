@@ -19,7 +19,8 @@
         "10_fundamentals/06_loops.rs",
         "10_fundamentals/07_tuples_arrays.rs",
         // playground: ahead-of-curriculum experiments (not part of the Sequence)
-        "playground/borrowing.rs"
+        "playground/borrowing.rs",
+        "playground/conditional_returns.rs"
     ],
 
     // "Check on save" (flycheck) shells out to `cargo check` for full compiler diagnostics —

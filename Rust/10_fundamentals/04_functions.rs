@@ -44,11 +44,74 @@
 //               sneaky trailing semicolon.)
 //
 // Compile & run (Windows):  rustc 04_functions.rs && .\04_functions.exe
+// Companion note:  04_functions_notes.md  (expression vs statement — `;` discards a value)
 // -------------------------------------------------------------
 
-// TODO: define your functions up here (e.g. `fn square(...) -> i32 { ... }`)
+fn square(n: i32) -> i32
+{
+    n * n
+}
+
+fn nthchar(s: &str, n: usize) -> char
+{
+    if n >= s.len() {
+        return ' ';
+    }
+
+    let mut i = 0;
+    let mut nth: char = ' ';
+    for c in s.chars()
+    {
+        if i == n
+        {
+            nth = c;
+        }
+        
+        i += 1;
+    }
+
+    nth
+}
+
+fn add(a: i32, b: i32) -> i32
+{
+    a + b
+}
+
+fn parity(n: i32) -> char
+{
+    if n % 2 == 0
+    {
+        'E'
+    }
+    else 
+    {
+        'O'
+    }
+}
 
 fn main() {
-    // TODO: call your functions, print results, and explain your reasoning in comments.
-    // Mark questions with `// Q:` so I can spot them.
+    let num = 5;
+    let sq = square(num);
+    println!("{num}^2={sq}");
+
+    let (a, b) = (3, 4);
+    let s = add(a, b);
+    println!("{a}+{b}={s}");
+
+    let s = "blahblah";
+    let valid_nthchar = nthchar(s, num as usize);
+    println!("{num}th char of {s} = {valid_nthchar}");
+    let num2 = num as usize * 2;
+    let invalid_nthchar = nthchar(s, num2);
+    println!("{num2}th char of {s} = {invalid_nthchar}");
+
+    let x = { let a = 2; a + 1 };   // if no return value, then it's construed as a function returning () (E0277)
+    println!("{x}");
+
+    // statement is that ends in ';', whereas expression is any operand+operator (Q: is it correct enough?)
+    // if there's a ';' to a fn's return, it makes the function a () type.
+
+    println!("{num} is {}", parity(num));
+    println!("{num2} is {}", parity(num2 as i32));
 }
