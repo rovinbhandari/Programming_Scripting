@@ -6,6 +6,7 @@
 .vs
 .vscode
 .dropbox
+.temp/
 
 # gen
 *.o

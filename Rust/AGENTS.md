@@ -11,12 +11,12 @@ This folder is the user's space to **learn Rust** through small, self-contained 
   - **Tier 2 — C / Python** (secondary)
   - Then the plain, language-agnostic programming concept.
 
-## Make it fun (every exercise)
-Delight aids retention, so every exercise spec gets a light **🦀 Ferris's Fun Zone** block — placed near the end of the header comment (after *Questions to ponder*, before *Compile & run*) and clearly marked *optional bonus — for delight, not grading*. Include:
-- **A pun** — ideally Rust/crab-flavoured (Ferris 🦀, oxidation, `const`/`mut`/`loop`/`char` wordplay) or a wink at the concept being taught.
-- **An easter egg and/or a small puzzle** — a decoder, a hidden word, a tiny ASCII Ferris, or a bite-sized bonus challenge that *exercises the same concept* (e.g. cast `u8 as char` to decode a word while teaching scalar types).
-- **A running collectible** — hand out one "secret ingredient" letter per exercise so each level spells a themed word once finished. *Level 1 spells `OXIDISE`* (O,X,I,D,I,S,E across its 7 files).
-Rules: keep it short (a handful of comment lines); **never spoil the core solution** (puzzles are *posed, not solved*); keep bonuses genuinely optional; tie each puzzle to the concept at hand; and tease the next exercise whenever there's a natural payoff.
+## Make it fun (woven into every task)
+Delight aids retention — so fun is **baked into the exercise's task list itself**, not bolted on as a separate "🦀 Fun Zone" block at the end (the Level 1 afterthought we're moving away from). The same numbered tasks the user works through should carry the play, so *doing the work is the fun*:
+- **Frame the tasks playfully** — pun-laced prompts, or a task that is itself a puzzle whose solution *exercises the concept* (decode a word via `u8 as char`, unscramble printed output, hunt a planted bug, name a variable to complete a joke). The puzzle teaches; it doesn't sit beside the teaching.
+- **Hide an easter egg or two** — a tiny ASCII Ferris 🦀, a hidden word in the comments, or a wink at the next concept.
+- **A running collectible** — give one "secret ingredient" letter per exercise so each level spells a themed word once complete. *Level 1 spelled `OXIDISE`* (7 files); choose a fresh themed word per level (one letter per file).
+Rules: keep it light; **never spoil the core solution** (puzzles are *posed, not solved*); a playful task must still teach its concept; tie every puzzle to the concept at hand; and tease the next exercise when there's a natural payoff.
 
 ## Code workflow
 - **Now:** one standalone `.rs` file per problem, compiled with `rustc file.rs`. Keep it boilerplate-free; focus on the language.
@@ -31,7 +31,9 @@ Rules: keep it short (a handful of comment lines); **never spoil the core soluti
   - `Notebook.md` — **living** log of key Q&A, concept links, gotchas, major corrections, **and the index of per-exercise concept notes**.
 - **Cross-linking (so a note is never lost):** a concept note is reachable from *both* ends — listed in the `Notebook.md` "Concept notes" index **and** pointed to by a one-line `Companion note:` line near the exercise header's *Compile & run* footer (the filename is deterministic: `NN_name.rs` → `NN_name_notes.md`). Keep a **single** source-of-truth index (the Notebook) — don't fork a second list. Rule of thumb: `Sequence.md` owns *order*, `Notebook.md` owns *knowledge*, `AGENTS.md` owns *rules* — cross-link between them, never duplicate.
 - Difficulty ladder: **L1** isolate one concept each → **L2** ownership/borrowing (Rust's signature) → **L3** mix (structs/enums/match/Option/Result) → **L4** more mixing (collections/generics/traits/lifetimes/errors) → **L5** small CLI apps → then graduate to Cargo.
-- The loop: agent writes exercise **specs** (skeletons, *not* solutions) → the user writes the solution with understanding-in-comments + questions → agent reviews the **code and the comments**, corrects misconceptions, ticks `Sequence.md`, logs anything worth keeping to `Notebook.md` (and links any new concept note from both the Notebook index and the exercise header), then designs/unlocks the next exercise.
+- **Practical end goal (the "why"):** exercises should compound toward a real project — a **file indexer** (heavy string ops, calculations, permissions handling) — not just isolated drills.
+- **Homework first (validate before authoring):** before writing a new exercise's spec, spawn a separate **general-purpose agent** to validate the hints/claims/expected behaviour against *real* `rustc` — exact error codes (e.g. `E0382`), panics, edge cases — so nothing is hand-waved. Keep that scratchpad in a repo-root **`.temp/`** folder that is **`.gitignore`d** (never committed).
+- The loop: agent does the homework above, then writes exercise **specs** (skeletons, *not* solutions) → the user writes the solution with understanding-in-comments + questions → agent reviews the **code and the comments**, corrects misconceptions, ticks `Sequence.md`, logs anything worth keeping to `Notebook.md` (and links any new concept note from both the Notebook index and the exercise header), then designs/unlocks the next exercise.
 
 ## Toolchain
 - Rust is **installed**: `rustc` + `cargo` 1.96.0 via `rustup` (stable). Confirm with `rustc --version`.

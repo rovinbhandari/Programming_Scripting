@@ -18,6 +18,10 @@
         "10_fundamentals/05_control_flow.rs",
         "10_fundamentals/06_loops.rs",
         "10_fundamentals/07_tuples_arrays.rs",
+        "20_ownership/01_ownership_move.rs",
+        "20_ownership/02_references_borrow.rs",
+        "20_ownership/03_slices.rs",
+        "20_ownership/04_string_vs_str.rs",
         // playground: ahead-of-curriculum experiments (not part of the Sequence)
         "playground/borrowing.rs",
         "playground/conditional_returns.rs"

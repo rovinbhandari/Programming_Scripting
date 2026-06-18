@@ -45,10 +45,10 @@ Familiar-from-other-languages syntax; low friction, build confidence.
 ## Level 2 — Ownership & Borrowing *(isolated — Rust's signature idea)*
 The concepts that make Rust *Rust*. No analogy in C#/Python; we go slow with diagrams.
 
-- [ ] `20_ownership/01_ownership_move.rs` — move vs `Copy`, stack vs heap, `String`
-- [ ] `20_ownership/02_references_borrow.rs` — `&T`, `&mut T`, the borrow rules
-- [ ] `20_ownership/03_slices.rs` — `&str` and array slices
-- [ ] `20_ownership/04_string_vs_str.rs` — owned `String` vs borrowed `&str`
+- [~] `20_ownership/01_ownership_move.rs` — move vs `Copy`, stack vs heap, `String`
+- [~] `20_ownership/02_references_borrow.rs` — `&T`, `&mut T`, the borrow rules
+- [~] `20_ownership/03_slices.rs` — `&str` and array slices
+- [~] `20_ownership/04_string_vs_str.rs` — owned `String` vs borrowed `&str`
 
 ## Level 3 — Custom Types & Pattern Matching *(start mixing)*
 Model your own data; combine it with ownership.
