@@ -41,9 +41,100 @@
 //               swap this 'S' for a 'Z' and you'd have the American version.)
 //
 // Compile & run (Windows):  rustc 06_loops.rs && .\06_loops.exe
+// Companion note:  06_loops_notes.md  (loop/while/for, break-with-value, ranges, labels)
 // -------------------------------------------------------------
 
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    let mut i = 1;
+    let found = 
+        loop 
+        {
+            if i == 5
+            {
+                break i * 10;
+            }
+            i += 1;
+        };
+    println!("{found}");
+
+    let mut j = 3;
+    while j > 0
+    {
+        println!("{j}...");
+        j -= 1;
+    }
+    println!("liftoff!");
+
+    for k in 1..=5
+    {
+        println!("{k}")
+    }
+
+    for l in (1..=3).map(|x| x*10)
+    {
+        println!("{l}");
+    }
+
+    let mut m = 100..=500;
+    let n = 50..150;
+    let any_n_in_m = 'outer: loop 
+        {
+            let mnext = m.next();
+            if mnext.is_none()
+            {
+                break false;
+            }
+            else 
+            {
+                let mut n_ = n.clone();
+                'inner: loop
+                {
+                    let n_next = n_.next();
+                    if n_next.is_none()
+                    {
+                        break;
+                    }
+                    else if Some(n_next).unwrap() == Some(mnext).unwrap()
+                    {
+                        break 'outer true;
+                    }
+                }
+            }
+        };
+    println!("n found in m? {any_n_in_m}");
+
+    // for i in x..y seems to have more well-predictable exit condition than a vanilla for (i = x; i < y; )
+    // while COND is better than loop { ... } when the condition COND should be checked prior to starting looping.
+
+    for o in 1..=15
+    {
+        if o % 15 == 0
+        {
+            println!("FizzBuzz");
+        }
+        else if o % 3 == 0
+        {
+            println!("Fizz");
+        }
+        else if o % 5 == 0
+        {
+            println!("Buzz");
+        }
+        else 
+        { 
+            println!("{o}");
+        };
+    }
+
+    let mut p = 1;
+    let n2gt50 = loop 
+        {
+            if p * p > 50
+            {
+                break p;
+            }
+            p += 1;
+        };
+    println!("{n2gt50}");
+
 }

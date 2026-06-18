@@ -28,6 +28,7 @@ lib/release
 *.dll
 *.pdb
 *.cache
+*.long-type-*.txt
 obj
 objd
 bin

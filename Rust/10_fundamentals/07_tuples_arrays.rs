@@ -45,9 +45,36 @@
 //               Congratulations: you have officially oxidised into a Rustacean!
 //
 // Compile & run (Windows):  rustc 07_tuples_arrays.rs && .\07_tuples_arrays.exe
+// Companion note:  07_tuples_arrays_notes.md  (fixed-size compounds; bounds: compile-time vs runtime)
 // -------------------------------------------------------------
 
 fn main() {
-    // TODO: write your solution here. Explain your thinking in comments,
-    // and jot any questions with a `// Q:` prefix so I can spot them.
+    let point: (i32, f64, char) = (3, 2.5, 'p');
+    println!("{}", point.0);
+    let (x, y, label) = point;
+    println!("{}, {}, {}", x, y, label);
+     
+    let nums = [10, 20, 30, 40, 50];
+    println!("{}", nums[0]);
+    println!("{}", nums.len());
+
+    // Task 3: Iterate array
+    for num in nums {
+        println!("{}", num);
+    }
+    
+    // Task 4: Out of bounds access
+    // let out_of_bounds = nums[10];  // compiler failed with: error: this operation will panic at runtime
+
+    // Tuple is an easy way to represent a complex type or a value with multiple-type dimensions
+    // Array is mainly for many values of the same type.
+
+    // Fixing size at compile time ensures better capturing of out of bounds indexes during compilation.
+
+    let scrambled = ['I', 'O', 'E', 'X', 'S', 'D', 'I'];
+    let order     = [1, 3, 0, 5, 6, 4, 2];
+    for i in order 
+    {
+        print!("{}", scrambled[i]);
+    }
 }

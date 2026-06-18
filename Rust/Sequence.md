@@ -39,8 +39,8 @@ Familiar-from-other-languages syntax; low friction, build confidence.
 - [x] `10_fundamentals/03_scalar_types.rs` — integers/floats/`bool`/`char`, casting with `as`
 - [x] `10_fundamentals/04_functions.rs` — params, return types, **expression vs statement**
 - [x] `10_fundamentals/05_control_flow.rs` — `if`/`else` as an **expression**
-- [ ] `10_fundamentals/06_loops.rs` — `loop` (break-with-value), `while`, `for` + ranges
-- [ ] `10_fundamentals/07_tuples_arrays.rs` — tuples (destructuring), arrays (index, `len`)
+- [x] `10_fundamentals/06_loops.rs` — `loop` (break-with-value), `while`, `for` + ranges
+- [x] `10_fundamentals/07_tuples_arrays.rs` — tuples (destructuring), arrays (index, `len`)
 
 ## Level 2 — Ownership & Borrowing *(isolated — Rust's signature idea)*
 The concepts that make Rust *Rust*. No analogy in C#/Python; we go slow with diagrams.
