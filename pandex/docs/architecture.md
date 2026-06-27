@@ -34,18 +34,18 @@ flowchart LR
 ## Open decisions
 The big forks. Each is settled below in the decision log with its rationale, worked in roughly this order (see [`../PLAN.md`](../PLAN.md)).
 
-| # | Decision | Options being weighed | Status |
-|---|----------|-----------------------|--------|
-| 1 | Topology | single-machine · central aggregator · hub + agents | Open |
-| 2 | Language | Rust (leaning) · other | Open |
-| 3 | Index store | SQLite+FTS · sqlite-vec · Tantivy · LanceDB · server DB | Open |
-| 4 | Index scope | metadata-only first · + keywords · + content embeddings | Open |
-| 5 | LLM hosting | local/on-device · hosted API · hybrid | Open |
-| 6 | Connectors | the pluggable Source interface | Open |
-| 7 | Scheduling | usage-trough detection · async enrichment queue | Open |
-| 8 | Versioning | data + schema migration strategy | Open |
-| 9 | Observability | telemetry + benchmark harness | Open |
-| 10 | Validation | fixtures + golden queries | Open |
+| # | Decision | Options being weighed | Research | Status |
+|---|----------|-----------------------|----------|--------|
+| 1 | Topology | single-machine · central aggregator · hub + agents | — | Open |
+| 2 | Language | Rust (leaning) · other | — | Open |
+| 3 | Index store | SQLite+FTS · sqlite-vec · Tantivy · LanceDB · server DB | [index-store](decision-research/index-store.md) | Open |
+| 4 | Index scope | metadata-only first · + keywords · + content embeddings | [file types & metadata](decision-research/file-types-and-metadata.md) | Open |
+| 5 | LLM hosting | local/on-device · hosted API · hybrid | [embeddings](decision-research/embeddings-and-inference.md) · [keywords](decision-research/keyword-extraction.md) | Open |
+| 6 | Connectors | the pluggable Source interface | [connectors](decision-research/storage-connectors.md) · [scan/watch](decision-research/fs-scan-and-watch.md) · [access/hydration](decision-research/file-access-and-hydration.md) | Open |
+| 7 | Scheduling | usage-trough detection · async enrichment queue | [async-runtime](decision-research/async-runtime.md) | Open |
+| 8 | Versioning | data + schema migration strategy | [schema-migrations](decision-research/schema-migrations.md) | Open |
+| 9 | Observability | telemetry + benchmark harness | [observability](decision-research/observability.md) · [benchmarking](decision-research/benchmarking.md) | Open |
+| 10 | Validation | fixtures + golden queries | — | Open |
 
 ## Architectural Decisions (log)
 Each settled decision lands here — newest first — as **what**, **why**, **alternatives rejected**, and **date**. Prefer editing this log over appending duplicates; full history lives in git.

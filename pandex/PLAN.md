@@ -19,13 +19,13 @@ We are deliberately designing before building: requirements, validation sets, to
 Worked through roughly in this order; each settles into an entry in the architecture decision log (`docs/architecture.md`), which owns the rationale.
 - [ ] **Topology** — single-machine tool vs central index aggregating many devices vs hub + agents.
 - [ ] **Language** — confirm Rust (leaning) and the minimum toolchain.
-- [ ] **Index store** — embedded (SQLite/FTS, sqlite-vec, Tantivy, LanceDB) vs server; how vectors live alongside metadata.
-- [ ] **Index scope** — metadata-only first, then opt-in content keywords/embeddings; which file types.
-- [ ] **LLM hosting** — local/on-device vs hosted API, for keyword extraction, embeddings, search, and RAG.
-- [ ] **Connectors** — the pluggable "source" interface for disks, VMs, and online stores.
-- [ ] **Scheduling** — detecting device-usage troughs; async pipeline for embeddings/keywords.
-- [ ] **Versioning** — data + schema versioning and migration strategy.
-- [ ] **Observability** — telemetry + benchmark harness to find and document slow parts.
+- [ ] **Index store** — embedded (SQLite/FTS, sqlite-vec, Tantivy, LanceDB) vs server; how vectors live alongside metadata. → [`index-store.md`](docs/decision-research/index-store.md)
+- [ ] **Index scope** — metadata-only first, then opt-in content keywords/embeddings; which file types. → [`file-types-and-metadata.md`](docs/decision-research/file-types-and-metadata.md)
+- [ ] **LLM hosting** — local/on-device vs hosted API, for keyword extraction, embeddings, search, and RAG. → [`embeddings-and-inference.md`](docs/decision-research/embeddings-and-inference.md), [`keyword-extraction.md`](docs/decision-research/keyword-extraction.md)
+- [ ] **Connectors** — the pluggable "source" interface for disks, VMs, and online stores. → [`storage-connectors.md`](docs/decision-research/storage-connectors.md), [`fs-scan-and-watch.md`](docs/decision-research/fs-scan-and-watch.md), [`file-access-and-hydration.md`](docs/decision-research/file-access-and-hydration.md)
+- [ ] **Scheduling** — detecting device-usage troughs; async pipeline for embeddings/keywords. → [`async-runtime.md`](docs/decision-research/async-runtime.md)
+- [ ] **Versioning** — data + schema versioning and migration strategy. → [`schema-migrations.md`](docs/decision-research/schema-migrations.md)
+- [ ] **Observability** — telemetry + benchmark harness to find and document slow parts. → [`observability.md`](docs/decision-research/observability.md), [`benchmarking.md`](docs/decision-research/benchmarking.md)
 - [ ] **Validation sets** — fixtures and golden queries we measure correctness and quality against.
 
 ## Milestones (tentative)
