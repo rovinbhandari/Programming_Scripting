@@ -43,6 +43,10 @@ Usage — let the ape loose:
 
     # Ape smash existing files and re-grab
     python ScrApe.py -i urls.txt -o ./output --overwrite
+
+    # No grabbing at all: groom and sniff clippings that are already in the nest
+    python ScrApe.py -o E:\\vault\\Clippings
+    python ScrApe.py -o E:\\vault\\Clippings --dry-run --no-sniff
 """
 
 import argparse
@@ -59,6 +63,14 @@ from urllib.parse import urlparse
 import html2text
 import requests
 from bs4 import BeautifulSoup
+
+# ── Console encoding ───────────────────────────────────────────────────────
+# Windows consoles default to cp1252, which chokes on the ape's emoji.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError, OSError):
+        pass
 
 # ── Constants ──────────────────────────────────────────────────────────────
 TODAY = datetime.now().strftime("%Y-%m-%d")
@@ -127,6 +139,80 @@ SNIFF_HTML_PATTERNS = [
     (re.compile(r"data:text/html", re.I), "data:text/html URI"),
     (re.compile(r"data:application/", re.I), "data:application/ URI"),
 ]
+
+# ── Link & image reference checks (banana sniff) ───────────────────────────
+# Every markdown link/image target: "](url" — images are the subset preceded by "!"
+MD_TARGET_RE = re.compile(r"\]\(\s*<?([^)<>\s]+)")
+MD_IMAGE_TARGET_RE = re.compile(r"!\[[^\]]*\]\(\s*<?([^)<>\s]+)")
+# Fenced code blocks hold examples, not references Obsidian will ever follow
+CODE_FENCE_RE = re.compile(r"^(?P<f>```+|~~~+)[^\n]*\n.*?^(?P=f)[^\n]*$", re.M | re.S)
+# Bare (autolinked) URLs, i.e. not already inside a markdown target or an attribute
+BARE_URL_RE = re.compile(r"""(?<!["'(\[<])\b((?:https?|ftp|ftps)://[^\s<>)\]"']+)""", re.I)
+HTML_SRC_RE = re.compile(r"""<[^>]*\bsrc\s*=\s*["']([^"']+)["']""", re.I)
+HTML_HREF_RE = re.compile(r"""<[^>]*\bhref\s*=\s*["']([^"']+)["']""", re.I)
+
+# Schemes that carry content without encryption
+INSECURE_SCHEMES = {"http", "ftp"}
+# Schemes that are fine to see in a clipping and need no host inspection
+BENIGN_SCHEMES = {"mailto", "tel", "obsidian", "file"}
+
+URL_SHORTENERS = {
+    "bit.ly", "t.co", "tinyurl.com", "goo.gl", "ow.ly", "buff.ly", "is.gd",
+    "cutt.ly", "rebrand.ly", "shorturl.at", "rb.gy", "t.ly", "lnkd.in",
+    "dlvr.it", "trib.al", "amzn.to", "youtu.be", "fb.me", "wp.me", "s.id",
+    "tiny.cc", "v.gd", "shorte.st", "adf.ly", "bl.ink", "clck.ru", "qr.ae",
+    "ift.tt", "flip.it", "mol.im", "nyti.ms", "on.ft.com", "econ.st",
+}
+
+TRACKING_PARAM_RE = re.compile(
+    r"^(utm_[a-z_]+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|yclid|"
+    r"twclid|ttclid|_hsenc|_hsmi|vero_id|oly_enc_id|ref_src|ref_url|spm|"
+    r"scid|cmpid|campaign_id|s_cid|at_medium|at_campaign)$", re.I)
+
+REDIRECT_PARAM_RE = re.compile(
+    r"^(url|u|q|src|redirect|redirect_uri|redir|dest|destination|target|next|"
+    r"out|link|goto|continue)$", re.I)
+
+IPV4_HOST_RE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+STANDARD_PORTS = {80, 443, 21}
+
+# ── Markdown tidy-up (banana groom) ────────────────────────────────────────
+FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+FM_SOURCE_RE = re.compile(r"""^source:\s*["']?(\S+?)["']?\s*$""", re.M)
+
+# Wikipedia serves Parsoid HTML, whose citation markers survive the HTML→markdown
+# step as raw <sup> blobs. They carry the #cite_note anchor of the reference.
+SUP_BLOCK_RE = re.compile(r"<sup\b[^>]*>.*?</sup>", re.S | re.I)
+CITE_NOTE_HREF_RE = re.compile(r"""href\s*=\s*["'][^"']*?(#cite_note-[^"']+)["']""", re.I)
+# A reference-list entry always backlinks to its marker, whatever the language
+CITE_REF_LINK_RE = re.compile(r"\]\([^)]*#cite_ref-")
+CITE_FOOTNOTE_DEF_RE = re.compile(r"^\[\^c\]:", re.M)
+MD_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
+MD_HEADING_PARTS_RE = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*$")
+# Wikipedia's shortened-footnote style splits the apparatus in two: numbered
+# entries carrying the #cite_ref- backlinks, then the works those point at via
+# #CITEREF anchors. Only the first tier is detectable by backlink, so the second
+# is matched by heading — but solely when a #CITEREF link proves it is a second
+# tier, which leaves a standalone bibliography or further reading list alone.
+SHORTREF_LINK_RE = re.compile(r"\]\([^)]*#CITEREF")
+BIBLIOGRAPHY_HEADINGS = frozenset({
+    "bibliography", "sources", "works cited", "cited works", "references",
+    "litteratur", "kilder", "referanser",
+})
+# Wikipedia's per-section [edit source] links, wrapped in escaped brackets.
+# The section= lookahead keeps red links (action=edit&redlink=1) out of it —
+# those are inline content links to articles that do not exist yet. Targets may
+# carry escaped parens, as in Doughnut_\(economic_model\), so a plain [^)] scan
+# would stop short of the query string.
+_MD_TARGET = r"(?:\\.|[^)\\])*"
+WIKI_EDIT_LINK_RE = re.compile(
+    r"(?:\\\[\s*)?\[[^\]]*\]\("
+    rf"(?={_MD_TARGET}\baction=edit\b)(?={_MD_TARGET}[&?]section=\d)"
+    rf"{_MD_TARGET}\)(?:\s*\\\])?")
+# 1x1 beacon Wikipedia leaves in the markup; it phones home whenever a note renders
+WIKI_TRACKING_IMG_RE = re.compile(r"!\[[^\]]*\]\([^)\s]*Special:CentralAutoLogin[^)]*\)")
+PROTOCOL_RELATIVE_RE = re.compile(r"\]\(\s*(//[^)\s]+)")
+ROOT_RELATIVE_RE = re.compile(r"\]\(\s*(/[^/)\s][^)\s]*)")
 
 # ── Thread safety ──────────────────────────────────────────────────────────
 _print_lock = threading.Lock()
@@ -863,6 +949,110 @@ def process_url(url: str, outdir: str, session: requests.Session | None = None,
 #  Banana Sniff — post-download content security check
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+def _iter_references(text: str):
+    """Yield (is_image, url) for every link/image reference in a markdown file."""
+    text = CODE_FENCE_RE.sub(lambda m: "\n" * m.group(0).count("\n"), text)
+    image_starts = {m.start(1) for m in MD_IMAGE_TARGET_RE.finditer(text)}
+    for m in MD_TARGET_RE.finditer(text):
+        yield m.start(1) in image_starts, m.group(1).strip()
+    for m in HTML_SRC_RE.finditer(text):
+        yield True, m.group(1).strip()
+    for m in HTML_HREF_RE.finditer(text):
+        yield False, m.group(1).strip()
+    for m in BARE_URL_RE.finditer(text):
+        yield False, m.group(1).strip()
+
+
+def _sniff_url(url: str, is_image: bool) -> list[str]:
+    """Smell-check a single link/image target. Returns finding descriptions."""
+    kind = "image" if is_image else "link"
+    findings: list[str] = []
+
+    if not url or url.startswith("#"):
+        return findings
+
+    # Protocol-relative: inherits whatever scheme the renderer happens to use
+    if url.startswith("//"):
+        findings.append(f"protocol-relative {kind} URL (scheme-inheriting)")
+        to_parse = "https:" + url
+    else:
+        to_parse = url
+
+    try:
+        parsed = urlparse(to_parse)
+    except ValueError as exc:
+        findings.append(f"unparseable {kind} URL ({exc})")
+        return findings
+
+    if not url.startswith("//"):
+        scheme = parsed.scheme.lower()
+        if not scheme:
+            return findings          # local relative path — exactly what we want
+        if scheme in BENIGN_SCHEMES:
+            return findings
+        if scheme == "data":
+            return findings          # already covered by SNIFF_HTML_PATTERNS
+        if scheme in INSECURE_SCHEMES:
+            findings.append(f"insecure {scheme}:// {kind} (unencrypted)")
+        elif scheme not in ("https", "ftps"):
+            findings.append(f"unexpected '{scheme}:' scheme in {kind}")
+
+    if is_image and parsed.scheme.lower() in ("http", "https"):
+        findings.append("remote image not downloaded locally")
+
+    host = (parsed.hostname or "").lower()
+    if host:
+        if IPV4_HOST_RE.match(host) or ":" in host:
+            findings.append(f"raw IP address host in {kind}")
+        if host.startswith("xn--") or ".xn--" in host:
+            findings.append(f"punycode/IDN host in {kind}")
+        if host in URL_SHORTENERS:
+            findings.append(f"URL shortener host '{host}' (opaque redirect)")
+
+    if parsed.username or parsed.password:
+        findings.append(f"credentials embedded in {kind} URL")
+
+    try:
+        port = parsed.port
+    except ValueError:
+        port = None
+        findings.append(f"malformed port in {kind} URL")
+    if port is not None and port not in STANDARD_PORTS:
+        findings.append(f"non-standard port :{port} in {kind}")
+
+    if parsed.query:
+        for pair in parsed.query.split("&"):
+            name = pair.split("=", 1)[0]
+            if TRACKING_PARAM_RE.match(name):
+                findings.append(f"tracking parameter '{name}' in {kind}")
+            elif REDIRECT_PARAM_RE.match(name) and "%3a%2f%2f" in pair.lower():
+                findings.append(f"redirect wrapper parameter '{name}' in {kind}")
+            elif REDIRECT_PARAM_RE.match(name) and "://" in pair:
+                findings.append(f"redirect wrapper parameter '{name}' in {kind}")
+
+    return findings
+
+
+def _sniff_references(text: str) -> list[str]:
+    """Aggregate link/image findings across a whole file, with one example each."""
+    counts: dict[str, int] = {}
+    examples: dict[str, str] = {}
+
+    for is_image, url in _iter_references(text):
+        for finding in _sniff_url(url, is_image):
+            counts[finding] = counts.get(finding, 0) + 1
+            examples.setdefault(finding, url)
+
+    lines = []
+    for finding, count in counts.items():
+        example = examples[finding]
+        if len(example) > 70:
+            example = example[:67] + "…"
+        suffix = f" (×{count})" if count > 1 else ""
+        lines.append(f"{finding}{suffix} — e.g. {example}")
+    return lines
+
+
 def _sniff_markdown(path: str) -> list[str]:
     """Smell-check a markdown file for suspicious content."""
     findings = []
@@ -875,6 +1065,8 @@ def _sniff_markdown(path: str) -> list[str]:
         matches = pattern.findall(text)
         if matches:
             findings.append(f"{description} (×{len(matches)})")
+
+    findings.extend(_sniff_references(text))
 
     return findings
 
@@ -930,7 +1122,8 @@ def _sniff_image(path: str) -> list[str]:
 def banana_sniff(clippings_dir: str, assets_dir: str | None = None) -> int:
     """
     🐒 The Banana Sniff — inspect downloaded clippings and images for
-    suspicious content. Returns the number of total findings.
+    suspicious content, insecure links and un-localised images.
+    Returns the number of total findings.
     """
     print()
     print("── 🐒 Banana Sniff ─────────────────")
@@ -990,6 +1183,275 @@ def banana_sniff(clippings_dir: str, assets_dir: str | None = None) -> int:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  🦧 Banana Groom — tidy up already-clipped markdown
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _groom_source_url(text: str) -> str:
+    """The `source:` of a clipping, used as the base for relative targets."""
+    fm = FRONTMATTER_RE.match(text)
+    if not fm:
+        return ""
+    m = FM_SOURCE_RE.search(fm.group(1))
+    return m.group(1) if m else ""
+
+
+def _strip_inline(text: str, pattern: re.Pattern) -> tuple[str, int]:
+    """Remove every match of `pattern`, dropping any line the match leaves empty."""
+    kept: list[str] = []
+    count = 0
+    for line in text.split("\n"):
+        stripped, n = pattern.subn("", line)
+        if n:
+            count += n
+            if not stripped.strip():
+                continue  # the match was all the line held
+        kept.append(stripped)
+    return "\n".join(kept), count
+
+
+def _groom_edit_links(text: str) -> tuple[str, int]:
+    """Drop Wikipedia's per-section [edit source] links, which are not vault content."""
+    if "action=edit" not in text or "section=" not in text:
+        return text, 0
+    return _strip_inline(text, WIKI_EDIT_LINK_RE)
+
+
+def _groom_tracking_pixels(text: str) -> tuple[str, int]:
+    """Drop Wikipedia's 1x1 CentralAutoLogin beacon, which phones home on render."""
+    if "CentralAutoLogin" not in text:
+        return text, 0
+    return _strip_inline(text, WIKI_TRACKING_IMG_RE)
+
+
+def _groom_citation_markers(text: str, source: str, refs_heading: str) -> tuple[str, int]:
+    """
+    Replace raw <sup> citation blobs with a single shared [^c] footnote pointing
+    at the live article's reference section. Wikipedia's own #cite_note anchors
+    are mostly positional, so a link to one silently rots into a different
+    source as the article gains references; [^c] cannot.
+    """
+    if not source or "<sup" not in text.lower():
+        return text, 0
+
+    count = 0
+
+    def _convert(match: re.Match) -> str:
+        nonlocal count
+        blob = match.group(0)
+        if not CITE_NOTE_HREF_RE.search(blob):
+            return blob
+        count += 1
+        return "[^c]"
+
+    text = SUP_BLOCK_RE.sub(_convert, text)
+    if not count:
+        return text, 0
+
+    if not CITE_FOOTNOTE_DEF_RE.search(text):
+        target = source.split("#", 1)[0]
+        if refs_heading:
+            target += "#" + refs_heading.replace(" ", "_")
+        text = text.rstrip("\n") + f"\n\n[^c]: [References]({target})\n"
+
+    return text, count
+
+
+def _groom_reference_list(text: str) -> tuple[str, int, str]:
+    """
+    Drop the imported reference list, which [^c] now stands in for. Entries are
+    recognised by their #cite_ref- backlinks rather than by heading text, so this
+    works whatever language the article is in. A heading is only removed when
+    references were all it contained; its text is returned so the footnote can
+    link straight to that section of the original.
+    """
+    if not CITE_REF_LINK_RE.search(text):
+        return text, 0, ""
+
+    lines = text.split("\n")
+    bounds = [-1] + [i for i, line in enumerate(lines) if MD_HEADING_RE.match(line)]
+    bounds.append(len(lines))
+
+    keep = [True] * len(lines)
+    removed = 0
+    heading = ""
+
+    for start, end in zip(bounds, bounds[1:]):
+        refs = [i for i in range(start + 1, end) if CITE_REF_LINK_RE.search(lines[i])]
+        if not refs:
+            continue
+        removed += len(refs)
+        # A bundled reference carries its sources on indented lines beneath it,
+        # which are orphaned if only the entry itself goes
+        drop: set[int] = set()
+        for i in refs:
+            drop.add(i)
+            j = i + 1
+            while j < end and lines[j][:1].isspace() and lines[j].strip():
+                drop.add(j)
+                j += 1
+        others = [i for i in range(start + 1, end)
+                  if lines[i].strip() and i not in drop]
+        if others:
+            for i in drop:
+                keep[i] = False
+        else:
+            # Nothing but references under this heading — take the section with it
+            if start >= 0 and not heading:
+                heading = MD_HEADING_RE.sub("", lines[start]).strip()
+            for i in range(max(start, 0), end):
+                keep[i] = False
+
+    return "\n".join(line for i, line in enumerate(lines) if keep[i]), removed, heading
+
+
+def _groom_bibliography(text: str) -> tuple[str, int]:
+    """
+    Remove the second tier of a shortened-footnote apparatus: the works the short
+    citations pointed at. Carries no backlinks of its own, so unlike the first
+    tier it has to be matched by heading, and a section is only taken when the
+    note is already known to use shortened footnotes.
+    """
+    lines = text.split("\n")
+    heads = []
+    for i, line in enumerate(lines):
+        m = MD_HEADING_PARTS_RE.match(line)
+        if m:
+            heads.append((i, len(m.group(1)), m.group(2).strip().lower()))
+
+    keep = [True] * len(lines)
+    removed = 0
+    for pos, (start, level, title) in enumerate(heads):
+        if title not in BIBLIOGRAPHY_HEADINGS:
+            continue
+        end = len(lines)
+        for j, deeper, _ in heads[pos + 1:]:
+            if deeper <= level:
+                end = j                      # a sibling or shallower heading ends it
+                break
+        removed += sum(1 for k in range(start, end)
+                       if lines[k].lstrip().startswith(("- ", "* ")))
+        for k in range(start, end):
+            keep[k] = False
+
+    if removed == 0:
+        return text, 0
+    return "\n".join(line for i, line in enumerate(lines) if keep[i]), removed
+
+
+def _groom_urls(text: str, source: str) -> tuple[str, int]:
+    """Absolutise protocol-relative and root-relative link and image targets."""
+    total = 0
+    text, n = PROTOCOL_RELATIVE_RE.subn(lambda m: "](https:" + m.group(1), text)
+    total += n
+
+    if source:
+        parts = urlparse(source)
+        if parts.scheme and parts.netloc:
+            origin = f"{parts.scheme}://{parts.netloc}"
+            text, n = ROOT_RELATIVE_RE.subn(lambda m: "](" + origin + m.group(1), text)
+            total += n
+
+    return text, total
+
+
+def _groom_markdown(path: str) -> tuple[list[str], str | None]:
+    """Groom one file. Returns (change descriptions, new text or None if unchanged)."""
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        raw = f.read()
+
+    crlf = "\r\n" in raw
+    text = original = raw.replace("\r\n", "\n")
+    source = _groom_source_url(text)
+    if not source:
+        return [], None          # not a clipping — hands off notes we did not fetch
+
+    changes: list[str] = []
+
+    def _note(count: int, singular: str, plural: str):
+        if count:
+            changes.append(f"{count} {singular if count == 1 else plural}")
+
+    text, n = _groom_edit_links(text)
+    _note(n, "edit link removed", "edit links removed")
+
+    text, n = _groom_tracking_pixels(text)
+    _note(n, "tracking pixel removed", "tracking pixels removed")
+
+    # Only trade the reference list away when there are markers to stand in for it
+    has_markers = bool(source) and any(
+        CITE_NOTE_HREF_RE.search(m.group(0)) for m in SUP_BLOCK_RE.finditer(text))
+
+    refs_heading = ""
+    if has_markers:
+        # The #CITEREF links live in the first tier, so look before removing it
+        shortrefs = bool(SHORTREF_LINK_RE.search(text))
+        text, n, refs_heading = _groom_reference_list(text)
+        _note(n, "imported reference dropped", "imported references dropped")
+
+        if shortrefs:
+            text, n = _groom_bibliography(text)
+            _note(n, "cited work dropped", "cited works dropped")
+
+    text, n = _groom_citation_markers(text, source, refs_heading)
+    _note(n, "citation marker footnoted", "citation markers footnoted")
+
+    text, n = _groom_urls(text, source)
+    _note(n, "relative target absolutised", "relative targets absolutised")
+
+    if text == original:
+        return [], None
+    return changes, text.replace("\n", "\r\n") if crlf else text
+
+
+def banana_groom(clippings_dir: str, dry_run: bool = False) -> int:
+    """
+    🦧 The Banana Groom — pick the nits out of clipped markdown: swap Wikipedia
+    citation markers for a [^c] footnote pointing at the original's reference
+    section, drop the imported reference list, and absolutise relative targets.
+    Grooming is idempotent, so it is safe to run over the same nest twice.
+    Returns the number of files changed.
+    """
+    print()
+    print("── 🦧 Banana Groom ─────────────────")
+    print(f"  Clippings: {clippings_dir}")
+    if dry_run:
+        print("  Dry run:   no files will be written")
+    print()
+
+    changed = 0
+    checked = 0
+
+    if os.path.isdir(clippings_dir):
+        for root, _dirs, files in os.walk(clippings_dir):
+            for fname in sorted(files):
+                if not fname.endswith(".md"):
+                    continue
+                fpath = os.path.join(root, fname)
+                changes, new_text = _groom_markdown(fpath)
+                checked += 1
+                if new_text is None:
+                    continue
+                changed += 1
+                if not dry_run:
+                    with open(fpath, "w", encoding="utf-8", newline="") as f:
+                        f.write(new_text)
+                rel = os.path.relpath(fpath, clippings_dir)
+                print(f"  🦧🧹 {rel}")
+                for change in changes:
+                    print(f"         └─ {change}")
+
+    print()
+    if changed == 0:
+        print(f"  ✅ Every banana already glossy! ({checked} markdown)")
+    else:
+        verb = "would be groomed" if dry_run else "groomed"
+        print(f"  🦧 {changed} file{'s' if changed != 1 else ''} {verb} ({checked} markdown checked)")
+    print()
+
+    return changed
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1045,9 +1507,13 @@ Examples:
     beh.add_argument("--assets-dir", metavar="DIR",
                      help="Directory for downloaded images (default: <output>/../Assets/Pocket)")
     beh.add_argument("--sniff", action="store_true", default=True, dest="sniff",
-                     help="Run the 🐒 Banana Sniff content check (default: on)")
+                     help="Run the 🐒 Banana Sniff content, link and image check (default: on)")
     beh.add_argument("--no-sniff", action="store_false", dest="sniff",
                      help="Skip the 🐒 Banana Sniff post-download content check")
+    beh.add_argument("--groom", action="store_true", default=True, dest="groom",
+                     help="Run the 🦧 Banana Groom markdown tidy-up (default: on)")
+    beh.add_argument("--no-groom", action="store_false", dest="groom",
+                     help="Skip the 🦧 Banana Groom markdown tidy-up")
 
     return p
 
@@ -1069,11 +1535,13 @@ def main(argv=None):
                 urls.append(line)
 
     if not urls:
-        if args.sniff:
-            # Standalone sniff mode — no scraping, just inspect existing files
+        if args.groom or args.sniff:
+            # Standalone mode — no scraping, just work over existing files
             outdir = os.path.abspath(args.output)
             adir = args.assets_dir or os.path.join(os.path.dirname(outdir), "Assets", "Pocket")
-            findings = banana_sniff(outdir, adir)
+            if args.groom:
+                banana_groom(outdir, dry_run=args.dry_run)
+            findings = banana_sniff(outdir, adir) if args.sniff else 0
             return 0 if findings == 0 else 1
         parser.error("No URLs provided. Use -i, --urls, or --stdin.")
 
@@ -1198,6 +1666,10 @@ def main(argv=None):
         for r in failures:
             print(f"  {r['url']}")
             print(f"    💀 {r['error']}")
+
+    # Banana Groom — tidy the freshly peeled markdown
+    if args.groom and not args.dry_run:
+        banana_groom(outdir)
 
     # Banana Sniff — post-scrape content check
     if args.sniff and not args.dry_run:
